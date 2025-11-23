@@ -10,6 +10,7 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
+    country = Column(String, default="US")
 
     subscriptions = relationship("Subscription", back_populates="owner")
     watchlist = relationship("WatchlistItem", back_populates="owner")
@@ -49,3 +50,16 @@ class Service(Base):
     name = Column(String, unique=True, index=True)
     logo_url = Column(String, nullable=True)
     base_cost = Column(Float, nullable=True)
+    
+    plans = relationship("Plan", back_populates="service")
+
+class Plan(Base):
+    __tablename__ = "plans"
+
+    id = Column(Integer, primary_key=True, index=True)
+    service_id = Column(Integer, ForeignKey("services.id"))
+    name = Column(String) # Basic, Standard, Premium
+    cost = Column(Float)
+    currency = Column(String, default="USD")
+    
+    service = relationship("Service", back_populates="plans")

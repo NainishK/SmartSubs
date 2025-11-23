@@ -121,6 +121,18 @@ def get_recommendations(db: Session = Depends(get_db), current_user: models.User
     import recommendations
     return recommendations.get_recommendations(db, user_id=current_user.id)
 
+@app.get("/services/", response_model=list[schemas.Service])
+def read_services(db: Session = Depends(get_db)):
+    return crud.get_services(db)
+
+@app.get("/services/{service_id}/plans", response_model=list[schemas.Plan])
+def read_plans(service_id: int, db: Session = Depends(get_db)):
+    return crud.get_plans(db, service_id=service_id)
+
+@app.put("/users/me", response_model=schemas.User)
+def update_user_me(country: str, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    return crud.update_user_profile(db, user_id=current_user.id, country=country)
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}

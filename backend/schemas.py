@@ -38,8 +38,32 @@ class WatchlistItem(WatchlistItemBase):
     class Config:
         from_attributes = True
 
+class PlanBase(BaseModel):
+    name: str
+    cost: float
+    currency: str
+
+class Plan(PlanBase):
+    id: int
+    service_id: int
+
+    class Config:
+        from_attributes = True
+
+class ServiceBase(BaseModel):
+    name: str
+    logo_url: Optional[str] = None
+
+class Service(ServiceBase):
+    id: int
+    plans: List[Plan] = []
+
+    class Config:
+        from_attributes = True
+
 class UserBase(BaseModel):
     email: str
+    country: str = "US"
 
 class UserCreate(UserBase):
     password: str

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import styles from './dashboard.module.css';
@@ -24,10 +24,36 @@ interface WatchlistItem {
     poster_path?: string;
 }
 
+interface Recommendation {
+    service_name: string;
+    reason: string;
+    estimated_cost: number;
+}
+
+interface Service {
+    id: number;
+    name: string;
+    logo_url?: string;
+}
+
+interface Plan {
+    id: number;
+    name: string;
+    cost: number;
+    currency: string;
+}
+
 export default function Dashboard() {
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
     const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
+    const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+    const [services, setServices] = useState<Service[]>([]);
+    const [plans, setPlans] = useState<Plan[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // Form State
+    const [selectedServiceId, setSelectedServiceId] = useState<number | 'custom' | ''>('');
+    const [selectedPlanId, setSelectedPlanId] = useState<number | ''>('');
     const [newSub, setNewSub] = useState({
         service_name: '',
         cost: 0,
@@ -36,16 +62,69 @@ export default function Dashboard() {
         start_date: new Date().toISOString().split('T')[0],
         next_billing_date: new Date().toISOString().split('T')[0],
     });
+
     const router = useRouter();
+    const dateInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        fetchSubscriptions();
-        fetchWatchlist();
+        fetchData();
     }, []);
+
+    // Fetch plans when service changes
+    useEffect(() => {
+        if (selectedServiceId) {
+            fetchPlans(selectedServiceId as number);
+            const service = services.find(s => s.id === Number(selectedServiceId));
+            if (service) {
+                setNewSub(prev => ({ ...prev, service_name: service.name }));
+            }
+        } else {
+            setPlans([]);
+            setSelectedPlanId('');
+        }
+    }, [selectedServiceId, services]);
+
+    // Update cost when plan changes
+    useEffect(() => {
+        if (selectedPlanId) {
+            const plan = plans.find(p => p.id === Number(selectedPlanId));
+            if (plan) {
+                setNewSub(prev => ({ ...prev, cost: plan.cost, currency: plan.currency }));
+            }
+        }
+    }, [selectedPlanId, plans]);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
         router.push('/login');
+    };
+
+    const fetchData = async () => {
+        try {
+            const [subsRes, watchRes, recsRes, servicesRes] = await Promise.all([
+                api.get('/subscriptions/'),
+                api.get('/watchlist/'),
+                api.get('/recommendations'),
+                api.get('/services/')
+            ]);
+            setSubscriptions(subsRes.data);
+            setWatchlist(watchRes.data);
+            setRecommendations(recsRes.data);
+            setServices(servicesRes.data);
+        } catch (error) {
+            console.error('Failed to fetch dashboard data', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchPlans = async (serviceId: number) => {
+        try {
+            const response = await api.get(`/services/${serviceId}/plans`);
+            setPlans(response.data);
+        } catch (error) {
+            console.error('Failed to fetch plans', error);
+        }
     };
 
     const fetchSubscriptions = async () => {
@@ -54,8 +133,6 @@ export default function Dashboard() {
             setSubscriptions(response.data);
         } catch (error) {
             console.error('Failed to fetch subscriptions', error);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -68,10 +145,29 @@ export default function Dashboard() {
         }
     };
 
+    const fetchRecommendations = async () => {
+        try {
+            const response = await api.get('/recommendations');
+            setRecommendations(response.data);
+        } catch (error) {
+            console.error('Failed to fetch recommendations', error);
+        }
+    };
+
     const handleAddSubscription = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // For tracking, we'll assume the subscription starts "today" if not specified.
+        // The critical field is next_billing_date which the user now provides directly.
+
+        const subData = {
+            ...newSub,
+            start_date: new Date().toISOString().split('T')[0] // Default to today
+        };
+
         try {
-            await api.post('/subscriptions/', newSub);
+            await api.post('/subscriptions/', subData);
+            // Reset form
             setNewSub({
                 service_name: '',
                 cost: 0,
@@ -80,7 +176,11 @@ export default function Dashboard() {
                 start_date: new Date().toISOString().split('T')[0],
                 next_billing_date: new Date().toISOString().split('T')[0],
             });
+            setSelectedServiceId('');
+            setSelectedPlanId('');
+
             fetchSubscriptions();
+            fetchRecommendations();
         } catch (error) {
             console.error('Failed to add subscription', error);
         }
@@ -90,6 +190,7 @@ export default function Dashboard() {
         try {
             await api.delete(`/subscriptions/${id}`);
             fetchSubscriptions();
+            fetchRecommendations();
         } catch (error) {
             console.error('Failed to delete subscription', error);
         }
@@ -99,6 +200,7 @@ export default function Dashboard() {
         try {
             await api.delete(`/watchlist/${id}`);
             fetchWatchlist();
+            fetchRecommendations();
         } catch (error) {
             console.error('Failed to delete watchlist item', error);
         }
@@ -113,6 +215,7 @@ export default function Dashboard() {
             <header className={styles.header}>
                 <h1>Dashboard</h1>
                 <div className={styles.stats}>
+                    <Link href="/settings" style={{ marginRight: '1rem', color: '#0070f3', textDecoration: 'none' }}>Settings</Link>
                     <span>Total Monthly Cost: ${totalCost.toFixed(2)}</span>
                     <button onClick={handleLogout} className={styles.button} style={{ marginLeft: '1rem', backgroundColor: '#666' }}>Logout</button>
                 </div>
@@ -157,10 +260,17 @@ export default function Dashboard() {
                         <h2>Recommendations</h2>
                         <div style={{ padding: '1rem', background: '#e6f7ff', borderRadius: '4px' }}>
                             <p className={styles.recommendationText}>Based on your watchlist, you should consider:</p>
-                            <ul className={styles.recommendationList} style={{ listStyle: 'none', padding: 0 }}>
-                                <li style={{ marginBottom: '0.5rem' }}><strong>Netflix</strong> - Available: 3 items ($15.49)</li>
-                                <li><strong>Hulu</strong> - Available: 1 item ($7.99)</li>
-                            </ul>
+                            {recommendations.length > 0 ? (
+                                <ul className={styles.recommendationList} style={{ listStyle: 'none', padding: 0 }}>
+                                    {recommendations.map((rec, index) => (
+                                        <li key={index} style={{ marginBottom: '0.5rem' }}>
+                                            <strong>{rec.service_name}</strong> - {rec.reason} (${rec.estimated_cost})
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p style={{ color: '#666', fontStyle: 'italic' }}>No recommendations yet. Add more items to your watchlist!</p>
+                            )}
                         </div>
                     </section>
                 </div>
@@ -168,14 +278,46 @@ export default function Dashboard() {
                 <section className={styles.addSection}>
                     <h2>Add Subscription</h2>
                     <form onSubmit={handleAddSubscription} className={styles.form}>
-                        <input
-                            type="text"
-                            placeholder="Service Name"
-                            value={newSub.service_name}
-                            onChange={(e) => setNewSub({ ...newSub, service_name: e.target.value })}
+                        {/* Service Dropdown */}
+                        <select
+                            value={selectedServiceId}
+                            onChange={(e) => setSelectedServiceId(Number(e.target.value))}
                             required
                             className={styles.input}
-                        />
+                        >
+                            <option value="">Select Service</option>
+                            {services.map(service => (
+                                <option key={service.id} value={service.id}>{service.name}</option>
+                            ))}
+                            <option value="custom">Other (Custom)</option>
+                        </select>
+
+                        {/* Custom Service Name (if 'Other' selected) */}
+                        {selectedServiceId === 'custom' && (
+                            <input
+                                type="text"
+                                placeholder="Service Name"
+                                value={newSub.service_name}
+                                onChange={(e) => setNewSub({ ...newSub, service_name: e.target.value })}
+                                required
+                                className={styles.input}
+                            />
+                        )}
+
+                        {/* Plan Dropdown (if service has plans) */}
+                        {plans.length > 0 && selectedServiceId !== 'custom' && (
+                            <select
+                                value={selectedPlanId}
+                                onChange={(e) => setSelectedPlanId(Number(e.target.value))}
+                                className={styles.input}
+                            >
+                                <option value="">Select Plan</option>
+                                {plans.map(plan => (
+                                    <option key={plan.id} value={plan.id}>{plan.name} - ${plan.cost}</option>
+                                ))}
+                            </select>
+                        )}
+
                         <input
                             type="number"
                             placeholder="Cost"
@@ -192,12 +334,46 @@ export default function Dashboard() {
                             <option value="monthly">Monthly</option>
                             <option value="yearly">Yearly</option>
                         </select>
-                        <input
-                            type="date"
-                            value={newSub.start_date}
-                            onChange={(e) => setNewSub({ ...newSub, start_date: e.target.value })}
-                            className={styles.input}
-                        />
+
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>Next Billing Date</label>
+                            <div style={{ position: 'relative' }}>
+                                <input
+                                    ref={dateInputRef}
+                                    type="date"
+                                    value={newSub.next_billing_date}
+                                    onChange={(e) => setNewSub({ ...newSub, next_billing_date: e.target.value })}
+                                    className={styles.input}
+                                    style={{ width: '100%' }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        try {
+                                            // @ts-ignore
+                                            dateInputRef.current?.showPicker();
+                                        } catch (e) { }
+                                    }}
+                                    style={{
+                                        position: 'absolute',
+                                        right: '10px',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        fontSize: '1.2rem',
+                                        lineHeight: 1
+                                    }}
+                                    title="Open Calendar"
+                                >
+                                    📅
+                                </button>
+                            </div>
+                            <p style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.25rem' }}>
+                                We'll remind you before this date.
+                            </p>
+                        </div>
                         <button type="submit" className={styles.button}>Add</button>
                     </form>
                 </section>

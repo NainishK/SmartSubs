@@ -42,3 +42,24 @@ def search_multi(query: str):
     except Exception as e:
         print(f"Error fetching from TMDB: {e}")
         return {"results": []}
+
+def get_watch_providers(media_type: str, tmdb_id: int):
+    """
+    Fetch watch providers for a movie or TV show.
+    Defaults to US region for now.
+    """
+    if settings.TMDB_API_KEY == "YOUR_TMDB_API_KEY_HERE":
+        return {}
+
+    url = f"{TMDB_BASE_URL}/{media_type}/{tmdb_id}/watch/providers"
+    params = {"api_key": settings.TMDB_API_KEY}
+    
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+        # Return US providers or empty dict
+        return data.get("results", {}).get("US", {})
+    except Exception as e:
+        print(f"Error fetching providers for {media_type}/{tmdb_id}: {e}")
+        return {}

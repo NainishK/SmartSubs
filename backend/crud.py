@@ -64,3 +64,17 @@ def delete_watchlist_item(db: Session, item_id: int, user_id: int):
         db.delete(db_item)
         db.commit()
     return db_item
+
+def get_services(db: Session):
+    return db.query(models.Service).all()
+
+def get_plans(db: Session, service_id: int):
+    return db.query(models.Plan).filter(models.Plan.service_id == service_id).all()
+
+def update_user_profile(db: Session, user_id: int, country: str):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if user:
+        user.country = country
+        db.commit()
+        db.refresh(user)
+    return user
