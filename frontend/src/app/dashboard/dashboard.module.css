@@ -1,0 +1,149 @@
+.container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #eaeaea;
+    padding-bottom: 1rem;
+}
+
+.stats {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #0070f3;
+}
+
+.content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.leftColumn {
+    display: flex;
+    flex-direction: column;
+}
+
+.listSection {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #eaeaea;
+    margin-bottom: 2rem;
+}
+
+.listSection h2 {
+    color: #000;
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+.list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.listItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    background-color: white;
+}
+
+.listItem:last-child {
+    border-bottom: none;
+}
+
+.subInfo h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.1rem;
+    color: #000;
+}
+
+.subInfo p {
+    margin: 0;
+    color: #222;
+    font-size: 0.9rem;
+}
+
+.deleteBtn {
+    background: #ff4d4f;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.deleteBtn:hover {
+    background: #ff7875;
+}
+
+.addSection {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #eaeaea;
+    height: fit-content;
+}
+
+.addSection h2 {
+    color: #000;
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.input {
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+    color: #000;
+    background-color: #fff;
+}
+
+.button {
+    padding: 0.75rem;
+    background-color: #0070f3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-size: 1.5rem;
+}
+
+.recommendationText {
+    color: #000;
+    margin-bottom: 0.5rem;
+}
+
+.recommendationList {
+    list-style: none;
+    padding: 0;
+    color: #000;
+}

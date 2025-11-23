@@ -1,0 +1,89 @@
+.container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.link {
+    color: #0070f3;
+    text-decoration: none;
+}
+
+.form {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.button {
+    padding: 0.75rem 1.5rem;
+    background-color: #0070f3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.card {
+    border: 1px solid #eaeaea;
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+}
+
+.card h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+}
+
+.type {
+    color: #000;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    margin: 0 0 0.5rem 0;
+    font-weight: bold;
+}
+
+.overview {
+    font-size: 0.9rem;
+    color: #000;
+    flex: 1;
+}
+
+.addButton {
+    margin-top: 1rem;
+    padding: 0.5rem;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.addButton:hover {
+    background-color: #218838;
+}
