@@ -25,9 +25,13 @@ interface WatchlistItem {
 }
 
 interface Recommendation {
+    type: 'watch_now' | 'cancel' | 'subscribe';
     service_name: string;
+    items: string[];
     reason: string;
-    estimated_cost: number;
+    cost: number;
+    savings: number;
+    score: number;
 }
 
 interface Service {
@@ -208,6 +212,9 @@ export default function Dashboard() {
 
     const totalCost = subscriptions.reduce((acc, sub) => acc + sub.cost, 0);
 
+    const watchNowRecs = recommendations.filter(r => r.type === 'watch_now');
+    const cancelRecs = recommendations.filter(r => r.type === 'cancel');
+
     if (loading) return <div className={styles.loading}>Loading...</div>;
 
     return (
@@ -258,20 +265,55 @@ export default function Dashboard() {
 
                     <section className={styles.listSection} style={{ marginTop: '2rem' }}>
                         <h2>Recommendations</h2>
-                        <div style={{ padding: '1rem', background: '#e6f7ff', borderRadius: '4px' }}>
-                            <p className={styles.recommendationText}>Based on your watchlist, you should consider:</p>
-                            {recommendations.length > 0 ? (
-                                <ul className={styles.recommendationList} style={{ listStyle: 'none', padding: 0 }}>
-                                    {recommendations.map((rec, index) => (
-                                        <li key={index} style={{ marginBottom: '0.5rem' }}>
-                                            <strong>{rec.service_name}</strong> - {rec.reason} (${rec.estimated_cost})
-                                        </li>
+
+                        {recommendations.length === 0 && (
+                            <p style={{ color: '#666', fontStyle: 'italic' }}>No recommendations yet. Add more items to your watchlist!</p>
+                        )}
+
+                        {/* Watch Now Section */}
+                        {watchNowRecs.length > 0 && (
+                            <div className={styles.recGroup}>
+                                <h3 className={styles.recGroupTitle} style={{ color: '#2e7d32' }}>
+                                    ✅ Watch Now
+                                </h3>
+                                <div className={styles.recGrid}>
+                                    {watchNowRecs.map((rec, index) => (
+                                        <div key={index} className={`${styles.recCard} ${styles.recCardGreen}`}>
+                                            <div className={styles.recHeader}>
+                                                <h4>{rec.service_name}</h4>
+                                                <span className={styles.badge}>Included</span>
+                                            </div>
+                                            <p className={styles.recReason}>{rec.reason}</p>
+                                            <div className={styles.recTags}>
+                                                {rec.items.map((item, i) => (
+                                                    <span key={i} className={styles.tag}>{item}</span>
+                                                ))}
+                                            </div>
+                                        </div>
                                     ))}
-                                </ul>
-                            ) : (
-                                <p style={{ color: '#666', fontStyle: 'italic' }}>No recommendations yet. Add more items to your watchlist!</p>
-                            )}
-                        </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Cancel Section */}
+                        {cancelRecs.length > 0 && (
+                            <div className={styles.recGroup} style={{ marginTop: '1.5rem' }}>
+                                <h3 className={styles.recGroupTitle} style={{ color: '#c62828' }}>
+                                    ⚠️ Unused Subscriptions
+                                </h3>
+                                <div className={styles.recGrid}>
+                                    {cancelRecs.map((rec, index) => (
+                                        <div key={index} className={`${styles.recCard} ${styles.recCardRed}`}>
+                                            <div className={styles.recHeader}>
+                                                <h4>{rec.service_name}</h4>
+                                                <span className={styles.savingsBadge}>Save ${rec.savings}</span>
+                                            </div>
+                                            <p className={styles.recReason}>{rec.reason}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </section>
                 </div>
 

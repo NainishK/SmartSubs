@@ -94,29 +94,28 @@ def get_recommendations(db: Session, user_id: int):
     # Add "Watch Now" recommendations
     for service_name, items in service_watch_list.items():
         recommendations.append({
-            "service_name": f"Watch on {service_name}",
-            "reason": f"You already have this! Watch: {', '.join(items[:3])}",
-            "estimated_cost": 0,
-            "score": 100 + len(items) # High score to show first
+            "type": "watch_now",
+            "service_name": service_name,
+            "items": items,
+            "reason": f"Available on your subscription",
+            "cost": 0,
+            "savings": 0,
+            "score": 100 + len(items)
         })
 
     # B. "Cancel Unused" - Suggest cancelling subscriptions that cover NO watchlist items
     for sub in subscriptions:
         if sub.id not in useful_subscriptions:
             recommendations.append({
-                "service_name": f"Cancel {sub.service_name}?",
-                "reason": "None of your watchlist items are currently on this service.",
-                "estimated_cost": -sub.cost, # Negative cost implies savings
-                "score": 50 + sub.cost # Higher score for more expensive unused subs
+                "type": "cancel",
+                "service_name": sub.service_name,
+                "items": [],
+                "reason": "No watchlist items found",
+                "cost": 0,
+                "savings": sub.cost,
+                "score": 50 + sub.cost
             })
 
-    # C. "Missing Content" - Only if not covered by A
-    # (Reuse the previous logic for uncovered items, but with lower priority)
-    # ... [We can keep the previous logic here if desired, or simplify]
-    
-    # For now, let's stick to the user's request of "save money". 
-    # If we really want to suggest new things, we can do it for items NOT in A.
-    
     # Sort by Score
     recommendations.sort(key=lambda x: x["score"], reverse=True)
 
