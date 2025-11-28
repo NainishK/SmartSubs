@@ -130,8 +130,19 @@ def update_watchlist_status(
 
 @app.get("/recommendations")
 def get_recommendations(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    """Legacy endpoint - returns fast recommendations only to avoid breaking changes"""
     import recommendations
-    return recommendations.get_recommendations(db, user_id=current_user.id)
+    return recommendations.get_dashboard_recommendations(db, user_id=current_user.id)
+
+@app.get("/recommendations/dashboard")
+def get_dashboard_recommendations(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    import recommendations
+    return recommendations.get_dashboard_recommendations(db, user_id=current_user.id)
+
+@app.get("/recommendations/similar")
+def get_similar_recommendations(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    import recommendations
+    return recommendations.get_similar_content(db, user_id=current_user.id)
 
 @app.get("/services/", response_model=list[schemas.Service])
 def read_services(db: Session = Depends(get_db)):

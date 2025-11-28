@@ -25,6 +25,11 @@ export interface Recommendation {
     cost: number;
     savings: number;
     score: number;
+    tmdb_id?: number;
+    media_type?: string;
+    poster_path?: string;
+    vote_average?: number;
+    overview?: string;
 }
 
 export interface Service {
