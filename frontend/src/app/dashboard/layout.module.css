@@ -1,0 +1,13 @@
+.container {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f9fafb;
+}
+
+.main {
+    flex: 1;
+    margin-left: 250px;
+    /* Width of sidebar */
+    padding: 2rem;
+    max-width: calc(100% - 250px);
+}

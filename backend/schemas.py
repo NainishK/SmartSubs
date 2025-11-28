@@ -26,6 +26,7 @@ class WatchlistItemBase(BaseModel):
     title: str
     media_type: str
     poster_path: Optional[str] = None
+    status: str = "plan_to_watch"
 
 class WatchlistItemCreate(WatchlistItemBase):
     pass
@@ -33,6 +34,7 @@ class WatchlistItemCreate(WatchlistItemBase):
 class WatchlistItem(WatchlistItemBase):
     id: int
     user_id: int
+    status: str
     added_at: datetime
 
     class Config:

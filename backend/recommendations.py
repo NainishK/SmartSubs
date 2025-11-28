@@ -116,6 +116,43 @@ def get_recommendations(db: Session, user_id: int):
                 "score": 50 + sub.cost
             })
 
+    # C. "Because you watched" - Suggest similar content available on current subscriptions
+    # Get items marked as "watched"
+    watched_items = [item for item in watchlist if item.status == "watched"]
+    
+    # For each watched item, find similar content
+    for watched_item in watched_items[:3]:  # Limit to top 3 to avoid too many API calls
+        similar_data = tmdb_client.get_similar(watched_item.media_type, watched_item.tmdb_id)
+        similar_items = similar_data.get("results", [])[:5]  # Take top 5 similar items
+        
+        for similar in similar_items:
+            # Check if already in watchlist
+            similar_id = similar.get("id")
+            already_in_watchlist = any(w.tmdb_id == similar_id for w in watchlist)
+            if already_in_watchlist:
+                continue
+            
+            # Check if available on current subscriptions
+            similar_providers = tmdb_client.get_watch_providers(watched_item.media_type, similar_id)
+            if "flatrate" in similar_providers:
+                for provider in similar_providers["flatrate"]:
+                    p_name = provider["provider_name"]
+                    for sub in subscriptions:
+                        sub_name = sub.service_name.lower()
+                        if sub_name in p_name.lower() or p_name.lower() in sub_name:
+                            # Add recommendation
+                            title = similar.get("title") or similar.get("name", "Unknown")
+                            recommendations.append({
+                                "type": "similar_content",
+                                "service_name": sub.service_name,
+                                "items": [title],
+                                "reason": f"Because you watched {watched_item.title}",
+                                "cost": 0,
+                                "savings": 0,
+                                "score": 80
+                            })
+                            break  # Only add once per similar item
+
     # Sort by Score
     recommendations.sort(key=lambda x: x["score"], reverse=True)
 

@@ -39,9 +39,11 @@ class WatchlistItem(Base):
     title = Column(String)
     media_type = Column(String) # movie, tv
     poster_path = Column(String, nullable=True)
+    status = Column(String, default="plan_to_watch") # plan_to_watch, watching, watched
     added_at = Column(DateTime(timezone=True), server_default=func.now())
 
     owner = relationship("User", back_populates="watchlist")
+
 
 class Service(Base):
     __tablename__ = "services"

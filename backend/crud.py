@@ -78,3 +78,14 @@ def update_user_profile(db: Session, user_id: int, country: str):
         db.commit()
         db.refresh(user)
     return user
+
+def update_watchlist_item_status(db: Session, item_id: int, user_id: int, status: str):
+    db_item = db.query(models.WatchlistItem).filter(
+        models.WatchlistItem.id == item_id, 
+        models.WatchlistItem.user_id == user_id
+    ).first()
+    if db_item:
+        db_item.status = status
+        db.commit()
+        db.refresh(db_item)
+    return db_item

@@ -87,3 +87,45 @@
 .addButton:hover {
     background-color: #218838;
 }
+
+.addButton:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+.statusSelect {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    background-color: white;
+    cursor: pointer;
+}
+
+.addedButton {
+    background-color: #28a745 !important;
+    cursor: default;
+}
+
+.errorText {
+    color: #dc3545;
+    font-size: 0.85rem;
+    margin: 0;
+    text-align: center;
+}
+
+.alreadyAddedBadge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: bold;
+    margin-top: 0.5rem;
+}
+
+.alreadyAddedButton {
+    background-color: #6c757d !important;
+    cursor: not-allowed;
+}

@@ -31,17 +31,36 @@ def search_multi(query: str):
         "query": query,
         "include_adult": False
     }
-    try:
-        print(f"Searching TMDB for: {query} with Key: {settings.TMDB_API_KEY[:5]}...")
-        response = requests.get(url, params=params)
-        print(f"TMDB Response Status: {response.status_code}")
-        response.raise_for_status()
-        data = response.json()
-        print(f"TMDB Results Count: {len(data.get('results', []))}")
-        return data
-    except Exception as e:
-        print(f"Error fetching from TMDB: {e}")
-        return {"results": []}
+    
+    # Try up to 3 times with exponential backoff
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            print(f"Searching TMDB for: {query} with Key: {settings.TMDB_API_KEY[:5]}... (Attempt {attempt + 1}/{max_retries})")
+            response = requests.get(url, params=params, timeout=10)
+            print(f"TMDB Response Status: {response.status_code}")
+            response.raise_for_status()
+            data = response.json()
+            print(f"TMDB Results Count: {len(data.get('results', []))}")
+            return data
+        except requests.exceptions.ConnectionError as e:
+            print(f"Connection error on attempt {attempt + 1}: {e}")
+            if attempt < max_retries - 1:
+                import time
+                wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
+                print(f"Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+            else:
+                print(f"Max retries reached. Error fetching from TMDB: {e}")
+                return {"results": []}
+        except requests.exceptions.Timeout as e:
+            print(f"Timeout error: {e}")
+            return {"results": []}
+        except Exception as e:
+            print(f"Error fetching from TMDB: {e}")
+            return {"results": []}
+    
+    return {"results": []}
 
 def get_watch_providers(media_type: str, tmdb_id: int):
     """
@@ -63,3 +82,22 @@ def get_watch_providers(media_type: str, tmdb_id: int):
     except Exception as e:
         print(f"Error fetching providers for {media_type}/{tmdb_id}: {e}")
         return {}
+
+def get_similar(media_type: str, tmdb_id: int):
+    """
+    Fetch similar movies or TV shows for a given item.
+    """
+    if settings.TMDB_API_KEY == "YOUR_TMDB_API_KEY_HERE":
+        return {"results": []}
+
+    url = f"{TMDB_BASE_URL}/{media_type}/{tmdb_id}/similar"
+    params = {"api_key": settings.TMDB_API_KEY, "page": 1}
+    
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+        return data
+    except Exception as e:
+        print(f"Error fetching similar content for {media_type}/{tmdb_id}: {e}")
+        return {"results": []}

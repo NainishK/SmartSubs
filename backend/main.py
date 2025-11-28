@@ -116,6 +116,18 @@ def delete_watchlist_item(item_id: int, db: Session = Depends(get_db), current_u
         raise HTTPException(status_code=404, detail="Item not found")
     return db_item
 
+@app.put("/watchlist/{item_id}/status", response_model=schemas.WatchlistItem)
+def update_watchlist_status(
+    item_id: int, 
+    status: str, 
+    db: Session = Depends(get_db), 
+    current_user: models.User = Depends(dependencies.get_current_user)
+):
+    db_item = crud.update_watchlist_item_status(db, item_id=item_id, user_id=current_user.id, status=status)
+    if db_item is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return db_item
+
 @app.get("/recommendations")
 def get_recommendations(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
     import recommendations
