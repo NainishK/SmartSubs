@@ -354,6 +354,174 @@
     background: #ff4d4f;
     color: white;
     padding: 2px 8px;
+    margin-bottom: 1rem;
+}
+
+.list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.listItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    background-color: white;
+}
+
+.listItem:last-child {
+    border-bottom: none;
+}
+
+.subInfo h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.1rem;
+    color: #000;
+}
+
+.subInfo p {
+    margin: 0;
+    color: #222;
+    font-size: 0.9rem;
+}
+
+.deleteBtn {
+    background: #ff4d4f;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.deleteBtn:hover {
+    background: #ff7875;
+}
+
+.addSection {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #eaeaea;
+    height: fit-content;
+}
+
+.addSection h2 {
+    color: #000;
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.input {
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+    color: #000;
+    background-color: #fff;
+}
+
+/* Hide native calendar picker to use custom one */
+.input::-webkit-calendar-picker-indicator {
+    display: none;
+}
+
+.button {
+    padding: 0.75rem;
+    background-color: #0070f3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-size: 1.5rem;
+}
+
+.recommendationText {
+    color: #000;
+    margin-bottom: 0.5rem;
+}
+
+.recommendationList {
+    list-style: none;
+    padding: 0;
+    color: #000;
+}
+
+.recGroup {
+    margin-bottom: 1rem;
+}
+
+.recGroupTitle {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.recGrid {
+    display: grid;
+    gap: 1rem;
+}
+
+.recCard {
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid transparent;
+}
+
+.recCardGreen {
+    background-color: #f6ffed;
+    border-color: #b7eb8f;
+}
+
+.recCardRed {
+    background-color: #fff1f0;
+    border-color: #ffa39e;
+}
+
+.recHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.recHeader h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: #333;
+}
+
+.badge {
+    background: #52c41a;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.savingsBadge {
+    background: #ff4d4f;
+    color: white;
+    padding: 2px 8px;
     border-radius: 12px;
     font-size: 0.75rem;
     font-weight: bold;
@@ -377,4 +545,18 @@
     border-radius: 4px;
     font-size: 0.8rem;
     color: #333;
+}
+
+.layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.mainContent {
+    flex: 1;
+    margin-left: 250px;
+    /* Width of sidebar */
+    padding: 2rem;
+    background-color: #fcfcfc;
+    min-height: 100vh;
 }

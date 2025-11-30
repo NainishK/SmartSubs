@@ -3,81 +3,77 @@
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import styles from './dashboard.module.css';
-import Link from 'next/link';
-import { Subscription, Recommendation } from '@/lib/types';
+import { useRecommendations } from '@/context/RecommendationsContext';
 
 export default function DashboardOverview() {
-    const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-    const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState<any>(null);
+    const [stats, setStats] = useState({ total_cost: 0, active_subs: 0 });
+    const { dashboardRecs, loadingDashboard } = useRecommendations();
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [subsRes, recsRes] = await Promise.all([
-                    api.get('/subscriptions/'),
-                    api.get('/recommendations/')
-                ]);
-                setSubscriptions(subsRes.data);
-                setRecommendations(recsRes.data);
-            } catch (error) {
-                console.error('Failed to fetch data', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
+        fetchUserData();
     }, []);
 
-    const totalCost = subscriptions.reduce((acc, sub) => acc + sub.cost, 0);
-    const watchNowRecs = recommendations.filter(r => r.type === 'watch_now');
-    const cancelRecs = recommendations.filter(r => r.type === 'cancel');
+    const fetchUserData = async () => {
+        try {
+            const [userRes, subRes] = await Promise.all([
+                api.get('/users/me/'),
+                api.get('/subscriptions/')
+            ]);
+            setUser(userRes.data);
 
-    if (loading) return <div className={styles.loading}>Loading...</div>;
+            const subs = subRes.data;
+            const totalCost = subs.reduce((acc: number, sub: any) => acc + sub.cost, 0);
+            setStats({
+                total_cost: totalCost,
+                active_subs: subs.length
+            });
+        } catch (error) {
+            console.error('Failed to fetch dashboard data', error);
+        }
+    };
+
+    const watchNowRecs = dashboardRecs.filter(r => r.type === 'watch_now').slice(0, 3);
 
     return (
         <div className={styles.container}>
-            <h1 className={styles.pageTitle}>Overview</h1>
+            <h1 className={styles.pageTitle}>Welcome back, {user?.email?.split('@')[0]}!</h1>
 
             <div className={styles.statsGrid}>
                 <div className={styles.statCard}>
-                    <h3>Total Monthly Cost</h3>
-                    <p className={styles.statValue}>${totalCost.toFixed(2)}</p>
+                    <h3>Monthly Spend</h3>
+                    <p className={styles.statValue}>${stats.total_cost.toFixed(2)}</p>
                 </div>
                 <div className={styles.statCard}>
                     <h3>Active Subscriptions</h3>
-                    <p className={styles.statValue}>{subscriptions.length}</p>
-                </div>
-                <div className={styles.statCard}>
-                    <h3>Potential Savings</h3>
-                    <p className={styles.statValue} style={{ color: '#2e7d32' }}>
-                        ${cancelRecs.reduce((acc, r) => acc + r.savings, 0).toFixed(2)}
-                    </p>
+                    <p className={styles.statValue}>{stats.active_subs}</p>
                 </div>
             </div>
 
-            <div className={styles.content}>
-                <div className={styles.leftColumn} style={{ width: '100%' }}>
-                    <section className={styles.listSection}>
-                        <h2>Quick Actions</h2>
-                        <div className={styles.quickActions}>
-                            <Link href="/dashboard/subscriptions" className={styles.actionCard}>
-                                <h3>Manage Subscriptions</h3>
-                                <p>Add or remove services</p>
-                            </Link>
-                            <Link href="/dashboard/watchlist" className={styles.actionCard}>
-                                <h3>Update Watchlist</h3>
-                                <p>Add new movies & shows</p>
-                            </Link>
-                            <Link href="/dashboard/recommendations" className={styles.actionCard}>
-                                <h3>View Recommendations</h3>
-                                <p>
-                                    {watchNowRecs.length} Watch Now • {cancelRecs.length} Unused
-                                </p>
-                            </Link>
-                        </div>
-                    </section>
-                </div>
+            <div className={styles.section}>
+                <h2 className={styles.sectionTitle}>Quick Watch</h2>
+                {loadingDashboard ? (
+                    <p>Loading recommendations...</p>
+                ) : watchNowRecs.length > 0 ? (
+                    <div className={styles.recGrid}>
+                        {watchNowRecs.map((rec, index) => (
+                            <div key={index} className={`${styles.recCard} ${styles.recCardGreen}`}>
+                                <div className={styles.recHeader}>
+                                    <h4>{rec.service_name}</h4>
+                                    <span className={styles.badge}>Included</span>
+                                </div>
+                                <p className={styles.recReason}>{rec.reason}</p>
+                                <div className={styles.recTags}>
+                                    {rec.items.slice(0, 3).map((item, i) => (
+                                        <span key={i} className={styles.tag}>{item}</span>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p style={{ color: '#666' }}>Add items to your watchlist to get recommendations!</p>
+                )}
             </div>
         </div>
     );

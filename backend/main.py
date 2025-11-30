@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi import FastAPI, Depends, HTTPException, status, Request, BackgroundTasks
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
@@ -49,7 +49,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return crud.create_user(db=db, user=user)
 
 @app.post("/token")
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+async def login_for_access_token(background_tasks: BackgroundTasks, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = crud.get_user_by_email(db, email=form_data.username)
     if not user or not security.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
@@ -61,6 +61,11 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     access_token = security.create_access_token(
         data={"sub": user.email}, expires_delta=access_token_expires
     )
+    
+    # Trigger background recommendation refresh (smart refresh)
+    import recommendations
+    background_tasks.add_task(recommendations.refresh_recommendations, db, user.id, force=False)
+    
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/users/me/", response_model=schemas.User)
@@ -143,6 +148,13 @@ def get_dashboard_recommendations(db: Session = Depends(get_db), current_user: m
 def get_similar_recommendations(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
     import recommendations
     return recommendations.get_similar_content(db, user_id=current_user.id)
+
+@app.post("/recommendations/refresh")
+def refresh_recommendations_endpoint(background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    """Force refresh recommendations in background"""
+    import recommendations
+    background_tasks.add_task(recommendations.refresh_recommendations, db, user_id=current_user.id, force=True)
+    return {"message": "Recommendation refresh started"}
 
 @app.get("/services/", response_model=list[schemas.Service])
 def read_services(db: Session = Depends(get_db)):

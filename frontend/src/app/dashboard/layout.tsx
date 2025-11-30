@@ -1,5 +1,6 @@
 import Sidebar from '@/components/Sidebar';
-import styles from './layout.module.css';
+import styles from './dashboard.module.css';
+import { RecommendationsProvider } from '@/context/RecommendationsContext';
 
 export default function DashboardLayout({
     children,
@@ -7,10 +8,12 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className={styles.container}>
+        <div className={styles.layout}>
             <Sidebar />
-            <main className={styles.main}>
-                {children}
+            <main className={styles.mainContent}>
+                <RecommendationsProvider>
+                    {children}
+                </RecommendationsProvider>
             </main>
         </div>
     );

@@ -5,62 +5,67 @@ import api from '@/lib/api';
 import styles from '../dashboard.module.css';
 import { Recommendation } from '@/lib/types';
 import MediaCard, { MediaItem } from '@/components/MediaCard';
+import { useRecommendations } from '@/context/RecommendationsContext';
 
 export default function RecommendationsPage() {
-    const [dashboardRecs, setDashboardRecs] = useState<Recommendation[]>([]);
-    const [similarRecs, setSimilarRecs] = useState<Recommendation[]>([]);
+    const {
+        dashboardRecs,
+        similarRecs,
+        loadingDashboard,
+        loadingSimilar,
+        refreshRecommendations
+    } = useRecommendations();
+
     const [watchlist, setWatchlist] = useState<Array<{ tmdb_id: number; status: string }>>([]);
-    const [loadingDashboard, setLoadingDashboard] = useState(true);
-    const [loadingSimilar, setLoadingSimilar] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
 
     useEffect(() => {
-        fetchDashboardData();
-        fetchSimilarData();
+        fetchWatchlist();
     }, []);
 
-    const fetchDashboardData = async () => {
-        try {
-            const [recRes, watchRes] = await Promise.all([
-                api.get('/recommendations/dashboard'),
-                api.get('/watchlist/')
-            ]);
-            setDashboardRecs(recRes.data);
-            setWatchlist(watchRes.data.map((item: any) => ({ tmdb_id: item.tmdb_id, status: item.status })));
-        } catch (error) {
-            console.error('Failed to fetch dashboard data', error);
-        } finally {
-            setLoadingDashboard(false);
-        }
-    };
-
-    const fetchSimilarData = async () => {
-        try {
-            const response = await api.get('/recommendations/similar');
-            setSimilarRecs(response.data);
-        } catch (error) {
-            console.error('Failed to fetch similar recommendations', error);
-        } finally {
-            setLoadingSimilar(false);
-        }
-    };
-
-    const refreshWatchlist = async () => {
+    const fetchWatchlist = async () => {
         try {
             const response = await api.get('/watchlist/');
             setWatchlist(response.data.map((item: any) => ({ tmdb_id: item.tmdb_id, status: item.status })));
         } catch (error) {
-            console.error('Failed to refresh watchlist', error);
+            console.error('Failed to fetch watchlist', error);
         }
+    };
+
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        await refreshRecommendations();
+        setRefreshing(false);
     };
 
     const watchNowRecs = dashboardRecs.filter(r => r.type === 'watch_now');
     const cancelRecs = dashboardRecs.filter(r => r.type === 'cancel');
 
-    if (loadingDashboard) return <div className={styles.loading}>Loading...</div>;
+    if (loadingDashboard && dashboardRecs.length === 0) return <div className={styles.loading}>Loading...</div>;
 
     return (
         <div className={styles.container}>
-            <h1 className={styles.pageTitle}>Smart Recommendations</h1>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <h1 className={styles.pageTitle} style={{ marginBottom: 0 }}>Smart Recommendations</h1>
+                <button
+                    onClick={handleRefresh}
+                    disabled={refreshing || loadingSimilar}
+                    style={{
+                        padding: '0.5rem 1rem',
+                        backgroundColor: '#1976d2',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: (refreshing || loadingSimilar) ? 'not-allowed' : 'pointer',
+                        opacity: (refreshing || loadingSimilar) ? 0.7 : 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                    }}
+                >
+                    {refreshing ? 'Refreshing...' : '🔄 Refresh'}
+                </button>
+            </div>
 
             <div className={styles.content}>
                 <div className={styles.leftColumn} style={{ width: '100%' }}>
@@ -120,7 +125,7 @@ export default function RecommendationsPage() {
                                 🎬 You Might Like
                             </h3>
 
-                            {loadingSimilar ? (
+                            {loadingSimilar && similarRecs.length === 0 ? (
                                 <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
                                     Finding personalized recommendations...
                                 </div>
@@ -145,7 +150,7 @@ export default function RecommendationsPage() {
                                                 <MediaCard
                                                     item={item}
                                                     existingStatus={existingItem?.status}
-                                                    onAddSuccess={refreshWatchlist}
+                                                    onAddSuccess={fetchWatchlist}
                                                     showServiceBadge={rec.service_name}
                                                 />
                                             </div>

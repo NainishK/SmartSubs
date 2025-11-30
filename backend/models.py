@@ -50,10 +50,21 @@ class Service(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
+    base_cost = Column(Float)
     logo_url = Column(String, nullable=True)
-    base_cost = Column(Float, nullable=True)
     
     plans = relationship("Plan", back_populates="service")
+
+class RecommendationCache(Base):
+    __tablename__ = "recommendation_cache"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    category = Column(String, index=True) # "dashboard", "similar"
+    data = Column(String) # JSON string
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    owner = relationship("User")
 
 class Plan(Base):
     __tablename__ = "plans"
