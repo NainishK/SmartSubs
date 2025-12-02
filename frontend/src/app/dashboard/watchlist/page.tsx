@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import styles from '../dashboard.module.css';
-import Link from 'next/link';
 import { WatchlistItem } from '@/lib/types';
+import MediaCard from '@/components/MediaCard';
+import Link from 'next/link';
 
 export default function WatchlistPage() {
     const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('watching');
 
     useEffect(() => {
         fetchWatchlist();
@@ -26,6 +28,7 @@ export default function WatchlistPage() {
     };
 
     const handleDeleteWatchlist = async (id: number) => {
+        if (!confirm('Are you sure you want to remove this from your watchlist?')) return;
         try {
             await api.delete(`/watchlist/${id}`);
             fetchWatchlist();
@@ -43,85 +46,68 @@ export default function WatchlistPage() {
         }
     };
 
-    const getStatusLabel = (status: string) => {
-        switch (status) {
-            case 'plan_to_watch': return 'Plan to Watch';
-            case 'watching': return 'Watching';
-            case 'watched': return 'Watched';
-            default: return status;
-        }
-    };
-
-    // Group watchlist by status
-    const planToWatch = watchlist.filter(item => item.status === 'plan_to_watch');
-    const watching = watchlist.filter(item => item.status === 'watching');
-    const watched = watchlist.filter(item => item.status === 'watched');
-
-    const renderGroup = (title: string, items: WatchlistItem[]) => {
-        if (items.length === 0) return null;
-
-        return (
-            <div style={{ marginBottom: '2rem' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: '#333' }}>{title}</h3>
-                <ul className={styles.list}>
-                    {items.map((item) => (
-                        <li key={item.id} className={styles.listItem}>
-                            <div className={styles.subInfo}>
-                                <h3>{item.title}</h3>
-                                <p>{item.media_type}</p>
-                            </div>
-                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                <select
-                                    value={item.status}
-                                    onChange={(e) => handleStatusChange(item.id, e.target.value)}
-                                    style={{
-                                        padding: '0.5rem',
-                                        borderRadius: '4px',
-                                        border: '1px solid #ddd',
-                                        fontSize: '0.9rem'
-                                    }}
-                                >
-                                    <option value="plan_to_watch">Plan to Watch</option>
-                                    <option value="watching">Watching</option>
-                                    <option value="watched">Watched</option>
-                                </select>
-                                <button onClick={() => handleDeleteWatchlist(item.id)} className={styles.deleteBtn}>Remove</button>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
-            </div>
-        );
-    };
+    const filteredItems = watchlist.filter(item => item.status === activeTab);
 
     if (loading) return <div className={styles.loading}>Loading...</div>;
 
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <h1 className={styles.pageTitle}>My Watchlist</h1>
-                <Link href="/search" className={styles.button}>
-                    + Add Movies/TV
+                <h1>My Watchlist</h1>
+                <Link href="/search" className={styles.button} style={{ textDecoration: 'none' }}>
+                    + Add New
                 </Link>
             </div>
 
-            <div className={styles.content}>
-                <div className={styles.leftColumn} style={{ width: '100%' }}>
-                    <section className={styles.listSection}>
-                        {watchlist.length === 0 ? (
-                            <p style={{ color: '#666', fontStyle: 'italic', padding: '1rem' }}>
-                                Your watchlist is empty. Go add some movies!
-                            </p>
-                        ) : (
-                            <>
-                                {renderGroup('📺 Currently Watching', watching)}
-                                {renderGroup('📝 Plan to Watch', planToWatch)}
-                                {renderGroup('✅ Watched', watched)}
-                            </>
-                        )}
-                    </section>
+            <div style={{ marginBottom: '2rem', borderBottom: '1px solid #eaeaea' }}>
+                <div style={{ display: 'flex', gap: '2rem' }}>
+                    {['watching', 'plan_to_watch', 'watched'].map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            style={{
+                                padding: '1rem 0',
+                                background: 'none',
+                                border: 'none',
+                                borderBottom: activeTab === tab ? '2px solid #0070f3' : '2px solid transparent',
+                                color: activeTab === tab ? '#0070f3' : '#666',
+                                fontWeight: activeTab === tab ? 'bold' : 'normal',
+                                cursor: 'pointer',
+                                fontSize: '1rem',
+                                textTransform: 'capitalize'
+                            }}
+                        >
+                            {tab.replace(/_/g, ' ')} ({watchlist.filter(i => i.status === tab).length})
+                        </button>
+                    ))}
                 </div>
             </div>
+
+            {filteredItems.length > 0 ? (
+                <div className={styles.recGrid}>
+                    {filteredItems.map((item) => (
+                        <MediaCard
+                            key={item.id}
+                            item={{
+                                id: item.tmdb_id,
+                                title: item.title,
+                                media_type: item.media_type,
+                                overview: item.overview || '',
+                                poster_path: item.poster_path,
+                                vote_average: item.vote_average
+                            }}
+                            existingStatus={item.status}
+                            onRemove={() => handleDeleteWatchlist(item.id)}
+                            onStatusChange={(newStatus) => handleStatusChange(item.id, newStatus)}
+                            hideOverview={true}
+                        />
+                    ))}
+                </div>
+            ) : (
+                <div style={{ textAlign: 'center', padding: '3rem', color: '#666' }}>
+                    <p>No items in this list yet. <Link href="/search" style={{ color: '#0070f3' }}>Search for something to add!</Link></p>
+                </div>
+            )}
         </div>
     );
 }

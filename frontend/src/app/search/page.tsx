@@ -9,17 +9,18 @@ import MediaCard, { MediaItem } from '@/components/MediaCard';
 
 export default function SearchPage() {
     const [query, setQuery] = useState('');
+    const [mediaType, setMediaType] = useState('all');
     const [results, setResults] = useState<MediaItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchError, setSearchError] = useState('');
-    const [watchlist, setWatchlist] = useState<Array<{ tmdb_id: number; status: string }>>([]);
+    const [watchlist, setWatchlist] = useState<Array<{ id: number; tmdb_id: number; status: string }>>([]);
 
     useEffect(() => {
         // Fetch watchlist on mount to check which items are already added
         const fetchWatchlist = async () => {
             try {
                 const response = await api.get('/watchlist/');
-                setWatchlist(response.data.map((item: any) => ({ tmdb_id: item.tmdb_id, status: item.status })));
+                setWatchlist(response.data.map((item: any) => ({ id: item.id, tmdb_id: item.tmdb_id, status: item.status })));
             } catch (error) {
                 console.error('Failed to fetch watchlist', error);
             }
@@ -34,9 +35,16 @@ export default function SearchPage() {
         setSearchError('');
         try {
             const response = await api.get(`/search?query=${query}`);
-            setResults(response.data.results);
-            if (response.data.results.length === 0) {
-                setSearchError('No results found. The TMDB API might be unavailable - please try again in a moment.');
+            let filteredResults = response.data.results;
+
+            // Filter by media type if not 'all'
+            if (mediaType !== 'all') {
+                filteredResults = filteredResults.filter((item: MediaItem) => item.media_type === mediaType);
+            }
+
+            setResults(filteredResults);
+            if (filteredResults.length === 0) {
+                setSearchError('No results found. Try a different search or filter.');
             }
         } catch (error: any) {
             console.error('Search failed', error);
@@ -53,9 +61,20 @@ export default function SearchPage() {
     const refreshWatchlist = async () => {
         try {
             const response = await api.get('/watchlist/');
-            setWatchlist(response.data.map((item: any) => ({ tmdb_id: item.tmdb_id, status: item.status })));
+            setWatchlist(response.data.map((item: any) => ({ id: item.id, tmdb_id: item.tmdb_id, status: item.status })));
         } catch (error) {
             console.error('Failed to refresh watchlist', error);
+        }
+    };
+
+    const handleRemove = async (watchlistId: number) => {
+        if (!confirm('Remove this item from your watchlist?')) return;
+        try {
+            await api.delete(`/watchlist/${watchlistId}`);
+            await refreshWatchlist();
+        } catch (error) {
+            console.error('Failed to remove from watchlist', error);
+            alert('Failed to remove item');
         }
     };
 
@@ -73,7 +92,18 @@ export default function SearchPage() {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     className={styles.input}
+                    style={{ flex: 2 }}
                 />
+                <select
+                    value={mediaType}
+                    onChange={(e) => setMediaType(e.target.value)}
+                    className={styles.input}
+                    style={{ flex: '0 0 150px' }}
+                >
+                    <option value="all">All</option>
+                    <option value="movie">Movies</option>
+                    <option value="tv">TV Shows</option>
+                </select>
                 <button type="submit" className={styles.button}>Search</button>
             </form>
 
@@ -89,6 +119,7 @@ export default function SearchPage() {
                             item={item}
                             existingStatus={existingItem?.status}
                             onAddSuccess={refreshWatchlist}
+                            onRemove={existingItem ? () => handleRemove(existingItem.id) : undefined}
                         />
                     );
                 })}

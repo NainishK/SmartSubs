@@ -11,10 +11,13 @@ export interface Subscription {
 
 export interface WatchlistItem {
     id: number;
+    tmdb_id: number;
     title: string;
     media_type: string;
     poster_path?: string;
     status: string;
+    vote_average?: number;
+    overview?: string;
 }
 
 export interface Recommendation {

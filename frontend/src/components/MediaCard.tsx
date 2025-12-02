@@ -18,10 +18,21 @@ interface MediaCardProps {
     item: MediaItem;
     existingStatus?: string;
     onAddSuccess?: () => void;
-    showServiceBadge?: string; // Optional service name to display
+    showServiceBadge?: string;
+    onRemove?: () => void;
+    onStatusChange?: (newStatus: string) => void;
+    hideOverview?: boolean;
 }
 
-export default function MediaCard({ item, existingStatus, onAddSuccess, showServiceBadge }: MediaCardProps) {
+export default function MediaCard({
+    item,
+    existingStatus,
+    onAddSuccess,
+    showServiceBadge,
+    onRemove,
+    onStatusChange,
+    hideOverview
+}: MediaCardProps) {
     const [status, setStatus] = useState(existingStatus || 'plan_to_watch');
     const [adding, setAdding] = useState(false);
     const [added, setAdded] = useState(false);
@@ -59,6 +70,12 @@ export default function MediaCard({ item, existingStatus, onAddSuccess, showServ
         }
     };
 
+    const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newStatus = e.target.value;
+        setStatus(newStatus);
+        onStatusChange?.(newStatus);
+    };
+
     const getStatusLabel = (status: string) => {
         switch (status) {
             case 'plan_to_watch': return 'Plan to Watch';
@@ -79,49 +96,63 @@ export default function MediaCard({ item, existingStatus, onAddSuccess, showServ
                     </a>
                 </h3>
                 {item.vote_average && (
-                    <span className={styles.rating}>★ {item.vote_average.toFixed(1)}</span>
+                    <span className={styles.rating}>{item.vote_average.toFixed(1)}</span>
                 )}
             </div>
 
             <div className={styles.meta}>
-                <span className={styles.type}>{item.media_type}</span>
+                <span className={`${styles.type} ${item.media_type === 'tv' ? styles.typeTv : styles.typeMovie}`}>
+                    {item.media_type === 'tv' ? 'TV Series' : 'Movie'}
+                </span>
                 {showServiceBadge && (
                     <span className={styles.serviceBadge}>{showServiceBadge}</span>
                 )}
             </div>
 
-            <p className={styles.overview}>
-                {item.overview ? (
-                    item.overview.length > 150 ? `${item.overview.substring(0, 150)}...` : item.overview
-                ) : (
-                    'No synopsis available.'
-                )}
-            </p>
+            {!hideOverview && (
+                <p className={styles.overview}>
+                    {item.overview ? (
+                        item.overview.length > 150 ? `${item.overview.substring(0, 150)}...` : item.overview
+                    ) : (
+                        'No synopsis available.'
+                    )}
+                </p>
+            )}
 
-            {existingStatus && (
+            {existingStatus && !onRemove && (
                 <div className={styles.alreadyAddedBadge}>
-                    ★ In {getStatusLabel(existingStatus)}
+                    In {getStatusLabel(existingStatus)}
                 </div>
             )}
 
             <div className={styles.actions}>
                 <select
                     value={status}
-                    onChange={(e) => setStatus(e.target.value)}
+                    onChange={handleStatusChange}
                     className={styles.statusSelect}
-                    disabled={added || existingStatus !== undefined}
+                    disabled={added || (existingStatus !== undefined && !onStatusChange)}
                 >
                     <option value="plan_to_watch">Plan to Watch</option>
                     <option value="watching">Watching</option>
                     <option value="watched">Watched</option>
                 </select>
-                <button
-                    onClick={addToWatchlist}
-                    className={`${styles.addButton} ${added ? styles.addedButton : ''} ${existingStatus ? styles.alreadyAddedButton : ''}`}
-                    disabled={adding || added || existingStatus !== undefined}
-                >
-                    {existingStatus ? '✓ Added' : adding ? 'Adding...' : added ? '✓ Added' : 'Add to Watchlist'}
-                </button>
+
+                {onRemove ? (
+                    <button
+                        onClick={onRemove}
+                        className={styles.removeButton}
+                    >
+                        Remove
+                    </button>
+                ) : (
+                    <button
+                        onClick={addToWatchlist}
+                        className={`${styles.addButton} ${added ? styles.addedButton : ''} ${existingStatus ? styles.alreadyAddedButton : ''}`}
+                        disabled={adding || added || existingStatus !== undefined}
+                    >
+                        {existingStatus ? 'Added' : adding ? 'Adding...' : added ? 'Added' : 'Add to Watchlist'}
+                    </button>
+                )}
             </div>
             {error && <p className={styles.errorText}>{error}</p>}
         </div>
