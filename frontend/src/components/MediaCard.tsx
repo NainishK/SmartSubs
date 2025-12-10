@@ -53,6 +53,8 @@ export default function MediaCard({
                 title: item.title || item.name || 'Unknown',
                 media_type: item.media_type,
                 poster_path: item.poster_path,
+                vote_average: item.vote_average,
+                overview: item.overview,
                 status: status
             });
             setAdded(true);

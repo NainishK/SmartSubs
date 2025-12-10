@@ -26,6 +26,8 @@ class WatchlistItemBase(BaseModel):
     title: str
     media_type: str
     poster_path: Optional[str] = None
+    vote_average: Optional[float] = None
+    overview: Optional[str] = None
     status: str = "plan_to_watch"
 
 class WatchlistItemCreate(WatchlistItemBase):
