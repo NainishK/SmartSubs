@@ -4,14 +4,19 @@ import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import styles from './MediaCard.module.css';
 
+import StarRating from './StarRating';
+
 export interface MediaItem {
-    id: number;
+    id: number; // TMDB ID (usually)
+    dbId?: number; // Database ID (if known)
     title?: string;
     name?: string;
     media_type: string;
     overview: string;
     poster_path?: string;
     vote_average?: number;
+    genre_ids?: number[]; // From Search
+    user_rating?: number; // From DB (Watchlist)
 }
 
 interface MediaCardProps {
@@ -20,7 +25,7 @@ interface MediaCardProps {
     onAddSuccess?: () => void;
     showServiceBadge?: string;
     onRemove?: () => void;
-    onStatusChange?: (newStatus: string) => void;
+    onStatusChange?: (newStatus: string, newRating?: number) => void;
     hideOverview?: boolean;
 }
 
@@ -34,6 +39,8 @@ export default function MediaCard({
     hideOverview
 }: MediaCardProps) {
     const [status, setStatus] = useState(existingStatus || 'plan_to_watch');
+    const [userRating, setUserRating] = useState(item.user_rating || 0);
+    const [dbId, setDbId] = useState<number | undefined>(item.dbId);
     const [adding, setAdding] = useState(false);
     const [added, setAdded] = useState(false);
     const [error, setError] = useState('');
@@ -42,21 +49,29 @@ export default function MediaCard({
         if (existingStatus) {
             setStatus(existingStatus);
         }
-    }, [existingStatus]);
+        if (item.user_rating) {
+            setUserRating(item.user_rating);
+        }
+        if (item.dbId) {
+            setDbId(item.dbId);
+        }
+    }, [existingStatus, item.user_rating, item.dbId]);
 
     const addToWatchlist = async () => {
         setAdding(true);
         setError('');
         try {
-            await api.post('/watchlist/', {
+            const response = await api.post('/watchlist/', {
                 tmdb_id: item.id,
                 title: item.title || item.name || 'Unknown',
                 media_type: item.media_type,
                 poster_path: item.poster_path,
                 vote_average: item.vote_average,
                 overview: item.overview,
-                status: status
+                status: status,
+                genre_ids: item.genre_ids
             });
+            setDbId(response.data.id); // Capture DB ID
             setAdded(true);
             onAddSuccess?.();
             setTimeout(() => setAdded(false), 3000);
@@ -69,6 +84,47 @@ export default function MediaCard({
             }
         } finally {
             setAdding(false);
+        }
+    };
+
+    const handleRate = async (rating: number) => {
+        if (!dbId) {
+            setError("Cannot rate: Item ID missing");
+            return;
+        }
+
+        // Optimistic update
+        setUserRating(rating);
+        try {
+            // Need endpoint PUT /watchlist/{id}/rating
+            // But wait, we need the DB ID (`item.id` might be TMDB ID if from Search)
+            // If existingStatus is present, we assume `item.id` matches the watchlist logic?
+            // Actually, for Watchlist items, `item.id` is usually the TMDB ID in the frontend model if using `tmdb_id`.
+            // Let's check WatchlistPage. It passes `item` from `watchlist` response.
+            // `watchlist` response usually has `id` (DB ID) and `tmdb_id`.
+            // Frontend interface `MediaItem` has `id`.
+            // If from WatchlistPage, `id` is DB ID? No, looking at models, `WatchlistItem` has `id`.
+            // Looking at `WatchlistPage.tsx` (from memory/previous view), it maps data.
+            // If `item.id` is TMDB ID, we need to find the DB ID to update rating?
+            // Or the endpoint should support TMDB ID?
+
+            // To be safe, if we are in Watchlist mode (onRemove present), we assume we can rate.
+            // But we need the DB ID.
+            // Assuming `onStatusChange` might handle it or we call API directly.
+            // Let's call API. Assuming `item.id` is passed correctly from WatchlistPage as DB ID?
+            // NO. Watchlist items usually have `tmdb_id` as the main ID for display consistency with Search?
+            // Let's verify `WatchlistPage` mapping.
+
+            // For now, assume endpoint accepts TMDB ID or we pass DB ID separately?
+            // "item" has "id". In Search, it's TMDB ID.
+            // In WatchlistPage, it maps response.
+
+            // Let's use `api.put(`/watchlist/${item.id}/rating`, { rating })`.
+            await api.put(`/watchlist/${dbId}/rating`, { rating });
+            onStatusChange?.(status, rating);
+        } catch (e) {
+            console.error("Rate failed", e);
+            setError("Failed to save rating");
         }
     };
 
@@ -119,6 +175,13 @@ export default function MediaCard({
                         'No synopsis available.'
                     )}
                 </p>
+            )}
+
+            {/* Rating UI - Only show if in watchlist (existingStatus is set) */}
+            {existingStatus && (
+                <div className={styles.userRating}>
+                    <StarRating rating={userRating} onRate={handleRate} editable={true} />
+                </div>
             )}
 
             {existingStatus && !onRemove && (

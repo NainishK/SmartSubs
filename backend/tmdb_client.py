@@ -73,15 +73,25 @@ def get_watch_providers(media_type: str, tmdb_id: int):
     url = f"{TMDB_BASE_URL}/{media_type}/{tmdb_id}/watch/providers"
     params = {"api_key": settings.TMDB_API_KEY}
     
-    try:
-        response = requests.get(url, params=params)
-        response.raise_for_status()
-        data = response.json()
-        # Return US providers or empty dict
-        return data.get("results", {}).get("US", {})
-    except Exception as e:
-        print(f"Error fetching providers for {media_type}/{tmdb_id}: {e}")
-        return {}
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(url, params=params, timeout=5)
+            response.raise_for_status()
+            data = response.json()
+            # Return US providers or empty dict
+            return data.get("results", {}).get("US", {})
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+            if attempt < max_retries - 1:
+                import time
+                time.sleep(1)
+                continue
+            print(f"Error fetching providers for {media_type}/{tmdb_id}: {e}")
+        except Exception as e:
+            print(f"Error fetching providers for {media_type}/{tmdb_id}: {e}")
+            break
+            
+    return {}
 
 def get_similar(media_type: str, tmdb_id: int):
     """
@@ -101,3 +111,41 @@ def get_similar(media_type: str, tmdb_id: int):
     except Exception as e:
         print(f"Error fetching similar content for {media_type}/{tmdb_id}: {e}")
         return {"results": []}
+
+def get_details(media_type: str, tmdb_id: int):
+    """Fetch full details including genres."""
+    url = f"{TMDB_BASE_URL}/{media_type}/{tmdb_id}"
+    params = {"api_key": settings.TMDB_API_KEY}
+    try:
+        response = requests.get(url, params=params, timeout=5)
+        if response.status_code == 200:
+            return response.json()
+    except Exception as e:
+        print(f"Error fetching details: {e}")
+    return {}
+
+def discover_media(media_type: str, with_genres: str = None, sort_by: str = "popularity.desc", min_vote_count: int = 100, min_vote_average: float = 0, with_watch_providers: str = None, watch_region: str = "US"):
+    """Discover media with advanced filters."""
+    url = f"{TMDB_BASE_URL}/discover/{media_type}"
+    params = {
+        "api_key": settings.TMDB_API_KEY,
+        "sort_by": sort_by,
+        "vote_count.gte": min_vote_count,
+        "vote_average.gte": min_vote_average,
+        "include_adult": False,
+        "language": "en-US",
+        "page": 1
+    }
+    if with_genres:
+        params["with_genres"] = with_genres
+    if with_watch_providers:
+        params["with_watch_providers"] = with_watch_providers
+        params["watch_region"] = watch_region
+        
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        if response.status_code == 200:
+            return response.json()
+    except Exception as e:
+        print(f"Error discovering media: {e}")
+    return {"results": []}

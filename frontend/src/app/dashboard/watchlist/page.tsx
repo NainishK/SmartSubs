@@ -90,11 +90,13 @@ export default function WatchlistPage() {
                             key={item.id}
                             item={{
                                 id: item.tmdb_id,
+                                dbId: item.id, // Pass DB ID
                                 title: item.title,
                                 media_type: item.media_type,
                                 overview: item.overview || '',
                                 poster_path: item.poster_path,
-                                vote_average: item.vote_average
+                                vote_average: item.vote_average,
+                                user_rating: item.user_rating // Pass User Rating
                             }}
                             existingStatus={item.status}
                             onRemove={() => handleDeleteWatchlist(item.id)}

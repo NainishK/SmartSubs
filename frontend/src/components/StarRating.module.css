@@ -1,0 +1,23 @@
+.container {
+    display: flex;
+    gap: 2px;
+}
+
+.star {
+    font-size: 1.2rem;
+    color: #444;
+    cursor: default;
+    transition: color 0.1s;
+}
+
+.star.filled {
+    color: #ffd700;
+}
+
+.editable {
+    cursor: pointer;
+}
+
+.editable:hover {
+    transform: scale(1.1);
+}

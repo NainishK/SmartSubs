@@ -133,6 +133,18 @@ def update_watchlist_status(
         raise HTTPException(status_code=404, detail="Item not found")
     return db_item
 
+@app.put("/watchlist/{item_id}/rating", response_model=schemas.WatchlistItem)
+def update_watchlist_rating(
+    item_id: int, 
+    update: schemas.WatchlistRatingUpdate, 
+    db: Session = Depends(get_db), 
+    current_user: models.User = Depends(dependencies.get_current_user)
+):
+    db_item = crud.update_watchlist_item_rating(db, item_id=item_id, user_id=current_user.id, rating=update.rating)
+    if db_item is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return db_item
+
 @app.get("/recommendations")
 def get_recommendations(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
     """Legacy endpoint - returns fast recommendations only to avoid breaking changes"""
@@ -150,11 +162,11 @@ def get_similar_recommendations(db: Session = Depends(get_db), current_user: mod
     return recommendations.get_similar_content(db, user_id=current_user.id)
 
 @app.post("/recommendations/refresh")
-def refresh_recommendations_endpoint(background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
-    """Force refresh recommendations in background"""
+def refresh_recommendations_endpoint(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    """Force refresh recommendations synchronously"""
     import recommendations
-    background_tasks.add_task(recommendations.refresh_recommendations, db, user_id=current_user.id, force=True)
-    return {"message": "Recommendation refresh started"}
+    recommendations.refresh_recommendations(db, user_id=current_user.id, force=True)
+    return {"message": "Recommendations refreshed"}
 
 @app.get("/services/", response_model=list[schemas.Service])
 def read_services(db: Session = Depends(get_db)):

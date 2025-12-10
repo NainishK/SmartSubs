@@ -43,6 +43,28 @@ def delete_subscription(db: Session, subscription_id: int, user_id: int):
 def get_watchlist(db: Session, user_id: int, skip: int = 0, limit: int = 100):
     return db.query(models.WatchlistItem).filter(models.WatchlistItem.user_id == user_id).offset(skip).limit(limit).all()
 
+import json
+
+def update_interests(db: Session, user_id: int, genre_ids: list, delta: int):
+    """Update score for user interests."""
+    if not genre_ids:
+        return
+    
+    for genre_id in genre_ids:
+        interest = db.query(models.UserInterest).filter(
+            models.UserInterest.user_id == user_id,
+            models.UserInterest.genre_id == genre_id
+        ).first()
+        
+        if interest:
+            interest.score += delta
+        else:
+            # Only create if positive delta (don't create negative interest for new genre)
+            if delta > 0:
+                interest = models.UserInterest(user_id=user_id, genre_id=genre_id, score=delta)
+                db.add(interest)
+    db.commit()
+
 def create_watchlist_item(db: Session, item: schemas.WatchlistItemCreate, user_id: int):
     # Check for duplicate
     existing_item = db.query(models.WatchlistItem).filter(
@@ -52,17 +74,77 @@ def create_watchlist_item(db: Session, item: schemas.WatchlistItemCreate, user_i
     if existing_item:
         return existing_item
 
-    db_item = models.WatchlistItem(**item.dict(), user_id=user_id)
+    # Prepare data
+    item_data = item.dict()
+    genre_ids_list = item_data.pop('genre_ids', [])
+    
+    # If genres not provided, try to fetch them? 
+    # For now assume frontend sends them or we verify later.
+    # Store as string
+    genre_ids_str = json.dumps(genre_ids_list) if genre_ids_list else None
+    
+    db_item = models.WatchlistItem(**item_data, genre_ids=genre_ids_str, user_id=user_id)
     db.add(db_item)
     db.commit()
     db.refresh(db_item)
+    
+    # Update User Interests (+1 for adding)
+    if genre_ids_list:
+        update_interests(db, user_id, genre_ids_list, 1)
+        
     return db_item
 
 def delete_watchlist_item(db: Session, item_id: int, user_id: int):
     db_item = db.query(models.WatchlistItem).filter(models.WatchlistItem.id == item_id, models.WatchlistItem.user_id == user_id).first()
     if db_item:
+        # Decrement interest logic
+        if db_item.genre_ids:
+            try:
+                g_ids = json.loads(db_item.genre_ids)
+                update_interests(db, user_id, g_ids, -1)
+            except:
+                pass
+                
         db.delete(db_item)
         db.commit()
+    return db_item
+
+def update_watchlist_item_rating(db: Session, item_id: int, user_id: int, rating: int):
+    db_item = db.query(models.WatchlistItem).filter(
+        models.WatchlistItem.id == item_id, 
+        models.WatchlistItem.user_id == user_id
+    ).first()
+    
+    if db_item:
+        if db_item.genre_ids:
+            old_rating = db_item.user_rating or 0
+            diff = rating - old_rating
+            
+            # Simple Logic: 
+            # Rate 5 (New): +3. 
+            # Rate 1 (New): -2.
+            
+            # To handle *changes*, we calculate delta score
+            def get_score_impact(r):
+                if r >= 9: return 3   # 5 stars (9-10)
+                if r >= 7: return 1   # 4 stars (7-8)
+                if r <= 2: return -3  # 1 star (1-2)
+                if r <= 4: return -1  # 2 stars (3-4)
+                return 0              # 3 stars (5-6)
+                
+            score_change = get_score_impact(rating) - get_score_impact(old_rating)
+            
+            if score_change != 0:
+                try:
+                    g_ids = json.loads(db_item.genre_ids)
+                    update_interests(db, user_id, g_ids, score_change)
+                except:
+                    pass
+
+        db_item.user_rating = rating
+        db.commit()
+        db.refresh(db_item)
+        
     return db_item
 
 def get_services(db: Session):

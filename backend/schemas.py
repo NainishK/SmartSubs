@@ -29,15 +29,20 @@ class WatchlistItemBase(BaseModel):
     vote_average: Optional[float] = None
     overview: Optional[str] = None
     status: str = "plan_to_watch"
+    user_rating: Optional[int] = None # 1-10
+
+class WatchlistRatingUpdate(BaseModel):
+    rating: int
 
 class WatchlistItemCreate(WatchlistItemBase):
-    pass
+    genre_ids: Optional[List[int]] = None
 
 class WatchlistItem(WatchlistItemBase):
     id: int
     user_id: int
     status: str
     added_at: datetime
+    genre_ids: Optional[str] = None # Stored as string
 
     class Config:
         from_attributes = True

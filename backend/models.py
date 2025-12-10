@@ -14,6 +14,7 @@ class User(Base):
 
     subscriptions = relationship("Subscription", back_populates="owner")
     watchlist = relationship("WatchlistItem", back_populates="owner")
+    interests = relationship("UserInterest", back_populates="owner")
 
 class Subscription(Base):
     __tablename__ = "subscriptions"
@@ -41,10 +42,24 @@ class WatchlistItem(Base):
     poster_path = Column(String, nullable=True)
     vote_average = Column(Float, nullable=True)
     overview = Column(String, nullable=True)
+    user_rating = Column(Integer, nullable=True) # 1-5 scale (or 1-10)
+    genre_ids = Column(String, nullable=True) # JSON string or comma-separated list of genre IDs
     status = Column(String, default="plan_to_watch") # plan_to_watch, watching, watched
     added_at = Column(DateTime(timezone=True), server_default=func.now())
 
     owner = relationship("User", back_populates="watchlist")
+
+
+class UserInterest(Base):
+    __tablename__ = "user_interests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    genre_id = Column(Integer)
+    score = Column(Integer, default=0)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    owner = relationship("User", back_populates="interests")
 
 
 

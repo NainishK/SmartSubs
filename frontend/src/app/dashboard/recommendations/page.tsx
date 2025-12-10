@@ -47,24 +47,6 @@ export default function RecommendationsPage() {
         <div className={styles.container}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <h1 className={styles.pageTitle} style={{ marginBottom: 0 }}>Smart Recommendations</h1>
-                <button
-                    onClick={handleRefresh}
-                    disabled={refreshing || loadingSimilar}
-                    style={{
-                        padding: '0.5rem 1rem',
-                        backgroundColor: '#1976d2',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: (refreshing || loadingSimilar) ? 'not-allowed' : 'pointer',
-                        opacity: (refreshing || loadingSimilar) ? 0.7 : 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem'
-                    }}
-                >
-                    {refreshing ? 'Refreshing...' : '🔄 Refresh'}
-                </button>
             </div>
 
             <div className={styles.content}>
@@ -121,9 +103,30 @@ export default function RecommendationsPage() {
 
                         {/* Similar Content Section */}
                         <div className={styles.recGroup} style={{ marginTop: '1.5rem' }}>
-                            <h3 className={styles.recGroupTitle} style={{ color: '#1976d2' }}>
-                                🎬 You Might Like
-                            </h3>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                <h3 className={styles.recGroupTitle} style={{ color: '#1976d2', marginBottom: 0 }}>
+                                    🎬 You Might Like
+                                </h3>
+                                <button
+                                    onClick={handleRefresh}
+                                    disabled={refreshing || loadingSimilar}
+                                    style={{
+                                        padding: '0.4rem 0.8rem',
+                                        backgroundColor: '#1976d2',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: (refreshing || loadingSimilar) ? 'not-allowed' : 'pointer',
+                                        opacity: (refreshing || loadingSimilar) ? 0.7 : 1,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.4rem',
+                                        fontSize: '0.9rem'
+                                    }}
+                                >
+                                    {refreshing ? 'Refreshing...' : '🔄 Refresh'}
+                                </button>
+                            </div>
 
                             {loadingSimilar && similarRecs.length === 0 ? (
                                 <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>

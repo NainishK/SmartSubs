@@ -18,6 +18,7 @@ export interface WatchlistItem {
     status: string;
     vote_average?: number;
     overview?: string;
+    user_rating?: number; // 1-10 (mapped to stars)
 }
 
 export interface Recommendation {
