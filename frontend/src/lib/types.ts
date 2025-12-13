@@ -48,3 +48,9 @@ export interface Plan {
     cost: number;
     currency: string;
 }
+
+export interface AIRecommendation {
+    title: string;
+    reason: string;
+    service: string;
+}

@@ -18,6 +18,12 @@ def create_user(db: Session, user: schemas.UserCreate):
 def get_subscriptions(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Subscription).offset(skip).limit(limit).all()
 
+def get_user_subscriptions(db: Session, user_id: int):
+    return db.query(models.Subscription).filter(
+        models.Subscription.user_id == user_id,
+        models.Subscription.is_active == True
+    ).all()
+
 def create_user_subscription(db: Session, subscription: schemas.SubscriptionCreate, user_id: int):
     # Check for duplicate
     existing_sub = db.query(models.Subscription).filter(

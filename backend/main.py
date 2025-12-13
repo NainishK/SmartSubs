@@ -168,6 +168,24 @@ def refresh_recommendations_endpoint(db: Session = Depends(get_db), current_user
     recommendations.refresh_recommendations(db, user_id=current_user.id, force=True)
     return {"message": "Recommendations refreshed"}
 
+@app.post("/recommendations/ai", response_model=list[schemas.AIRecommendation])
+def get_ai_recommendations(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    """Generate AI-powered recommendations on demand"""
+    import ai_client
+    import crud
+    
+    # Gather Context
+    watchlist = crud.get_watchlist(db, user_id=current_user.id, limit=100)
+    subs = crud.get_user_subscriptions(db, user_id=current_user.id) # Need to ensure this crud exists or query directly
+    
+    # Format for AI
+    history = [{"title": w.title, "status": w.status} for w in watchlist]
+    ratings = [{"title": w.title, "rating": w.user_rating} for w in watchlist if w.user_rating]
+    active_subs = [s.service_name for s in subs]
+    
+    recommendations = ai_client.generate_ai_recommendations(history, ratings, active_subs)
+    return recommendations
+
 @app.get("/services/", response_model=list[schemas.Service])
 def read_services(db: Session = Depends(get_db)):
     return crud.get_services(db)

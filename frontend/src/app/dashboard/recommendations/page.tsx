@@ -18,6 +18,9 @@ export default function RecommendationsPage() {
 
     const [watchlist, setWatchlist] = useState<Array<{ tmdb_id: number; status: string }>>([]);
     const [refreshing, setRefreshing] = useState(false);
+    const [aiRecs, setAiRecs] = useState<any[]>([]);
+    const [loadingAi, setLoadingAi] = useState(false);
+    const [aiError, setAiError] = useState<string | null>(null);
 
     useEffect(() => {
         fetchWatchlist();
@@ -29,6 +32,24 @@ export default function RecommendationsPage() {
             setWatchlist(response.data.map((item: any) => ({ tmdb_id: item.tmdb_id, status: item.status })));
         } catch (error) {
             console.error('Failed to fetch watchlist', error);
+        }
+    };
+
+    const handleGenerateAI = async () => {
+        setLoadingAi(true);
+        setAiError(null);
+        try {
+            const response = await api.post('/recommendations/ai');
+            if (response.data && Array.isArray(response.data)) {
+                setAiRecs(response.data);
+            } else {
+                setAiError('Failed to generate recommendations.');
+            }
+        } catch (error) {
+            console.error('AI Generation failed', error);
+            setAiError('Failed to generate recommendations. Please try again.');
+        } finally {
+            setLoadingAi(false);
         }
     };
 
@@ -80,6 +101,76 @@ export default function RecommendationsPage() {
                                 </div>
                             </div>
                         )}
+
+                        {/* AI Curator Section */}
+                        <div className={styles.recGroup} style={{ marginTop: '2.5rem', border: '1px solid #e0e0e0', padding: '1.5rem', borderRadius: '12px', background: 'linear-gradient(to right, #f8f9fa, #ffffff)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <h3 className={styles.recGroupTitle} style={{ color: '#6a1b9a', marginBottom: 0 }}>
+                                        🤖 AI Curator Picks
+                                    </h3>
+                                    <span style={{ fontSize: '0.7rem', backgroundColor: '#e1bee7', color: '#4a148c', padding: '2px 6px', borderRadius: '4px' }}>BETA</span>
+                                </div>
+                                <button
+                                    onClick={handleGenerateAI}
+                                    disabled={loadingAi}
+                                    style={{
+                                        padding: '0.5rem 1rem',
+                                        backgroundColor: loadingAi ? '#9c27b0' : '#8e24aa',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        cursor: loadingAi ? 'wait' : 'pointer',
+                                        opacity: loadingAi ? 0.7 : 1,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.4rem',
+                                        fontWeight: 500,
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                    }}
+                                >
+                                    {loadingAi ? 'Creating...' : '✨ Generate AI Picks'}
+                                </button>
+                            </div>
+
+                            {/* Intro Text */}
+                            {aiRecs.length === 0 && !loadingAi && !aiError && (
+                                <p style={{ color: '#666', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                                    Want deeper insights? Our AI Curator analyzes your entire watch history and tastes to find
+                                    hidden gems available on your subscriptions. Click "Generate" to start.
+                                </p>
+                            )}
+
+                            {/* Error State */}
+                            {aiError && (
+                                <div style={{ padding: '1rem', backgroundColor: '#ffebee', color: '#c62828', borderRadius: '6px', marginBottom: '1rem' }}>
+                                    {aiError}
+                                </div>
+                            )}
+
+                            {/* Loading State */}
+                            {loadingAi && (
+                                <div style={{ padding: '2rem', textAlign: 'center', color: '#6a1b9a' }}>
+                                    <p>Thinking...</p>
+                                    <p style={{ fontSize: '0.8rem', color: '#888' }}>Analyzing your history to find perfect matches.</p>
+                                </div>
+                            )}
+
+                            {/* Results Grid */}
+                            {aiRecs.length > 0 && (
+                                <div className={styles.recGrid}>
+                                    {aiRecs.map((rec, index) => (
+                                        <div key={index} className={`${styles.recCard}`} style={{ borderLeft: '4px solid #8e24aa' }}>
+                                            <div className={styles.recHeader} style={{ marginBottom: '0.5rem' }}>
+                                                <h4 style={{ fontSize: '1.1rem', color: '#333' }}>{rec.title}</h4>
+                                                <span className={styles.badge} style={{ backgroundColor: '#f3e5f5', color: '#8e24aa' }}>{rec.service}</span>
+                                            </div>
+                                            <p className={styles.recReason} style={{ fontSize: '0.95rem', fontStyle: 'italic', color: '#555' }}>"{rec.reason}"</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
 
                         {/* Cancel Section */}
                         {cancelRecs.length > 0 && (

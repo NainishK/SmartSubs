@@ -85,3 +85,8 @@ class User(UserBase):
 
     class Config:
         from_attributes = True
+
+class AIRecommendation(BaseModel):
+    title: str
+    reason: str
+    service: str
