@@ -1,6 +1,8 @@
 import google.generativeai as genai
 from config import settings
 import json
+import tmdb_client 
+# Note: Using absolute import if needed, assuming same directory
 import logging
 
 # Configure logging
@@ -87,14 +89,49 @@ def generate_ai_recommendations(user_history: list, user_ratings: list, active_s
         response = model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})
         
         # Parse JSON
+        # Parse JSON
+        text_recs = []
         try:
-            return json.loads(response.text)
+            text_recs = json.loads(response.text)
         except json.JSONDecodeError:
-            logger.error("Failed to parse Gemini JSON response")
-            return []
+            # Cleanup markdown if raw load fails
+            raw_text = response.text.replace('```json', '').replace('```', '')
+            try:
+                text_recs = json.loads(raw_text)
+            except:
+                logger.error("Failed to parse AI response")
+                return []
+        
+        # Enrichment Loop
+        enriched_recs = []
+        for rec in text_recs:
+            if not isinstance(rec, dict): continue
             
+            enrichment = {}
+            # Search TMDB for metadata
+            try:
+                search_results = tmdb_client.search_multi(rec['title'])
+                if search_results.get('results'):
+                    best_match = search_results['results'][0]
+                    enrichment = {
+                        "tmdb_id": best_match.get('id'),
+                        "media_type": best_match.get('media_type', 'movie'),
+                        "poster_path": best_match.get('poster_path'),
+                        "vote_average": best_match.get('vote_average'),
+                        "overview": best_match.get('overview')
+                    }
+                    logger.info(f"Enriched '{rec['title']}' -> ID: {enrichment['tmdb_id']}")
+                else:
+                    logger.warning(f"Could not find TMDB match for: {rec['title']}")
+            except Exception as e:
+                logger.error(f"Error enriching {rec['title']}: {e}")
+                
+            enriched_recs.append({**rec, **enrichment})
+
+        return enriched_recs
+
     except Exception as e:
-        logger.error(f"Gemini API Error: {e}")
+        logger.error(f"AI Generation Failed: {e}")
         return []
 
 def explain_recommendation(title: str, user_history_summary: str):

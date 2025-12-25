@@ -36,30 +36,30 @@ def search_multi(query: str):
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            print(f"Searching TMDB for: {query} with Key: {settings.TMDB_API_KEY[:5]}... (Attempt {attempt + 1}/{max_retries})")
+            # print(f"Searching TMDB for: {query}... (Attempt {attempt + 1})") # Reduced logging
             response = requests.get(url, params=params, timeout=10)
-            print(f"TMDB Response Status: {response.status_code}")
             response.raise_for_status()
             data = response.json()
-            print(f"TMDB Results Count: {len(data.get('results', []))}")
             return data
-        except requests.exceptions.ConnectionError as e:
-            print(f"Connection error on attempt {attempt + 1}: {e}")
+        except requests.exceptions.RequestException as e:
+            # Retry on all request errors (connection, timeout, 5xx, 429)
+            # Check for 429 Too Many Requests specifically to wait longer?
+            is_429 = False
+            if isinstance(e, requests.exceptions.HTTPError) and e.response is not None and e.response.status_code == 429:
+                is_429 = True
+            
             if attempt < max_retries - 1:
                 import time
-                wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
-                print(f"Retrying in {wait_time} seconds...")
+                wait_time = (2 ** attempt) if not is_429 else (5) # Wait longer for 429
+                print(f"TMDB Error ({e}). Retrying in {wait_time}s...")
                 time.sleep(wait_time)
             else:
-                print(f"Max retries reached. Error fetching from TMDB: {e}")
+                print(f"Max retries searched. Error: {e}")
                 return {"results": []}
-        except requests.exceptions.Timeout as e:
-            print(f"Timeout error: {e}")
-            return {"results": []}
         except Exception as e:
-            print(f"Error fetching from TMDB: {e}")
+            print(f"Unexpected error: {e}")
             return {"results": []}
-    
+            
     return {"results": []}
 
 def get_watch_providers(media_type: str, tmdb_id: int):
@@ -81,10 +81,13 @@ def get_watch_providers(media_type: str, tmdb_id: int):
             data = response.json()
             # Return US providers or empty dict
             return data.get("results", {}).get("US", {})
-        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+        except requests.exceptions.RequestException as e:
+             # Retry on all request errors
             if attempt < max_retries - 1:
                 import time
-                time.sleep(1)
+                wait_time = 1 * (attempt + 1)
+                # print(f"Retrying providers for {tmdb_id} in {wait_time}s...")
+                time.sleep(wait_time)
                 continue
             print(f"Error fetching providers for {media_type}/{tmdb_id}: {e}")
         except Exception as e:

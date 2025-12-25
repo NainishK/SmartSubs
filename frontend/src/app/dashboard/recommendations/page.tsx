@@ -16,7 +16,7 @@ export default function RecommendationsPage() {
         refreshRecommendations
     } = useRecommendations();
 
-    const [watchlist, setWatchlist] = useState<Array<{ tmdb_id: number; status: string }>>([]);
+    const [watchlist, setWatchlist] = useState<Array<{ id: number; tmdb_id: number; status: string; user_rating?: number }>>([]);
     const [refreshing, setRefreshing] = useState(false);
     const [aiRecs, setAiRecs] = useState<any[]>([]);
     const [loadingAi, setLoadingAi] = useState(false);
@@ -24,12 +24,31 @@ export default function RecommendationsPage() {
 
     useEffect(() => {
         fetchWatchlist();
+        fetchCachedAiRecs();
     }, []);
+
+    const fetchCachedAiRecs = async () => {
+        try {
+            const response = await api.get('/recommendations/ai');
+            if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+                setAiRecs(response.data);
+            }
+        } catch (error) {
+            // calculated silently, no error needed if cache empty
+            console.log('No cached AI recs found or error');
+        }
+    };
 
     const fetchWatchlist = async () => {
         try {
             const response = await api.get('/watchlist/');
-            setWatchlist(response.data.map((item: any) => ({ tmdb_id: item.tmdb_id, status: item.status })));
+            // Map all necessary fields
+            setWatchlist(response.data.map((item: any) => ({
+                id: item.id, // Database ID
+                tmdb_id: item.tmdb_id,
+                status: item.status,
+                user_rating: item.user_rating
+            })));
         } catch (error) {
             console.error('Failed to fetch watchlist', error);
         }
@@ -156,18 +175,51 @@ export default function RecommendationsPage() {
                                 </div>
                             )}
 
-                            {/* Results Grid */}
+                            {/* Results Grid - UNIFIED GRID STYLE */}
                             {aiRecs.length > 0 && (
-                                <div className={styles.recGrid}>
-                                    {aiRecs.map((rec, index) => (
-                                        <div key={index} className={`${styles.recCard}`} style={{ borderLeft: '4px solid #8e24aa' }}>
-                                            <div className={styles.recHeader} style={{ marginBottom: '0.5rem' }}>
-                                                <h4 style={{ fontSize: '1.1rem', color: '#333' }}>{rec.title}</h4>
-                                                <span className={styles.badge} style={{ backgroundColor: '#f3e5f5', color: '#8e24aa' }}>{rec.service}</span>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+                                    {aiRecs.map((rec, index) => {
+                                        // map AI response to MediaCard Item (only if we have an ID)
+                                        if (!rec.tmdb_id) {
+                                            // Fallback for failed enrichment (text only)
+                                            return (
+                                                <div key={index} className={`${styles.recCard}`} style={{ borderLeft: '4px solid #8e24aa' }}>
+                                                    <div className={styles.recHeader} style={{ marginBottom: '0.5rem' }}>
+                                                        <h4 style={{ fontSize: '1.1rem', color: '#333' }}>{rec.title}</h4>
+                                                        <span className={styles.badge} style={{ backgroundColor: '#f3e5f5', color: '#8e24aa' }}>{rec.service}</span>
+                                                    </div>
+                                                    <p className={styles.recReason} style={{ fontSize: '0.95rem', fontStyle: 'italic', color: '#555' }}>"{rec.reason}"</p>
+                                                </div>
+                                            );
+                                        }
+
+                                        const existingItem = watchlist.find(w => w.tmdb_id === rec.tmdb_id);
+
+                                        const item: MediaItem = {
+                                            id: rec.tmdb_id,
+                                            // Pass DB ID if found in watchlist
+                                            dbId: existingItem?.id,
+                                            title: rec.title,
+                                            media_type: rec.media_type || 'movie',
+                                            overview: rec.overview || rec.reason,
+                                            poster_path: rec.poster_path,
+                                            vote_average: rec.vote_average,
+                                            user_rating: existingItem?.user_rating // Pass existing rating
+                                        };
+
+                                        return (
+                                            <div key={index} style={{ display: 'flex', flexDirection: 'column' }}>
+                                                <MediaCard
+                                                    item={item}
+                                                    existingStatus={existingItem?.status}
+                                                    onAddSuccess={fetchWatchlist}
+                                                    showServiceBadge={rec.service} // Badge inside card handles context
+                                                    customBadgeColor="#8e24aa"
+                                                    aiReason={rec.reason} // Pass the AI's logic
+                                                />
                                             </div>
-                                            <p className={styles.recReason} style={{ fontSize: '0.95rem', fontStyle: 'italic', color: '#555' }}>"{rec.reason}"</p>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>

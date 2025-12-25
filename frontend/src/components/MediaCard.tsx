@@ -27,6 +27,8 @@ interface MediaCardProps {
     onRemove?: () => void;
     onStatusChange?: (newStatus: string, newRating?: number) => void;
     hideOverview?: boolean;
+    customBadgeColor?: string;
+    aiReason?: string;
 }
 
 export default function MediaCard({
@@ -36,7 +38,9 @@ export default function MediaCard({
     showServiceBadge,
     onRemove,
     onStatusChange,
-    hideOverview
+    hideOverview,
+    customBadgeColor,
+    aiReason
 }: MediaCardProps) {
     const [status, setStatus] = useState(existingStatus || 'plan_to_watch');
     const [userRating, setUserRating] = useState(item.user_rating || 0);
@@ -145,6 +149,30 @@ export default function MediaCard({
 
     const tmdbLink = `https://www.themoviedb.org/${item.media_type}/${item.id}`;
 
+    // Toggle state for AI Reason vs Plot
+    const [showPlot, setShowPlot] = useState(false);
+
+    // Determine what text to show in the body
+    let displayValues = {
+        text: item.overview,
+        isAi: false
+    };
+
+    if (aiReason && !showPlot) {
+        displayValues = {
+            text: `"${aiReason}"`,
+            isAi: true
+        };
+    } else if (item.overview) {
+        // Fallback or Plot mode
+        displayValues = {
+            text: item.overview.length > 150 ? `${item.overview.substring(0, 150)}...` : item.overview,
+            isAi: false
+        };
+    } else {
+        displayValues.text = 'No synopsis available.';
+    }
+
     return (
         <div className={styles.card}>
             <div className={styles.header}>
@@ -163,18 +191,50 @@ export default function MediaCard({
                     {item.media_type === 'tv' ? 'TV Series' : 'Movie'}
                 </span>
                 {showServiceBadge && (
-                    <span className={styles.serviceBadge}>{showServiceBadge}</span>
+                    <span
+                        className={styles.serviceBadge}
+                        style={customBadgeColor ? { backgroundColor: '#f3e5f5', color: customBadgeColor, border: `1px solid ${customBadgeColor}40` } : {}}
+                    >
+                        {showServiceBadge}
+                    </span>
                 )}
             </div>
 
             {!hideOverview && (
-                <p className={styles.overview}>
-                    {item.overview ? (
-                        item.overview.length > 150 ? `${item.overview.substring(0, 150)}...` : item.overview
-                    ) : (
-                        'No synopsis available.'
+                <div style={{ position: 'relative' }}>
+                    <p
+                        className={styles.overview}
+                        style={displayValues.isAi ? {
+                            fontStyle: 'italic',
+                            color: '#4a148c',
+                            backgroundColor: '#f3e5f5',
+                            padding: '0.5rem',
+                            borderRadius: '4px',
+                            borderLeft: '3px solid #8e24aa'
+                        } : {}}
+                    >
+                        {displayValues.text}
+                    </p>
+
+                    {/* Toggle Button for AI Cards */}
+                    {aiReason && (
+                        <button
+                            onClick={(e) => { e.preventDefault(); setShowPlot(!showPlot); }}
+                            style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#1976d2',
+                                fontSize: '0.75rem',
+                                cursor: 'pointer',
+                                padding: 0,
+                                marginTop: '0.2rem',
+                                textDecoration: 'underline'
+                            }}
+                        >
+                            {showPlot ? "Show AI Insight ✨" : "Show Summary 📝"}
+                        </button>
                     )}
-                </p>
+                </div>
             )}
 
             {/* Rating UI - Only show if in watchlist (existingStatus is set) */}

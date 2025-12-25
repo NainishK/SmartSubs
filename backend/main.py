@@ -168,6 +168,14 @@ def refresh_recommendations_endpoint(db: Session = Depends(get_db), current_user
     recommendations.refresh_recommendations(db, user_id=current_user.id, force=True)
     return {"message": "Recommendations refreshed"}
 
+@app.get("/recommendations/ai", response_model=list[schemas.AIRecommendation])
+def get_cached_ai_recommendations(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    """Retrieve cached AI recommendations if available"""
+    import recommendations
+    cached = recommendations.get_cached_data(db, user_id=current_user.id, category="ai_picks")
+    return cached if cached else []
+
+
 @app.post("/recommendations/ai", response_model=list[schemas.AIRecommendation])
 def get_ai_recommendations(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
     """Generate AI-powered recommendations on demand"""
@@ -183,8 +191,14 @@ def get_ai_recommendations(db: Session = Depends(get_db), current_user: models.U
     ratings = [{"title": w.title, "rating": w.user_rating} for w in watchlist if w.user_rating]
     active_subs = [s.service_name for s in subs]
     
-    recommendations = ai_client.generate_ai_recommendations(history, ratings, active_subs)
-    return recommendations
+    recommendations_list = ai_client.generate_ai_recommendations(history, ratings, active_subs)
+    
+    # Cache the result if valid
+    if recommendations_list:
+        import recommendations as rec_engine
+        rec_engine.set_cached_data(db, user_id=current_user.id, category="ai_picks", data=recommendations_list)
+        
+    return recommendations_list
 
 @app.get("/services/", response_model=list[schemas.Service])
 def read_services(db: Session = Depends(get_db)):

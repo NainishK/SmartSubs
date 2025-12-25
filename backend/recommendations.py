@@ -119,9 +119,16 @@ def get_dashboard_recommendations(db: Session, user_id: int):
     if cached is not None:
         return cached
         
-    # Calculate and cache
+    # Calculate
     recs = calculate_dashboard_recommendations(db, user_id)
-    set_cached_data(db, user_id, "dashboard", recs)
+    
+    # Only cache if valid results or if genuinely empty (handled by refresh check?)
+    # If network failed, recs might be empty but we don't want to cache that for 24h.
+    # Simple heuristic: If empty, don't cache it? Or cache for short time?
+    # Let's say: If empty, we don't cache it, so next load tries again.
+    if recs:
+        set_cached_data(db, user_id, "dashboard", recs)
+        
     return recs
 
 def calculate_dashboard_recommendations(db: Session, user_id: int):
@@ -196,9 +203,12 @@ def get_similar_content(db: Session, user_id: int):
     if cached is not None:
         return cached
 
-    # Calculate and cache
+    # Calculate
     recs = calculate_similar_content(db, user_id)
-    set_cached_data(db, user_id, "similar", recs)
+    
+    if recs:
+        set_cached_data(db, user_id, "similar", recs)
+        
     return recs
 
 import random

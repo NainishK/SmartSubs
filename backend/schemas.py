@@ -90,3 +90,8 @@ class AIRecommendation(BaseModel):
     title: str
     reason: str
     service: str
+    tmdb_id: Optional[int] = None
+    media_type: Optional[str] = "movie"
+    poster_path: Optional[str] = None
+    vote_average: Optional[float] = None
+    overview: Optional[str] = None
