@@ -121,6 +121,26 @@ export default function RecommendationsPage() {
                             </div>
                         )}
 
+                        {/* Cancel Section - MOVED UP */}
+                        {cancelRecs.length > 0 && (
+                            <div className={styles.recGroup} style={{ marginTop: '1.5rem', marginBottom: '2.5rem' }}>
+                                <h3 className={styles.recGroupTitle} style={{ color: '#c62828' }}>
+                                    ⚠️ Unused Subscriptions
+                                </h3>
+                                <div className={styles.recGrid}>
+                                    {cancelRecs.map((rec, index) => (
+                                        <div key={index} className={`${styles.recCard} ${styles.recCardRed}`}>
+                                            <div className={styles.recHeader}>
+                                                <h4>{rec.service_name}</h4>
+                                                <span className={styles.savingsBadge}>Save ${rec.savings}</span>
+                                            </div>
+                                            <p className={styles.recReason}>{rec.reason}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {/* AI Curator Section */}
                         <div className={styles.recGroup} style={{ marginTop: '2.5rem', border: '1px solid #e0e0e0', padding: '1.5rem', borderRadius: '12px', background: 'linear-gradient(to right, #f8f9fa, #ffffff)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -224,25 +244,7 @@ export default function RecommendationsPage() {
                             )}
                         </div>
 
-                        {/* Cancel Section */}
-                        {cancelRecs.length > 0 && (
-                            <div className={styles.recGroup} style={{ marginTop: '1.5rem' }}>
-                                <h3 className={styles.recGroupTitle} style={{ color: '#c62828' }}>
-                                    ⚠️ Unused Subscriptions
-                                </h3>
-                                <div className={styles.recGrid}>
-                                    {cancelRecs.map((rec, index) => (
-                                        <div key={index} className={`${styles.recCard} ${styles.recCardRed}`}>
-                                            <div className={styles.recHeader}>
-                                                <h4>{rec.service_name}</h4>
-                                                <span className={styles.savingsBadge}>Save ${rec.savings}</span>
-                                            </div>
-                                            <p className={styles.recReason}>{rec.reason}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+
 
                         {/* Similar Content Section */}
                         <div className={styles.recGroup} style={{ marginTop: '1.5rem' }}>
