@@ -7,6 +7,7 @@ export interface Subscription {
     start_date: string;
     next_billing_date: string;
     is_active: boolean;
+    logo_url?: string;
 }
 
 export interface WatchlistItem {
@@ -24,6 +25,7 @@ export interface WatchlistItem {
 export interface Recommendation {
     type: 'watch_now' | 'cancel' | 'subscribe' | 'similar_content';
     service_name: string;
+    logo_url?: string;
     items: string[];
     reason: string;
     cost: number;
@@ -47,6 +49,7 @@ export interface Plan {
     name: string;
     cost: number;
     currency: string;
+    billing_cycle: string;
 }
 
 export interface AIRecommendation {

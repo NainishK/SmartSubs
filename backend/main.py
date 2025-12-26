@@ -23,6 +23,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 origins = [
     "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
 
 app.add_middleware(
@@ -64,7 +65,7 @@ async def login_for_access_token(background_tasks: BackgroundTasks, form_data: O
     
     # Trigger background recommendation refresh (smart refresh)
     import recommendations
-    background_tasks.add_task(recommendations.refresh_recommendations, db, user.id, force=False)
+    background_tasks.add_task(recommendations.refresh_recommendations, SessionLocal(), user.id, force=False)
     
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -78,32 +79,58 @@ def search_content(query: str, current_user: models.User = Depends(dependencies.
     return tmdb_client.search_multi(query)
 
 @app.post("/subscriptions/", response_model=schemas.Subscription)
-def create_subscription(subscription: schemas.SubscriptionCreate, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
-    # Check if already exists (crud now returns existing if found, but we might want to raise error)
-    # Actually, let's modify crud to return None if duplicate or handle it here.
-    # For simplicity, if the ID is set, it means it existed.
+def create_subscription(subscription: schemas.SubscriptionCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
     sub = crud.create_user_subscription(db=db, subscription=subscription, user_id=current_user.id)
-    # We can't easily tell if it was just created or existed without changing crud return type or logic.
-    # But for now, returning the existing one is "idempotent" which is fine, OR we can raise error.
-    # Let's check explicitly here for better UX if the user wants to know.
-    # But crud update was: return existing. So frontend will just see success.
-    # If we want to block duplicates with error:
-    # We should have checked before calling create, or modify create to raise.
-    # Let's leave it as idempotent (success) for now, or user might be confused why it "failed".
-    # Actually, user said "i could add same show multiple times", implying they DON'T want that.
-    # So idempotent is good (it won't add a second one).
+    
+    # Attach logo
+    service = db.query(models.Service).filter(
+        models.Service.name == sub.service_name,
+        (models.Service.country == current_user.country) | (models.Service.country == "US")
+    ).order_by(models.Service.country == current_user.country).first()
+    if service:
+        sub.logo_url = service.logo_url
+
+    # Trigger background refresh
+    import recommendations
+    background_tasks.add_task(recommendations.refresh_recommendations, SessionLocal(), current_user.id, force=True)
+    
     return sub
 
 @app.get("/subscriptions/", response_model=list[schemas.Subscription])
 def read_subscriptions(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
-    # Filter by current user
-    return db.query(models.Subscription).filter(models.Subscription.user_id == current_user.id).offset(skip).limit(limit).all()
+    subs = db.query(models.Subscription).filter(models.Subscription.user_id == current_user.id).offset(skip).limit(limit).all()
+    # Attach logos
+    for sub in subs:
+        service = db.query(models.Service).filter(
+            models.Service.name == sub.service_name,
+            (models.Service.country == current_user.country) | (models.Service.country == "US")
+        ).order_by(models.Service.country == current_user.country).first()
+        if service:
+            sub.logo_url = service.logo_url
+    return subs
 
 @app.delete("/subscriptions/{subscription_id}", response_model=schemas.Subscription)
-def delete_subscription(subscription_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+def delete_subscription(subscription_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
     db_sub = crud.delete_subscription(db, subscription_id=subscription_id, user_id=current_user.id)
     if db_sub is None:
         raise HTTPException(status_code=404, detail="Subscription not found")
+        
+    # Trigger background refresh
+    import recommendations
+    background_tasks.add_task(recommendations.refresh_recommendations, db, current_user.id, force=True)
+    
+    return db_sub
+
+@app.put("/subscriptions/{subscription_id}", response_model=schemas.Subscription)
+def update_subscription(subscription_id: int, subscription: schemas.SubscriptionUpdate, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    db_sub = crud.update_subscription(db, subscription_id=subscription_id, subscription=subscription, user_id=current_user.id)
+    if db_sub is None:
+        raise HTTPException(status_code=404, detail="Subscription not found")
+        
+    # Trigger background refresh
+    import recommendations
+    background_tasks.add_task(recommendations.refresh_recommendations, db, current_user.id, force=True)
+    
     return db_sub
 
 @app.post("/watchlist/", response_model=schemas.WatchlistItem)
@@ -191,7 +218,7 @@ def get_ai_recommendations(db: Session = Depends(get_db), current_user: models.U
     ratings = [{"title": w.title, "rating": w.user_rating} for w in watchlist if w.user_rating]
     active_subs = [s.service_name for s in subs]
     
-    recommendations_list = ai_client.generate_ai_recommendations(history, ratings, active_subs)
+    recommendations_list = ai_client.generate_ai_recommendations(history, ratings, active_subs, country=current_user.country)
     
     # Cache the result if valid
     if recommendations_list:
@@ -201,12 +228,12 @@ def get_ai_recommendations(db: Session = Depends(get_db), current_user: models.U
     return recommendations_list
 
 @app.get("/services/", response_model=list[schemas.Service])
-def read_services(db: Session = Depends(get_db)):
-    return crud.get_services(db)
+def read_services(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    return crud.get_services(db, country=current_user.country)
 
 @app.get("/services/{service_id}/plans", response_model=list[schemas.Plan])
-def read_plans(service_id: int, db: Session = Depends(get_db)):
-    return crud.get_plans(db, service_id=service_id)
+def read_plans(service_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    return crud.get_plans(db, service_id=service_id, country=current_user.country)
 
 @app.put("/users/me", response_model=schemas.User)
 def update_user_me(country: str, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):

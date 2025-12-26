@@ -62,10 +62,10 @@ def search_multi(query: str):
             
     return {"results": []}
 
-def get_watch_providers(media_type: str, tmdb_id: int):
+def get_watch_providers(media_type: str, tmdb_id: int, region: str = "US"):
     """
     Fetch watch providers for a movie or TV show.
-    Defaults to US region for now.
+    Defaults to US region.
     """
     if settings.TMDB_API_KEY == "YOUR_TMDB_API_KEY_HERE":
         return {}
@@ -79,14 +79,13 @@ def get_watch_providers(media_type: str, tmdb_id: int):
             response = requests.get(url, params=params, timeout=5)
             response.raise_for_status()
             data = response.json()
-            # Return US providers or empty dict
-            return data.get("results", {}).get("US", {})
+            # Return providers for the specified region or empty dict
+            return data.get("results", {}).get(region, {})
         except requests.exceptions.RequestException as e:
              # Retry on all request errors
             if attempt < max_retries - 1:
                 import time
                 wait_time = 1 * (attempt + 1)
-                # print(f"Retrying providers for {tmdb_id} in {wait_time}s...")
                 time.sleep(wait_time)
                 continue
             print(f"Error fetching providers for {media_type}/{tmdb_id}: {e}")

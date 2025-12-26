@@ -67,48 +67,41 @@ def refresh_recommendations(db: Session, user_id: int, force: bool = False):
     Background task to re-calculate and cache all recommendations.
     If force is False, only refreshes if cache is missing or older than 24 hours.
     """
-    print(f"Checking recommendations for user {user_id} (force={force})...")
+    print(f"--- [REFRESH] Checking recommendations for user {user_id} (force={force}) ---")
     try:
         # Check if we need to refresh
         if not force:
-            # Check dashboard cache age
             cache_entry = db.query(models.RecommendationCache).filter(
                 models.RecommendationCache.user_id == user_id,
                 models.RecommendationCache.category == "dashboard"
             ).first()
             
             if cache_entry and cache_entry.updated_at:
-                # Calculate age
-                # Ensure timezone awareness compatibility
                 last_updated = cache_entry.updated_at
-                if last_updated.tzinfo is None:
-                    # If naive, assume UTC or local depending on DB. 
-                    # For safety, let's just use naive comparison if needed, or make both aware.
-                    # Best bet: compare with datetime.utcnow() if stored as UTC, or now()
-                    # Let's assume naive UTC for simplicity if DB strips it.
-                    pass
-                
-                # Simple check: if < 24 hours old, skip
-                # Note: SQLite might return string, but SQLAlchemy usually converts.
-                # Let's assume it's a datetime object.
                 age = datetime.now(last_updated.tzinfo) - last_updated
                 if age < timedelta(hours=24):
-                    print(f"Cache is fresh ({age}), skipping refresh.")
+                    print(f"[REFRESH] Cache is fresh ({age}), skipping.")
                     return
 
-        print(f"Refreshing recommendations for user {user_id}...")
+        print(f"[REFRESH] Starting full recalculation for user {user_id}...")
 
         # 1. Calculate Dashboard Recs
         dashboard_recs = calculate_dashboard_recommendations(db, user_id)
+        print(f"[REFRESH] Dashboard recs calculated: {len(dashboard_recs)} items found.")
         set_cached_data(db, user_id, "dashboard", dashboard_recs)
         
         # 2. Calculate Similar Recs
         similar_recs = calculate_similar_content(db, user_id)
+        print(f"[REFRESH] Similar recs calculated: {len(similar_recs)} items found.")
         set_cached_data(db, user_id, "similar", similar_recs)
         
-        print(f"Recommendations refreshed for user {user_id}")
+        print(f"--- [REFRESH] Completed for user {user_id} ---")
     except Exception as e:
-        print(f"Error refreshing recommendations: {e}")
+        print(f"[REFRESH] FATAL ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        db.close()
 
 def get_dashboard_recommendations(db: Session, user_id: int):
     """
@@ -132,6 +125,10 @@ def get_dashboard_recommendations(db: Session, user_id: int):
     return recs
 
 def calculate_dashboard_recommendations(db: Session, user_id: int):
+    # 0. Get User Context (Country)
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    country = user.country if user and user.country else "US"
+
     # 1. Get User's Watchlist (Filter out 'watched' - only show actionable items)
     watchlist_query = db.query(models.WatchlistItem).filter(models.WatchlistItem.user_id == user_id).all()
     watchlist = [item for item in watchlist_query if item.status in ['plan_to_watch', 'watching']]
@@ -145,14 +142,20 @@ def calculate_dashboard_recommendations(db: Session, user_id: int):
     if not watchlist and not subscriptions:
         return []
 
-    recommendations = []
-    
+    # Helper to get logo
+    def get_service_logo(name, user_country):
+        service = db.query(models.Service).filter(
+            models.Service.name == name,
+            ((models.Service.country == user_country) | (models.Service.country == "US"))
+        ).order_by(models.Service.country == user_country).first()
+        return service.logo_url if service else None
+
     # A. "Watch Now" - Show items available on current subscriptions
     service_watch_list = {} # { "Netflix": ["Breaking Bad", "Stranger Things"] }
     useful_subscriptions = set()
     
     for item in watchlist:
-        providers = tmdb_client.get_watch_providers(item.media_type, item.tmdb_id)
+        providers = tmdb_client.get_watch_providers(item.media_type, item.tmdb_id, region=country)
         if "flatrate" in providers:
             for provider in providers["flatrate"]:
                 p_name = provider["provider_name"]
@@ -170,6 +173,7 @@ def calculate_dashboard_recommendations(db: Session, user_id: int):
         recommendations.append({
             "type": "watch_now",
             "service_name": service_name,
+            "logo_url": get_service_logo(service_name, country),
             "items": items,
             "reason": f"Available on your subscription",
             "cost": 0,
@@ -183,6 +187,7 @@ def calculate_dashboard_recommendations(db: Session, user_id: int):
             recommendations.append({
                 "type": "cancel",
                 "service_name": sub.service_name,
+                "logo_url": get_service_logo(sub.service_name, country),
                 "items": [],
                 "reason": "No watchlist items found",
                 "cost": 0,
@@ -214,6 +219,17 @@ def get_similar_content(db: Session, user_id: int):
 import random
 
 def calculate_similar_content(db: Session, user_id: int):
+    # 0. Get User Context (Country)
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    country = user.country if user and user.country else "US"
+
+    def get_service_logo(name, user_country):
+        service = db.query(models.Service).filter(
+            models.Service.name == name,
+            ((models.Service.country == user_country) | (models.Service.country == "US"))
+        ).order_by(models.Service.country == user_country).first()
+        return service.logo_url if service else None
+
     watchlist = db.query(models.WatchlistItem).filter(models.WatchlistItem.user_id == user_id).all()
     subscriptions = db.query(models.Subscription).filter(
         models.Subscription.user_id == user_id,
@@ -294,7 +310,7 @@ def calculate_similar_content(db: Session, user_id: int):
             min_vote_count=200, 
             min_vote_average=6.0,
             with_watch_providers=provider_string,
-            watch_region="US"
+            watch_region=country
         )
         
         # Process Available Candidates
@@ -309,7 +325,7 @@ def calculate_similar_content(db: Session, user_id: int):
             if any(w.tmdb_id == tmdb_id for w in watchlist): continue
             
             # Since we filtered by provider, we know it's on ONE of them. 
-            providers = tmdb_client.get_watch_providers("movie", tmdb_id)
+            providers = tmdb_client.get_watch_providers("movie", tmdb_id, region=country)
             matched_sub = None
             if "flatrate" in providers:
                 for p in providers["flatrate"]:
@@ -323,6 +339,7 @@ def calculate_similar_content(db: Session, user_id: int):
                 available_recs.append({
                     "type": "discovery",
                     "service_name": matched_sub,
+                    "logo_url": get_service_logo(matched_sub, country),
                     "items": [item.get("title")],
                     "reason": "Included in your subscription",
                     "score": 90 + item.get("vote_average", 0),
@@ -335,13 +352,13 @@ def calculate_similar_content(db: Session, user_id: int):
                 recommended_ids.add(tmdb_id)
                 count += 1
 
-        # 2. Explore Content Query
         data_explore = tmdb_client.discover_media(
             "movie",
             with_genres=str(interest.genre_id),
             sort_by="vote_average.desc",
             min_vote_count=500,
-            min_vote_average=7.0
+            min_vote_average=7.0,
+            watch_region=country
         )
         items_explore = data_explore.get("results", [])[:15] # More diversity for calculating best service
         
@@ -351,7 +368,7 @@ def calculate_similar_content(db: Session, user_id: int):
             if tmdb_id in recommended_ids: continue
             if any(w.tmdb_id == tmdb_id for w in watchlist): continue
             
-            providers = tmdb_client.get_watch_providers("movie", tmdb_id)
+            providers = tmdb_client.get_watch_providers("movie", tmdb_id, region=country)
             external_service = None
             on_existing = False
             
@@ -375,6 +392,7 @@ def calculate_similar_content(db: Session, user_id: int):
                 explore_recs.append({
                     "type": "discovery_explore",
                     "service_name": external_service,
+                    "logo_url": get_service_logo(external_service, country),
                     "items": [item.get("title")],
                     "reason": f"Available on {external_service}",
                     "score": 88 + item.get("vote_average", 0),
@@ -408,7 +426,7 @@ def calculate_similar_content(db: Session, user_id: int):
             if sim_id in recommended_ids: continue
             if any(w.tmdb_id == sim_id for w in watchlist): continue
              
-            providers = tmdb_client.get_watch_providers(seed.media_type, sim_id)
+            providers = tmdb_client.get_watch_providers(seed.media_type, sim_id, region=country)
             matched_sub = None
             if "flatrate" in providers:
                 for p in providers["flatrate"]:
@@ -422,6 +440,7 @@ def calculate_similar_content(db: Session, user_id: int):
                 similar_recs.append({
                     "type": "similar",
                     "service_name": matched_sub,
+                    "logo_url": get_service_logo(matched_sub, country),
                     "items": [sim.get("title") or sim.get("name")],
                     "reason": f"Because you liked {seed.title}",
                     "score": 75 + sim.get("vote_average", 0),

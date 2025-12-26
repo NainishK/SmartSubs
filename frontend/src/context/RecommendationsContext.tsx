@@ -35,7 +35,9 @@ export function RecommendationsProvider({ children }: { children: ReactNode }) {
     const fetchDashboardData = async () => {
         setLoadingDashboard(true);
         try {
-            const response = await api.get('/recommendations/dashboard');
+            // Add timestamp for cache-busting and silent auth to prevent accidental logouts
+            // @ts-ignore
+            const response = await api.get(`/recommendations/dashboard?t=${Date.now()}`, { _silentAuth: true });
             setDashboardRecs(response.data);
         } catch (error) {
             console.error('Failed to fetch dashboard recommendations', error);
@@ -47,7 +49,9 @@ export function RecommendationsProvider({ children }: { children: ReactNode }) {
     const fetchSimilarData = async () => {
         setLoadingSimilar(true);
         try {
-            const response = await api.get('/recommendations/similar');
+            // Add timestamp for cache-busting and silent auth
+            // @ts-ignore
+            const response = await api.get(`/recommendations/similar?t=${Date.now()}`, { _silentAuth: true });
             setSimilarRecs(response.data);
         } catch (error) {
             console.error('Failed to fetch similar recommendations', error);
@@ -57,23 +61,21 @@ export function RecommendationsProvider({ children }: { children: ReactNode }) {
     };
 
     const refreshRecommendations = async () => {
-        // 1. Trigger backend refresh
+        setLoadingDashboard(true);
+        setLoadingSimilar(true);
+
         try {
+            // 1. Trigger backend refresh (Synchronous POST)
             await api.post('/recommendations/refresh');
-            // 2. Wait a bit or poll? For simplicity, let's just re-fetch immediately 
-            // but realistically the backend task takes time.
-            // Better UX: Set loading, wait 2 seconds, then fetch.
-            setLoadingDashboard(true);
-            setLoadingSimilar(true);
 
-            // Give backend a moment to start/finish (it's async but usually fast for dashboard)
-            setTimeout(async () => {
-                await Promise.all([fetchDashboardData(), fetchSimilarData()]);
-                setLastUpdated(new Date());
-            }, 2000);
-
+            // 2. Fetch fresh data immediately (since POST is synchronous)
+            await Promise.all([fetchDashboardData(), fetchSimilarData()]);
+            setLastUpdated(new Date());
         } catch (error) {
             console.error('Failed to refresh recommendations', error);
+        } finally {
+            setLoadingDashboard(false);
+            setLoadingSimilar(false);
         }
     };
 

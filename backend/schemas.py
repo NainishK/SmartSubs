@@ -14,9 +14,19 @@ class SubscriptionBase(BaseModel):
 class SubscriptionCreate(SubscriptionBase):
     pass
 
+class SubscriptionUpdate(BaseModel):
+    service_name: Optional[str] = None
+    cost: Optional[float] = None
+    currency: Optional[str] = None
+    billing_cycle: Optional[str] = None
+    start_date: Optional[date] = None
+    next_billing_date: Optional[date] = None
+    is_active: Optional[bool] = None
+
 class Subscription(SubscriptionBase):
     id: int
     user_id: int
+    logo_url: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -51,6 +61,8 @@ class PlanBase(BaseModel):
     name: str
     cost: float
     currency: str
+    billing_cycle: str = "monthly"
+    country: str = "US"
 
 class Plan(PlanBase):
     id: int
@@ -62,6 +74,7 @@ class Plan(PlanBase):
 class ServiceBase(BaseModel):
     name: str
     logo_url: Optional[str] = None
+    country: str = "US"
 
 class Service(ServiceBase):
     id: int
@@ -95,3 +108,4 @@ class AIRecommendation(BaseModel):
     poster_path: Optional[str] = None
     vote_average: Optional[float] = None
     overview: Optional[str] = None
+    logo_url: Optional[str] = None

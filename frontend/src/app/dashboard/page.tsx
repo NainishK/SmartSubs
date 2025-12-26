@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import styles from './dashboard.module.css';
 import { useRecommendations } from '@/context/RecommendationsContext';
+import { formatCurrency } from '@/lib/currency';
 
 const SERVICE_DOMAINS: Record<string, string> = {
     'Netflix': 'netflix.com',
@@ -53,26 +54,39 @@ export default function DashboardOverview() {
             setUser(userRes.data);
 
             const subs = subRes.data;
-            const totalCost = subs.reduce((acc: number, sub: any) => acc + sub.cost, 0);
 
-            // Find top service
-            const top = subs.reduce((prev: any, current: any) => (prev.cost > current.cost) ? prev : current, { name: '-', cost: 0 });
+            // Normalize all costs to monthly for accurate stats
+            const normalizedSubs = subs.map((sub: any) => ({
+                ...sub,
+                monthlyCost: sub.billing_cycle === 'yearly' ? sub.cost / 12 : sub.cost
+            }));
+
+            const totalMonthlyCost = normalizedSubs.reduce((acc: number, sub: any) => acc + sub.monthlyCost, 0);
+
+            // Find top service by monthly impact
+            const top = normalizedSubs.reduce((prev: any, current: any) =>
+                (prev.monthlyCost > current.monthlyCost) ? prev : current,
+                { service_name: '-', monthlyCost: 0 }
+            );
 
             setStats({
-                total_cost: totalCost,
+                total_cost: totalMonthlyCost,
                 active_subs: subs.length,
-                yearly_projection: totalCost * 12,
-                top_service: { name: top.service_name, cost: top.cost }
+                yearly_projection: totalMonthlyCost * 12,
+                top_service: {
+                    name: top.service_name,
+                    cost: top.monthlyCost
+                }
             });
 
-            // Calculate Spending Distribution (Top 3 + Others)
-            const sortedSubs = [...subs].sort((a, b) => b.cost - a.cost);
+            // Calculate Spending Distribution (Top 3 + Others) using monthly equivalents
+            const sortedSubs = [...normalizedSubs].sort((a, b) => b.monthlyCost - a.monthlyCost);
             const topSubs = sortedSubs.slice(0, 3);
-            const otherCost = sortedSubs.slice(3).reduce((acc, sub) => acc + sub.cost, 0);
+            const otherCost = sortedSubs.slice(3).reduce((acc, sub) => acc + sub.monthlyCost, 0);
 
             const dist = topSubs.map((sub, index) => ({
                 name: sub.service_name,
-                cost: sub.cost,
+                cost: sub.monthlyCost,
                 color: getServiceColor(index)
             }));
 
@@ -92,9 +106,9 @@ export default function DashboardOverview() {
     };
 
     // Fallback Avatar Component
-    const ServiceIcon = ({ name }: { name: string }) => {
+    const ServiceIcon = ({ name, logoUrl: propLogoUrl }: { name: string, logoUrl?: string }) => {
         const [error, setError] = useState(false);
-        const logoUrl = getServiceLogo(name);
+        const logoUrl = propLogoUrl || getServiceLogo(name);
 
         if (error || !logoUrl) {
             return (
@@ -145,21 +159,21 @@ export default function DashboardOverview() {
             {/* Premium Stats Grid */}
             <div className={styles.statsGrid}>
                 <div className={styles.statCard}>
-                    <span className={styles.statLabel}>Monthly Spend</span>
-                    <p className={styles.statValue}>${stats.total_cost.toFixed(2)}</p>
-                    <span className={styles.statSubtext}>Across {stats.active_subs} services</span>
+                    <span className={styles.statLabel}>Monthly Average</span>
+                    <p className={styles.statValue}>{formatCurrency(stats.total_cost, user?.country || 'US')}</p>
+                    <span className={styles.statSubtext}>Normalized across {stats.active_subs} services</span>
                 </div>
 
                 <div className={styles.statCard}>
                     <span className={styles.statLabel}>Yearly Projection</span>
-                    <p className={styles.statValue}>${stats.yearly_projection.toFixed(2)}</p>
+                    <p className={styles.statValue}>{formatCurrency(stats.yearly_projection, user?.country || 'US')}</p>
                     <span className={styles.statSubtext}>Estimated annual cost</span>
                 </div>
 
                 <div className={styles.statCard}>
                     <span className={styles.statLabel}>Avg. Cost / Sub</span>
                     <p className={styles.statValue}>
-                        ${stats.active_subs > 0 ? (stats.total_cost / stats.active_subs).toFixed(2) : '0.00'}
+                        {formatCurrency(stats.active_subs > 0 ? (stats.total_cost / stats.active_subs) : 0, user?.country || 'US')}
                     </p>
                     <span className={styles.statSubtext}>Per subscription</span>
                 </div>
@@ -168,7 +182,7 @@ export default function DashboardOverview() {
                     <span className={styles.statLabel}>Top Expense</span>
                     <div style={{ marginTop: 'auto' }}>
                         <p className={styles.statValue} style={{ fontSize: '1.5rem', marginBottom: '0.2rem' }}>{stats.top_service.name}</p>
-                        <span className={styles.statSubtext} style={{ color: topServiceColor, fontWeight: 600 }}>${stats.top_service.cost.toFixed(2)} / mo</span>
+                        <span className={styles.statSubtext} style={{ color: topServiceColor, fontWeight: 600 }}>{formatCurrency(stats.top_service.cost, user?.country || 'US')} / mo</span>
                     </div>
                 </div>
             </div>
@@ -185,7 +199,7 @@ export default function DashboardOverview() {
                                 width: `${(item.cost / stats.total_cost) * 100}%`,
                                 backgroundColor: item.color
                             }}
-                            title={`${item.name}: $${item.cost.toFixed(2)}`}
+                            title={`${item.name}: ${formatCurrency(item.cost, user?.country || 'US')}`}
                         />
                     ))}
                 </div>
@@ -209,7 +223,7 @@ export default function DashboardOverview() {
                             <div key={index} className={styles.recCard}>
                                 <div className={styles.recHeader}>
                                     <div className={styles.serviceIdentity}>
-                                        <ServiceIcon name={rec.service_name} />
+                                        <ServiceIcon name={rec.service_name} logoUrl={rec.logo_url} />
                                         <h4 className={styles.serviceName}>{rec.service_name}</h4>
                                     </div>
                                     <span className={styles.badge}>

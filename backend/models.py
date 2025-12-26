@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Float, DateTime, Date
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Float, DateTime, Date, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
@@ -65,11 +65,15 @@ class UserInterest(Base):
 
 class Service(Base):
     __tablename__ = "services"
+    __table_args__ = (
+        UniqueConstraint('name', 'country', name='uix_name_country'),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True)
+    name = Column(String, index=True)
     base_cost = Column(Float)
     logo_url = Column(String, nullable=True)
+    country = Column(String, default="US") # Default region
     
     plans = relationship("Plan", back_populates="service")
 
@@ -92,5 +96,7 @@ class Plan(Base):
     name = Column(String) # Basic, Standard, Premium
     cost = Column(Float)
     currency = Column(String, default="USD")
+    billing_cycle = Column(String, default="monthly") # monthly, yearly
+    country = Column(String, default="US")
     
     service = relationship("Service", back_populates="plans")

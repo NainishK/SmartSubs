@@ -14,7 +14,7 @@ if settings.GEMINI_API_KEY and settings.GEMINI_API_KEY != "YOUR_GEMINI_API_KEY_H
 else:
     logger.warning("GEMINI_API_KEY not set. AI features will be disabled.")
 
-def generate_ai_recommendations(user_history: list, user_ratings: list, active_subs: list):
+def generate_ai_recommendations(user_history: list, user_ratings: list, active_subs: list, country: str = "US"):
     """
     Generates tailored movie/show recommendations using Gemini 1.5 Flash.
     
@@ -22,6 +22,7 @@ def generate_ai_recommendations(user_history: list, user_ratings: list, active_s
         user_history: List of dicts [{"title": "Breaking Bad", "status": "watched"}, ...]
         user_ratings: List of dicts [{"title": "The Bear", "rating": 5}, ...]
         active_subs: List of strings ["Netflix", "Hulu"]
+        country: User's country code (e.g., "US", "IN") for regional availability.
         
     Returns:
         List of 5 recommendations (dict with title, reason, service).
@@ -59,9 +60,10 @@ def generate_ai_recommendations(user_history: list, user_ratings: list, active_s
         subs_text = ", ".join(active_subs)
         
         prompt = f"""
-        Act as an elite movie critic and personal curator. 
-        Analyze the user's taste based on their history and ratings.
-        
+        Act as an elite movie critic and personal curator based in {country}. 
+        Analyze the user's taste based on their history and ratings, but ONLY recommend titles 
+        that are currently available in the {country} region.
+
         User's Watch History:
         {history_text}
         
@@ -69,11 +71,12 @@ def generate_ai_recommendations(user_history: list, user_ratings: list, active_s
         {ratings_text}
         
         User's Active Subscriptions: {subs_text}
+        User's Region: {country}
         
         Task:
-        Recommend 5 "Hidden Gems" or "Perfect Matches" that are distinct from what they have watched.
-        Prioritize movies/shows available on their active subscriptions (User's Subs: {subs_text}).
-        If a show is not on their subs but is a PERFECT match, you can include it but mention the service.
+        Recommend 5 "Hidden Gems" or "Perfect Matches" available in {country} that are distinct from what they have watched.
+        Prioritize movies/shows available on their active subscriptions in {country} (User's Subs: {subs_text}).
+        If a show is not on their subs but is a PERFECT match and available in {country}, you can include it but mention the service.
         
         Output strictly in JSON format:
         [

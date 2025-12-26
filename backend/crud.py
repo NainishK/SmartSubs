@@ -46,6 +46,15 @@ def delete_subscription(db: Session, subscription_id: int, user_id: int):
         db.commit()
     return db_sub
 
+def update_subscription(db: Session, subscription_id: int, subscription: schemas.SubscriptionUpdate, user_id: int):
+    db_sub = db.query(models.Subscription).filter(models.Subscription.id == subscription_id, models.Subscription.user_id == user_id).first()
+    if db_sub:
+        for var, value in subscription.dict(exclude_unset=True).items():
+            setattr(db_sub, var, value)
+        db.commit()
+        db.refresh(db_sub)
+    return db_sub
+
 def get_watchlist(db: Session, user_id: int, skip: int = 0, limit: int = 100):
     return db.query(models.WatchlistItem).filter(models.WatchlistItem.user_id == user_id).offset(skip).limit(limit).all()
 
@@ -153,11 +162,16 @@ def update_watchlist_item_rating(db: Session, item_id: int, user_id: int, rating
         
     return db_item
 
-def get_services(db: Session):
-    return db.query(models.Service).all()
+def get_services(db: Session, country: str = "US"):
+    return db.query(models.Service).filter(
+        models.Service.country == country
+    ).all()
 
-def get_plans(db: Session, service_id: int):
-    return db.query(models.Plan).filter(models.Plan.service_id == service_id).all()
+def get_plans(db: Session, service_id: int, country: str = "US"):
+    return db.query(models.Plan).filter(
+        models.Plan.service_id == service_id,
+        models.Plan.country == country
+    ).all()
 
 def update_user_profile(db: Session, user_id: int, country: str):
     user = db.query(models.User).filter(models.User.id == user_id).first()

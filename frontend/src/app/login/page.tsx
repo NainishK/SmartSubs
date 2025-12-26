@@ -15,18 +15,23 @@ export default function LoginPage() {
         e.preventDefault();
         setError('');
         try {
-            const formData = new FormData();
-            formData.append('username', email);
-            formData.append('password', password);
+            const params = new URLSearchParams();
+            params.append('username', email);
+            params.append('password', password);
 
-            const response = await api.post('/token', formData, {
+            const response = await api.post('/token', params, {
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
             });
 
             localStorage.setItem('token', response.data.access_token);
-            router.push('/dashboard');
-        } catch (err) {
-            setError('Invalid credentials');
+            window.location.href = '/dashboard';
+        } catch (err: any) {
+            console.error('Login error:', err);
+            if (err.response?.status === 401) {
+                setError('Invalid email or password');
+            } else {
+                setError('Login failed. Please check if the server is running.');
+            }
         }
     };
 
