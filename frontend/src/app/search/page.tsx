@@ -42,13 +42,7 @@ export default function SearchPage() {
                 filteredResults = filteredResults.filter((item: MediaItem) => item.media_type === mediaType);
             }
 
-            // Sort by rating (vote_average) in descending order to show highly rated items first
-            filteredResults.sort((a: MediaItem, b: MediaItem) => {
-                const ratingA = a.vote_average || 0;
-                const ratingB = b.vote_average || 0;
-                return ratingB - ratingA;
-            });
-
+            // Backend now returns pre-sorted results by relevance score
             setResults(filteredResults);
             if (filteredResults.length === 0) {
                 setSearchError('No results found. Try a different search or filter.');

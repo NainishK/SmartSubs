@@ -40,7 +40,18 @@ def search_multi(query: str):
             response = requests.get(url, params=params, timeout=10)
             response.raise_for_status()
             data = response.json()
-            return data
+            
+            # Simple filtering: just remove person results
+            results = data.get("results", [])
+            filtered_results = [
+                r for r in results
+                if r.get("media_type") in ["movie", "tv"]  # Exclude person results only
+            ]
+            
+            # Sort by popularity to show most relevant results first
+            filtered_results.sort(key=lambda x: x.get("popularity", 0), reverse=True)
+            
+            return {"results": filtered_results}
         except requests.exceptions.RequestException as e:
             # Retry on all request errors (connection, timeout, 5xx, 429)
             # Check for 429 Too Many Requests specifically to wait longer?

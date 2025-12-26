@@ -149,6 +149,9 @@ def calculate_dashboard_recommendations(db: Session, user_id: int):
             ((models.Service.country == user_country) | (models.Service.country == "US"))
         ).order_by(models.Service.country == user_country).first()
         return service.logo_url if service else None
+    
+    # Initialize recommendations list
+    recommendations = []
 
     # A. "Watch Now" - Show items available on current subscriptions
     service_watch_list = {} # { "Netflix": ["Breaking Bad", "Stranger Things"] }
