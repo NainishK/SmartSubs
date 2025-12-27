@@ -1,23 +1,31 @@
-.container {
+.starContainer {
     display: flex;
     gap: 2px;
+    align-items: center;
 }
 
-.star {
-    font-size: 1.2rem;
-    color: #444;
-    cursor: default;
-    transition: color 0.1s;
-}
-
-.star.filled {
-    color: #ffd700;
-}
-
-.editable {
+.starWrapper {
     cursor: pointer;
+    transition: transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.editable:hover {
-    transform: scale(1.1);
+.starWrapper:hover:not(.readonly) {
+    transform: scale(1.2);
+}
+
+.starFilled {
+    color: #fbbf24;
+    /* Amber 400 */
+}
+
+.starEmpty {
+    color: #e5e7eb;
+    /* Gray 200 */
+}
+
+.readonly {
+    cursor: default;
 }

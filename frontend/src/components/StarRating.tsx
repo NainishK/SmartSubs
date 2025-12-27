@@ -1,37 +1,56 @@
 import React, { useState } from 'react';
+import { Star } from 'lucide-react';
 import styles from './StarRating.module.css';
 
 interface StarRatingProps {
-    rating: number; // 1-10 (but we show 5 stars)
-    onRate: (rating: number) => void;
-    editable?: boolean;
+    rating: number; // 0-10
+    onRatingChange?: (rating: number) => void;
+    readonly?: boolean;
+    size?: number;
 }
 
-const StarRating: React.FC<StarRatingProps> = ({ rating, onRate, editable = false }) => {
-    const [hoverRating, setHoverRating] = useState(0);
+export default function StarRating({ rating, onRatingChange, readonly = false, size = 16 }: StarRatingProps) {
+    const [hoverRating, setHoverRating] = useState<number | null>(null);
 
-    const displayRating = hoverRating || Math.round(rating / 2); // Map 10 -> 5
+    // Convert 1-10 scale to 1-5 stars for display
+    const displayRating = Math.round(rating / 2);
 
-    const handleClick = (star: number) => {
-        if (!editable) return;
-        onRate(star * 2); // Map 5 -> 10
+    const handleMouseEnter = (index: number) => {
+        if (!readonly) {
+            setHoverRating(index);
+        }
+    };
+
+    const handleMouseLeave = () => {
+        setHoverRating(null);
+    };
+
+    const handleClick = (index: number) => {
+        if (!readonly && onRatingChange) {
+            onRatingChange(index * 2);
+        }
     };
 
     return (
-        <div className={styles.container}>
-            {[1, 2, 3, 4, 5].map((star) => (
-                <span
-                    key={star}
-                    className={`${styles.star} ${star <= displayRating ? styles.filled : ''} ${editable ? styles.editable : ''}`}
-                    onMouseEnter={() => editable && setHoverRating(star)}
-                    onMouseLeave={() => editable && setHoverRating(0)}
-                    onClick={() => handleClick(star)}
-                >
-                    ★
-                </span>
-            ))}
+        <div className={styles.starContainer} onMouseLeave={handleMouseLeave}>
+            {[1, 2, 3, 4, 5].map((index) => {
+                const isFilled = (hoverRating !== null ? hoverRating : displayRating) >= index;
+
+                return (
+                    <div
+                        key={index}
+                        className={`${styles.starWrapper} ${readonly ? styles.readonly : ''}`}
+                        onMouseEnter={() => handleMouseEnter(index)}
+                        onClick={() => handleClick(index)}
+                    >
+                        <Star
+                            size={size}
+                            className={isFilled ? styles.starFilled : styles.starEmpty}
+                            fill={isFilled ? "#fbbf24" : "none"}
+                        />
+                    </div>
+                );
+            })}
         </div>
     );
-};
-
-export default StarRating;
+}

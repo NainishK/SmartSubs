@@ -187,9 +187,10 @@ export default function MediaCard({
                     </h3>
 
                     {/* Rating UI - Only show if in watchlist (existingStatus is set) */}
-                    {existingStatus && (
+                    {/* Rating UI - Only show if in watchlist (existingStatus is set) AND not plan_to_watch */}
+                    {(existingStatus && status !== 'plan_to_watch') && (
                         <div style={{ marginBottom: '0.75rem' }}>
-                            <StarRating rating={userRating} onRate={handleRate} editable={true} />
+                            <StarRating rating={userRating} onRatingChange={handleRate} />
                         </div>
                     )}
 

@@ -173,15 +173,20 @@
 
 .statusSelect {
     width: 100%;
-    padding: 0.6rem;
+    padding: 0.6rem 1.6rem 0.6rem 0.8rem;
+    /* Extra right padding for arrow */
     border: 1px solid #e5e7eb;
     border-radius: 8px;
-    font-size: 0.875rem;
+    font-size: 0.825rem;
+    /* Slightly smaller font to fit text */
     color: #374151;
     background: #f9fafb;
     cursor: pointer;
     transition: all 0.2s;
     appearance: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .statusSelect:hover {

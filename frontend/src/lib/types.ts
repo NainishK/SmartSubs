@@ -24,7 +24,7 @@ export interface WatchlistItem {
 }
 
 export interface Recommendation {
-    type: 'watch_now' | 'cancel' | 'subscribe' | 'similar_content';
+    type: 'watch_now' | 'cancel' | 'subscribe' | 'similar_content' | 'trending';
     service_name: string;
     logo_url?: string;
     items: string[];

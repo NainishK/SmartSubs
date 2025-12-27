@@ -189,10 +189,10 @@ def get_similar_recommendations(db: Session = Depends(get_db), current_user: mod
     return recommendations.get_similar_content(db, user_id=current_user.id)
 
 @app.post("/recommendations/refresh")
-def refresh_recommendations_endpoint(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+def refresh_recommendations_endpoint(type: str = None, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
     """Force refresh recommendations synchronously"""
     import recommendations
-    recommendations.refresh_recommendations(db, user_id=current_user.id, force=True)
+    recommendations.refresh_recommendations(db, user_id=current_user.id, force=True, category=type)
     return {"message": "Recommendations refreshed"}
 
 @app.get("/recommendations/ai", response_model=list[schemas.AIRecommendation])

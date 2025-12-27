@@ -6,7 +6,10 @@ import styles from './recommendations.module.css';
 import { Recommendation } from '@/lib/types';
 import MediaCard, { MediaItem } from '@/components/MediaCard';
 import { useRecommendations } from '@/context/RecommendationsContext';
-import { Sparkles, PlayCircle, AlertTriangle, Search, Lightbulb, RefreshCw, XCircle } from 'lucide-react';
+import { PlayCircle, Lightbulb, TrendingUp, Sparkles, RefreshCw, XCircle, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ServiceIcon } from '@/components/ServiceIcon';
+
+const TRENDING_VISIBLE = 4;
 
 export default function RecommendationsPage() {
     const {
@@ -14,7 +17,8 @@ export default function RecommendationsPage() {
         similarRecs,
         loadingDashboard,
         loadingSimilar,
-        refreshRecommendations
+        refreshRecommendations,
+        fetchSimilarData: fetchSimilarRecs
     } = useRecommendations();
 
     const [watchlist, setWatchlist] = useState<Array<{ id: number; tmdb_id: number; status: string; user_rating?: number }>>([]);
@@ -22,6 +26,7 @@ export default function RecommendationsPage() {
     const [aiRecs, setAiRecs] = useState<any[]>([]);
     const [loadingAi, setLoadingAi] = useState(false);
     const [aiError, setAiError] = useState<string | null>(null);
+    const [trendingIndex, setTrendingIndex] = useState(0);
 
     useEffect(() => {
         fetchWatchlist();
@@ -73,10 +78,28 @@ export default function RecommendationsPage() {
         }
     };
 
+    const handleNextTrending = () => {
+        setTrendingIndex(prev =>
+            prev + TRENDING_VISIBLE < trendingRecs.length ? prev + 1 : prev
+        );
+    };
+
+    const handlePrevTrending = () => {
+        setTrendingIndex(prev => prev > 0 ? prev - 1 : 0);
+    };
+
     const handleRefresh = async () => {
         setRefreshing(true);
-        await refreshRecommendations();
-        setRefreshing(false);
+        try {
+            // Only refresh similar content
+            await api.post('/recommendations/refresh?type=similar');
+            // Only fetch similar recs
+            await fetchSimilarRecs();
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setRefreshing(false);
+        }
     };
 
     const handleQuickWatch = (itemName: string, serviceName: string) => {
@@ -84,7 +107,7 @@ export default function RecommendationsPage() {
         window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
     };
 
-    const watchNowRecs = dashboardRecs.filter(r => r.type === 'watch_now');
+    const trendingRecs = dashboardRecs.filter(r => r.type === 'trending');
     const cancelRecs = dashboardRecs.filter(r => r.type === 'cancel' && r.service_name !== 'YouTube Premium');
 
     if (loadingDashboard && dashboardRecs.length === 0) return (
@@ -99,33 +122,68 @@ export default function RecommendationsPage() {
                 <h1 className={styles.pageTitle}>Smart Recommendations</h1>
             </div>
 
-            {/* Watch Now Section */}
-            {watchNowRecs.length > 0 && (
+            {/* Trending Section - Carousel */}
+            {trendingRecs.length > 0 && (
                 <section className={styles.section}>
                     <div className={styles.sectionHeader}>
-                        <h2 className={styles.sectionTitle} style={{ color: '#16a34a' }}>
-                            <PlayCircle className={styles.sectionIcon} /> Watch Now
+                        <h2 className={styles.sectionTitle} style={{ color: '#ec4899' }}>
+                            <PlayCircle className={styles.sectionIcon} /> Trending on Your Services
                         </h2>
+                        {/* Carousel Controls */}
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button
+                                onClick={handlePrevTrending}
+                                disabled={trendingIndex === 0}
+                                className={styles.carouselBtn}
+                                style={{
+                                    padding: '8px',
+                                    borderRadius: '50%',
+                                    border: '1px solid #ddd',
+                                    background: 'white',
+                                    color: '#111827',
+                                    cursor: trendingIndex === 0 ? 'default' : 'pointer',
+                                    opacity: trendingIndex === 0 ? 0.3 : 1
+                                }}
+                            >
+                                <ChevronLeft size={20} />
+                            </button>
+                            <button
+                                onClick={handleNextTrending}
+                                disabled={trendingIndex + TRENDING_VISIBLE >= trendingRecs.length}
+                                className={styles.carouselBtn}
+                                style={{
+                                    padding: '8px',
+                                    borderRadius: '50%',
+                                    border: '1px solid #ddd',
+                                    background: 'white',
+                                    color: '#111827',
+                                    cursor: trendingIndex + TRENDING_VISIBLE >= trendingRecs.length ? 'default' : 'pointer',
+                                    opacity: trendingIndex + TRENDING_VISIBLE >= trendingRecs.length ? 0.3 : 1
+                                }}
+                            >
+                                <ChevronRight size={20} />
+                            </button>
+                        </div>
                     </div>
                     <div className={styles.grid}>
-                        {watchNowRecs.map((rec, index) => (
-                            <div key={index} className={styles.recCard} style={{ cursor: 'default' }}>
-                                <div className={styles.cardHeader}>
-                                    <span className={styles.serviceName}>{rec.service_name}</span>
-                                    <span className={`${styles.badge} ${styles.badgeGreen}`}>Included</span>
-                                </div>
-                                <div className={styles.cardTags}>
-                                    {rec.items.map((item, i) => (
-                                        <button
-                                            key={i}
-                                            className={styles.searchTag}
-                                            onClick={() => handleQuickWatch(item, rec.service_name)}
-                                            title={`Search where to watch ${item}`}
-                                        >
-                                            {item} <Search size={12} />
-                                        </button>
-                                    ))}
-                                </div>
+                        {trendingRecs.slice(trendingIndex, trendingIndex + TRENDING_VISIBLE).map((rec, index) => (
+                            <div key={`${trendingIndex}-${index}`} className={styles.recommendationItem}>
+
+
+                                <MediaCard
+                                    item={{
+                                        id: rec.tmdb_id || index,
+                                        title: rec.items[0],
+                                        overview: rec.overview || '',
+                                        poster_path: rec.poster_path || '',
+                                        vote_average: rec.vote_average || 0,
+                                        media_type: rec.media_type || 'movie',
+                                        user_rating: 0,
+                                        status: 'plan_to_watch'
+                                    }}
+                                    showServiceBadge={rec.service_name}
+                                    customBadgeColor="#db2777"
+                                />
                             </div>
                         ))}
                     </div>
@@ -142,7 +200,7 @@ export default function RecommendationsPage() {
                     </div>
                     <div className={styles.grid}>
                         {cancelRecs.map((rec, index) => (
-                            <div key={index} className={styles.recCard} style={{ cursor: 'default' }}>
+                            <div key={index} className={styles.recommendationItem} style={{ cursor: 'default' }}>
                                 <div className={styles.cardHeader}>
                                     <span className={styles.serviceName}>{rec.service_name}</span>
                                     <span className={`${styles.badge} ${styles.badgeRed}`}>Save ${rec.savings}</span>
@@ -231,7 +289,7 @@ export default function RecommendationsPage() {
             </section>
 
             {/* Similar Content Section */}
-            <section className={styles.section}>
+            <section className={styles.section} style={{ opacity: refreshing ? 0.6 : 1, transition: 'opacity 0.2s' }}>
                 <div className={styles.sectionHeader}>
                     <h2 className={styles.sectionTitle} style={{ color: '#2563eb' }}>
                         <Lightbulb className={styles.sectionIcon} /> You Might Like
@@ -242,7 +300,7 @@ export default function RecommendationsPage() {
                         className={styles.refreshBtn}
                     >
                         <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
-                        Refresh
+                        {refreshing ? 'Refreshing...' : 'Refresh'}
                     </button>
                 </div>
 
@@ -278,7 +336,7 @@ export default function RecommendationsPage() {
                     </div>
                 ) : (
                     <div className={styles.emptyState}>
-                        No similar content found based on your watched items. Try adding more to your watchlist!
+                        No recommendations found. Try adding more items to your watchlist!
                     </div>
                 )}
             </section>

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 import models
 import tmdb_client
+import random
 
 # Estimated costs for common services (since TMDB doesn't provide this)
 PROVIDER_COSTS = {
@@ -24,17 +25,7 @@ def get_cached_data(db: Session, user_id: int, category: str):
     ).first()
     
     if cache_entry:
-        # Check freshness (e.g., 24 hours)
-        # Note: SQLite stores datetime as string or naive datetime depending on driver, 
-        # but SQLAlchemy handles conversion if defined correctly.
-        # Assuming updated_at is timezone aware or naive UTC.
-        # Let's just check if it exists for now, or add a simple time check.
-        # For simplicity in this iteration, we trust the background refresh to keep it updated.
-        # But let's add a 24h check just in case.
         if cache_entry.updated_at:
-             # Ensure we're comparing compatible datetimes (offset-naive vs aware)
-             # This can be tricky with SQLite. Let's rely on the background refresh to update it.
-             # If data exists, return it.
              try:
                  return json.loads(cache_entry.data)
              except:
@@ -51,7 +42,6 @@ def set_cached_data(db: Session, user_id: int, category: str, data: list):
     
     if cache_entry:
         cache_entry.data = json_data
-        # updated_at updates automatically via onupdate
     else:
         cache_entry = models.RecommendationCache(
             user_id=user_id,
@@ -62,46 +52,53 @@ def set_cached_data(db: Session, user_id: int, category: str, data: list):
     
     db.commit()
 
-def refresh_recommendations(db: Session, user_id: int, force: bool = False):
+def refresh_recommendations(db: Session, user_id: int, force: bool = False, category: str = None):
     """
     Background task to re-calculate and cache all recommendations.
     If force is False, only refreshes if cache is missing or older than 24 hours.
+    category: 'dashboard' or 'similar' (None = both)
     """
-    print(f"--- [REFRESH] Checking recommendations for user {user_id} (force={force}) ---")
+    print(f"--- [REFRESH] Checking recommendations for user {user_id} (force={force}, cat={category}) ---")
     try:
-        # Check if we need to refresh
-        if not force:
-            cache_entry = db.query(models.RecommendationCache).filter(
-                models.RecommendationCache.user_id == user_id,
-                models.RecommendationCache.category == "dashboard"
-            ).first()
+        # 1. Refresh Dashboard (Trending/Watch Now)
+        if category in [None, "dashboard"]:
+            should_refresh = force
+            if not force:
+                cache_entry = db.query(models.RecommendationCache).filter(
+                    models.RecommendationCache.user_id == user_id,
+                    models.RecommendationCache.category == "dashboard"
+                ).first()
+                if not cache_entry or not cache_entry.updated_at or \
+                   (datetime.now(cache_entry.updated_at.tzinfo) - cache_entry.updated_at > timedelta(hours=24)):
+                    should_refresh = True
             
-            if cache_entry and cache_entry.updated_at:
-                last_updated = cache_entry.updated_at
-                age = datetime.now(last_updated.tzinfo) - last_updated
-                if age < timedelta(hours=24):
-                    print(f"[REFRESH] Cache is fresh ({age}), skipping.")
-                    return
+            if should_refresh:
+                print(f"[REFRESH] Recalculating Dashboard for user {user_id}...")
+                dashboard_recs = calculate_dashboard_recommendations(db, user_id)
+                set_cached_data(db, user_id, "dashboard", dashboard_recs)
 
-        print(f"[REFRESH] Starting full recalculation for user {user_id}...")
-
-        # 1. Calculate Dashboard Recs
-        dashboard_recs = calculate_dashboard_recommendations(db, user_id)
-        print(f"[REFRESH] Dashboard recs calculated: {len(dashboard_recs)} items found.")
-        set_cached_data(db, user_id, "dashboard", dashboard_recs)
-        
-        # 2. Calculate Similar Recs
-        similar_recs = calculate_similar_content(db, user_id)
-        print(f"[REFRESH] Similar recs calculated: {len(similar_recs)} items found.")
-        set_cached_data(db, user_id, "similar", similar_recs)
+        # 2. Refresh Similar Content
+        if category in [None, "similar"]:
+            should_refresh = force
+            if not force:
+                cache_entry = db.query(models.RecommendationCache).filter(
+                    models.RecommendationCache.user_id == user_id,
+                    models.RecommendationCache.category == "similar"
+                ).first()
+                if not cache_entry or not cache_entry.updated_at or \
+                   (datetime.now(cache_entry.updated_at.tzinfo) - cache_entry.updated_at > timedelta(hours=24)):
+                    should_refresh = True
+            
+            if should_refresh:
+                print(f"[REFRESH] Recalculating Similar Content for user {user_id}...")
+                similar_recs = calculate_similar_content(db, user_id)
+                set_cached_data(db, user_id, "similar", similar_recs)
         
         print(f"--- [REFRESH] Completed for user {user_id} ---")
     except Exception as e:
         print(f"[REFRESH] FATAL ERROR: {e}")
         import traceback
         traceback.print_exc()
-    finally:
-        db.close()
 
 def get_dashboard_recommendations(db: Session, user_id: int):
     """
@@ -115,10 +112,6 @@ def get_dashboard_recommendations(db: Session, user_id: int):
     # Calculate
     recs = calculate_dashboard_recommendations(db, user_id)
     
-    # Only cache if valid results or if genuinely empty (handled by refresh check?)
-    # If network failed, recs might be empty but we don't want to cache that for 24h.
-    # Simple heuristic: If empty, don't cache it? Or cache for short time?
-    # Let's say: If empty, we don't cache it, so next load tries again.
     if recs:
         set_cached_data(db, user_id, "dashboard", recs)
         
@@ -131,6 +124,11 @@ def calculate_dashboard_recommendations(db: Session, user_id: int):
 
     # 1. Get User's Watchlist (Filter out 'watched' - only show actionable items)
     watchlist_query = db.query(models.WatchlistItem).filter(models.WatchlistItem.user_id == user_id).all()
+    # IDs to exclude from recommendations (everything the user has interacted with)
+    exclude_ids = {item.tmdb_id for item in watchlist_query}
+    
+    # Active watchlist for "Your Watchlist" section logic (if needed, though dashboard mainly uses this for filtering too? No, wait)
+    # Actually, we should exclude everything in watchlist_query from being recommended again.
     watchlist = [item for item in watchlist_query if item.status in ['plan_to_watch', 'watching']]
     
     # 2. Get User's Active OTT Subscriptions
@@ -154,36 +152,54 @@ def calculate_dashboard_recommendations(db: Session, user_id: int):
     # Initialize recommendations list
     recommendations = []
 
-    # A. "Watch Now" - Show items available on current subscriptions
-    service_watch_list = {} # { "Netflix": ["Breaking Bad", "Stranger Things"] }
+    # A. "Watch Now" - Show items available on current subscriptions (Deduplicated)
+    service_watch_list = {} 
     useful_subscriptions = set()
-    
+    seen_items = set() # Track items to prevent duplicates across services
+
+    # Initialize lists for all services
+    for sub in subscriptions:
+        service_watch_list[sub.service_name] = []
+
+    # Process items
     for item in watchlist:
+        if item.title in seen_items:
+            continue
+            
         providers = tmdb_client.get_watch_providers(item.media_type, item.tmdb_id, region=country)
         if "flatrate" in providers:
+            potential_services = []
+            
+            # Find all valid services for this item
             for provider in providers["flatrate"]:
                 p_name = provider["provider_name"]
                 for sub in subscriptions:
                     sub_name = sub.service_name.lower()
                     if sub_name in p_name.lower() or p_name.lower() in sub_name:
-                        useful_subscriptions.add(sub.id)
-                        if sub.service_name not in service_watch_list:
-                            service_watch_list[sub.service_name] = []
-                        if item.title not in service_watch_list[sub.service_name]:
-                            service_watch_list[sub.service_name].append(item.title)
-        
+                        potential_services.append(sub)
+            
+            if potential_services:
+                # Load Balancing Strategy:
+                # Assign to the service that currently has the FEWEST items
+                target_sub = min(potential_services, key=lambda s: len(service_watch_list[s.service_name]))
+                
+                useful_subscriptions.add(target_sub.id)
+                service_watch_list[target_sub.service_name].append(item.title)
+                seen_items.add(item.title)
+
     # Add "Watch Now" recommendations
     for service_name, items in service_watch_list.items():
-        recommendations.append({
-            "type": "watch_now",
-            "service_name": service_name,
-            "logo_url": get_service_logo(service_name, country),
-            "items": items,
-            "reason": f"Available on your subscription",
-            "cost": 0,
-            "savings": 0,
-            "score": 100 + len(items)
-        })
+        if items:
+            recommendations.append({
+                "type": "watch_now",
+                "service_name": service_name,
+                "logo_url": get_service_logo(service_name, country),
+                "items": items[:5], # Limit to 5
+                "reason": f"Included in your {service_name} subscription",
+                "cost": 0,
+                "savings": 0,
+                "score": 100 + len(items)
+            })
 
     # B. "Cancel Unused" - Suggest cancelling subscriptions that cover NO watchlist items
     for sub in subscriptions:
@@ -198,12 +214,137 @@ def calculate_dashboard_recommendations(db: Session, user_id: int):
                 "savings": sub.cost,
                 "score": 50 + sub.cost
             })
+
+    # C. "Trending" - Popular items on your services
+    # Map subscription IDs for efficient discovery
+    PROVIDER_IDS_MAP = {
+        "netflix": "8",
+        "hulu": "15", 
+        "amazon prime video": "9",
+        "disney plus": "337",
+        "max": "384|312",
+        "peacock": "386",
+        "apple tv plus": "350",
+        "paramount plus": "83|531",
+        "crunchyroll": "283"
+    }
+    
+    valid_provider_ids = set()
+    for sub in subscriptions:
+        key = sub.service_name.lower()
+        if key in PROVIDER_IDS_MAP:
+            valid_provider_ids.add(PROVIDER_IDS_MAP[key])
+        else:
+            for k, v in PROVIDER_IDS_MAP.items():
+                if k in key or key in k:
+                    valid_provider_ids.add(v)
+                    
+    provider_string = "|".join(valid_provider_ids) if valid_provider_ids else None
+    
+    trending_recs = []
+    if provider_string:
+        try:
+            # Fetch Movies
+            data_movies = tmdb_client.discover_media(
+                "movie",
+                sort_by="popularity.desc",
+                min_vote_count=500,
+                with_watch_providers=provider_string,
+                watch_region=country
+            )
+            movies = data_movies.get("results", [])[:20]
+            
+            # Fetch TV Shows
+            data_tv = tmdb_client.discover_media(
+                "tv",
+                sort_by="popularity.desc",
+                min_vote_count=500,
+                with_watch_providers=provider_string,
+                watch_region=country
+            )
+            shows = data_tv.get("results", [])[:20]
+            
+            # Interleave (Movie, TV, Movie, TV)
+            combined_candidates = []
+            for i in range(max(len(movies), len(shows))):
+                if i < len(movies): combined_candidates.append({**movies[i], "media_type": "movie"})
+                if i < len(shows): combined_candidates.append({**shows[i], "media_type": "tv"})
+            
+            print(f"[DEBUG] Trending candidates pool size: {len(combined_candidates)}")
+            
+            count = 0 
+            seen_trending_titles = set()
+            
+            for item in combined_candidates:
+                if count >= 15: break
+                tmdb_id = item.get("id")
+                title = item.get("title") or item.get("name") # Handle TV name
+                
+                if tmdb_id in exclude_ids: continue
+                if title in seen_trending_titles: continue
+
+                # Find which service has it
+                providers = tmdb_client.get_watch_providers(item.get("media_type"), tmdb_id, region=country)
+                matched_sub = None
+                
+                # Shuffle subscriptions to avoid favoring the first one (e.g. Netflix) for multi-platform content
+                import random
+                shuffled_subs = list(subscriptions)
+                random.shuffle(shuffled_subs)
+                
+                if "flatrate" in providers:
+                    flatrate_ids = [str(p["provider_id"]) for p in providers["flatrate"]]
+                    for sub in shuffled_subs:
+                        # Normalize service name for mapping
+                        s_name = sub.service_name.lower().replace(" ", "")
+                        
+                        # Check distinct mapping first
+                        mapped_ids = []
+                        for key, val in PROVIDER_IDS_MAP.items():
+                            if key.replace(" ", "") in s_name:
+                                mapped_ids = val.split("|")
+                                break
+                        
+                        if any(pid in flatrate_ids for pid in mapped_ids):
+                            matched_sub = sub.service_name
+                            break
+                
+                if matched_sub:
+                    recommendations.append({
+                        "type": "trending",
+                        "service_name": matched_sub,
+                        "logo_url": get_service_logo(matched_sub, country),
+                        "items": [title],
+                        "reason": f"Trending", # Simplified reason
+                        "cost": 0,
+                        "savings": 0,
+                        "score": 95 + (item.get("popularity", 0) / 100),
+                        "tmdb_id": tmdb_id,
+                        "media_type": item.get("media_type"),
+                        "poster_path": item.get("poster_path"),
+                        "vote_average": item.get("vote_average"),
+                        "overview": item.get("overview")
+                    })
+                    seen_trending_titles.add(title)
+                    count += 1
+        except Exception as e:
+            print(f"Error fetching trending: {e}")
+            
+        except Exception as e:
+            print(f"Error fetching trending: {e}")
             
     # Sort by Score
     recommendations.sort(key=lambda x: x["score"], reverse=True)
     return recommendations
 
 def get_similar_content(db: Session, user_id: int):
+    # ... logic ...
+    # (Leaving get_similar_content signature line in targeting to ensure match)
+    
+    # Need to target the END of get_similar_content for the limit change
+    # I'll do this in a separate chunk or just target the return line if possible.
+    # Actually, the file content of get_similar_content was seen previously ending with return unique_candidates[:6]
+    pass # Replaced by actual edit in next tool call or finding better range.
     """
     Slow recommendations: Similar content based on watched history.
     Tries cache first, then calculates if missing.
@@ -219,8 +360,6 @@ def get_similar_content(db: Session, user_id: int):
         set_cached_data(db, user_id, "similar", recs)
         
     return recs
-
-import random
 
 def calculate_similar_content(db: Session, user_id: int):
     # 0. Get User Context (Country)
@@ -252,7 +391,6 @@ def calculate_similar_content(db: Session, user_id: int):
     
     # FALLBACK: If no explicit interests, derive from Watchlist or Default
     if not interests:
-        import json
         from collections import Counter
         
         # Gather all genres from watchlist
@@ -268,7 +406,6 @@ def calculate_similar_content(db: Session, user_id: int):
         # If we found genres, use top 2
         if genre_counter:
             top_genes = genre_counter.most_common(2) # [(id, count), ...]
-            # Create mock interest objects
             class MockInterest:
                 def __init__(self, gid): self.genre_id = gid
             interests = [MockInterest(g[0]) for g in top_genes]
@@ -324,12 +461,11 @@ def calculate_similar_content(db: Session, user_id: int):
         
         count = 0
         for item in items:
-            if count >= 6: break # Increased limit to ensure we fill slots
+            if count >= 6: break 
             tmdb_id = item.get("id")
             if tmdb_id in recommended_ids: continue
             if any(w.tmdb_id == tmdb_id for w in watchlist): continue
             
-            # Since we filtered by provider, we know it's on ONE of them. 
             providers = tmdb_client.get_watch_providers("movie", tmdb_id, region=country)
             matched_sub = None
             if "flatrate" in providers:
@@ -365,9 +501,8 @@ def calculate_similar_content(db: Session, user_id: int):
             min_vote_average=7.0,
             watch_region=country
         )
-        items_explore = data_explore.get("results", [])[:15] # More diversity for calculating best service
+        items_explore = data_explore.get("results", [])[:15]
         
-        # We don't limit here instantly. We collect candidates first.
         for item in items_explore:
             tmdb_id = item.get("id")
             if tmdb_id in recommended_ids: continue
@@ -380,7 +515,6 @@ def calculate_similar_content(db: Session, user_id: int):
             if "flatrate" in providers:
                 for p in providers["flatrate"]:
                     p_name = p["provider_name"]
-                    # Check if user has it
                     for sub in subscriptions:
                         if sub.service_name.lower() in p_name.lower():
                             on_existing = True
@@ -393,7 +527,6 @@ def calculate_similar_content(db: Session, user_id: int):
                          break
             
             if not on_existing and external_service:
-                # Store candidate for clustering
                 explore_recs.append({
                     "type": "discovery_explore",
                     "service_name": external_service,
@@ -407,7 +540,6 @@ def calculate_similar_content(db: Session, user_id: int):
                     "vote_average": item.get("vote_average"),
                     "overview": item.get("overview")
                 })
-                # Don't add to recommended_ids yet, as we filter later
 
     # --- Strategy B: Similar Content ---
     seeds = []
@@ -420,7 +552,7 @@ def calculate_similar_content(db: Session, user_id: int):
     
     similar_recs = []
     for seed in top_seeds:
-        if len(similar_recs) >= 6: break # Increased limit
+        if len(similar_recs) >= 6: break
         
         sim_data = tmdb_client.get_similar(seed.media_type, seed.tmdb_id)
         candidates = [c for c in sim_data.get("results", []) if c.get("vote_average", 0) >= 6.0]
@@ -458,14 +590,15 @@ def calculate_similar_content(db: Session, user_id: int):
                 recommended_ids.add(sim_id)
                 break 
 
+                recommended_ids.add(sim_id)
+                break 
+
     # --- Clustering Explore Recs ---
-    # Group by service
     service_counts = {}
     for r in explore_recs:
         s = r["service_name"]
         service_counts[s] = service_counts.get(s, 0) + 1
         
-    # Find best service (most items)
     best_external_service = None
     if service_counts:
         best_external_service = max(service_counts, key=service_counts.get)
@@ -473,27 +606,15 @@ def calculate_similar_content(db: Session, user_id: int):
     final_explore = []
     if best_external_service:
         final_explore = [r for r in explore_recs if r["service_name"] == best_external_service][:2]
-        # Mark as used
         for r in final_explore:
             recommended_ids.add(r["tmdb_id"])
 
-    # Combine: Prioritize Available/Similar over Explore, but ensure total is 6
+    # Combine
     current_pool = available_recs + similar_recs
     random.shuffle(current_pool)
     
-    # Target: 6 items.
-    # Mix: If we have Explore items, include up to 2.
-    # But if we have 6 Available, user says "fine with showing all 6 included".
-    # User also said "split was just example... if you dont have 2 good recommendations [external]... fill them".
-    
-    # Plan: Take All Available + All Explore (Best Service).
-    # Then Pick Top 6 (by Score or Shuffle).
-    # Score logic: Available (90+) > Explore (88+) > Similar (75+).
-    # This naturally prioritizes available discovery.
-    
     all_candidates = current_pool + final_explore
     
-    # Remove duplicates (just in case) based on tmdb_id
     unique_candidates = []
     seen = set()
     for c in all_candidates:
@@ -501,10 +622,6 @@ def calculate_similar_content(db: Session, user_id: int):
             unique_candidates.append(c)
             seen.add(c["tmdb_id"])
             
-    # Sort by score or shuffle? User wants "New suggestions".
-    # Shuffle gives variety. Score gives quality.
-    # Let's Shuffle, but maybe weighting high score?
-    # Simple Shuffle is best for variety.
     random.shuffle(unique_candidates)
     
-    return unique_candidates[:6]
+    return unique_candidates[:8]

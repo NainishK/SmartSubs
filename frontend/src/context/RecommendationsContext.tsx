@@ -10,6 +10,7 @@ interface RecommendationsContextType {
     loadingDashboard: boolean;
     loadingSimilar: boolean;
     refreshRecommendations: () => Promise<void>;
+    fetchSimilarData: () => Promise<void>;
     lastUpdated: Date | null;
 }
 
@@ -86,6 +87,7 @@ export function RecommendationsProvider({ children }: { children: ReactNode }) {
             loadingDashboard,
             loadingSimilar,
             refreshRecommendations,
+            fetchSimilarData,
             lastUpdated
         }}>
             {children}

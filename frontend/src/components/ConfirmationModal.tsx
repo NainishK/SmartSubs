@@ -1,45 +1,74 @@
-'use client';
-
-import styles from './ConfirmationModal.module.css';
+import React from 'react';
 
 interface ConfirmationModalProps {
     isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
     title: string;
     message: React.ReactNode;
     confirmLabel?: string;
-    cancelLabel?: string;
-    onConfirm: () => void;
-    onCancel: () => void;
+    onCancel?: () => void;
     isDangerous?: boolean;
 }
 
-export default function ConfirmationModal({
-    isOpen,
-    title,
-    message,
-    confirmLabel = 'Confirm',
-    cancelLabel = 'Cancel',
-    onConfirm,
-    onCancel,
-    isDangerous = true
-}: ConfirmationModalProps) {
+export default function ConfirmationModal({ isOpen, onClose, onConfirm, title, message, confirmLabel = "Logout", onCancel, isDangerous = false }: ConfirmationModalProps) {
     if (!isOpen) return null;
 
     return (
-        <div className={styles.overlay} onClick={onCancel}>
-            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-                <h2 className={styles.title}>{title}</h2>
-                <div className={styles.message}>{message}</div>
-                <div className={styles.actions}>
-                    <button className={styles.cancelBtn} onClick={onCancel}>
-                        {cancelLabel}
+        <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            backdropFilter: 'blur(4px)'
+        }}>
+            <div style={{
+                background: 'white',
+                padding: '2rem',
+                borderRadius: '16px',
+                width: '400px',
+                maxWidth: '90%',
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+                border: '1px solid #f3f4f6'
+            }}>
+                <h3 style={{ marginTop: 0, fontSize: '1.25rem', fontWeight: 600, color: '#111827' }}>{title}</h3>
+                <p style={{ color: '#6b7280', marginBottom: '2rem', lineHeight: 1.5 }}>{message}</p>
+
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                    <button
+                        onClick={onClose}
+                        style={{
+                            padding: '0.6rem 1.2rem',
+                            borderRadius: '8px',
+                            border: '1px solid #e5e7eb',
+                            background: 'white',
+                            color: '#374151',
+                            cursor: 'pointer',
+                            fontWeight: 500
+                        }}
+                    >
+                        Cancel
                     </button>
                     <button
-                        className={styles.confirmBtn}
                         onClick={onConfirm}
-                        style={!isDangerous ? { background: '#2563eb' } : undefined}
+                        style={{
+                            padding: '0.6rem 1.2rem',
+                            borderRadius: '8px',
+                            border: 'none',
+                            background: '#ef4444',
+                            color: 'white',
+                            cursor: 'pointer',
+                            fontWeight: 500,
+                            boxShadow: '0 4px 6px -1px rgba(239, 68, 68, 0.2)'
+                        }}
                     >
-                        {confirmLabel}
+                        Logout
                     </button>
                 </div>
             </div>

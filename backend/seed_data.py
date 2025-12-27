@@ -1,3 +1,11 @@
+import sys
+import os
+
+# Create a path to the backend directory
+current_dir = os.path.dirname(os.path.abspath(__file__))
+backend_dir = current_dir  # Should be the backend folder itself since script is in backend/
+sys.path.append(backend_dir)
+
 from sqlalchemy.orm import Session
 from database import SessionLocal, engine
 import models
@@ -211,6 +219,28 @@ def seed_data():
                 "plans": [
                     {"name": "Plus", "cost": 11.99, "currency": "USD", "country": "US", "billing_cycle": "monthly"},
                     {"name": "Essentials", "cost": 22.00, "currency": "USD", "country": "US", "billing_cycle": "monthly"}
+                ]
+            },
+            {
+                "name": "Crunchyroll",
+                "country": "US",
+                "domain": "crunchyroll.com",
+                "category": "OTT",
+                "plans": [
+                    {"name": "Fan", "cost": 7.99, "currency": "USD", "country": "US", "billing_cycle": "monthly"},
+                    {"name": "Mega Fan", "cost": 9.99, "currency": "USD", "country": "US", "billing_cycle": "monthly"},
+                    {"name": "Ultimate Fan", "cost": 14.99, "currency": "USD", "country": "US", "billing_cycle": "monthly"}
+                ]
+            },
+            {
+                "name": "Crunchyroll",
+                "country": "IN",
+                "domain": "crunchyroll.com",
+                "category": "OTT",
+                "plans": [
+                    {"name": "Fan", "cost": 79, "currency": "INR", "country": "IN", "billing_cycle": "monthly"},
+                    {"name": "Mega Fan", "cost": 99, "currency": "INR", "country": "IN", "billing_cycle": "monthly"},
+                    {"name": "Annual Mega Fan", "cost": 999, "currency": "INR", "country": "IN", "billing_cycle": "yearly"}
                 ]
             }
         ]

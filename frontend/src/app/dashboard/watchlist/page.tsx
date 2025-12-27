@@ -37,7 +37,7 @@ export default function WatchlistPage() {
                 poster_path: item.poster_path,
                 vote_average: item.vote_average,
                 overview: item.overview,
-                user_rating: item.rating,
+                user_rating: item.user_rating,
                 status: item.status
             }));
             setItems(transformed);
@@ -176,6 +176,7 @@ export default function WatchlistPage() {
             {/* Modals */}
             <ConfirmationModal
                 isOpen={!!itemToRemove}
+                onClose={() => setItemToRemove(null)}
                 title={`Remove ${itemToRemove?.title || itemToRemove?.name}?`}
                 message={
                     <span>

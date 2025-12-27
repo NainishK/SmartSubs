@@ -74,7 +74,7 @@ def generate_ai_recommendations(user_history: list, user_ratings: list, active_s
         User's Region: {country}
         
         Task:
-        Recommend 5 "Hidden Gems" or "Perfect Matches" available in {country} that are distinct from what they have watched.
+        Recommend 8 "Hidden Gems" or "Perfect Matches" available in {country} that are distinct from what they have watched.
         Prioritize movies/shows available on their active subscriptions in {country} (User's Subs: {subs_text}).
         If a show is not on their subs but is a PERFECT match and available in {country}, you can include it but mention the service.
         
