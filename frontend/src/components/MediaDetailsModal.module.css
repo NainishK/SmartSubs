@@ -1,0 +1,255 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 2rem;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.modal {
+    background: white;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow-y: auto;
+    /* Default mobile behavior: whole card scrolls */
+    position: relative;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+.closeButton {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: rgba(0, 0, 0, 0.1);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.2s;
+    color: #1a1a1a;
+}
+
+.closeButton:hover {
+    background: rgba(0, 0, 0, 0.2);
+    transform: rotate(90deg);
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+}
+
+@media (min-width: 768px) {
+    .modal {
+        overflow-y: hidden;
+        /* Desktop: card frame fixed, inner content scrolls */
+    }
+
+    .content {
+        flex-direction: row;
+        height: 525px;
+        /* Matches 2/3 ratio approx */
+    }
+}
+
+.posterSide {
+    width: 100%;
+    aspect-ratio: 2/3;
+    max-height: 400px;
+    flex-shrink: 0;
+    background: #f0f0f0;
+    position: relative;
+    margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+    .posterSide {
+        width: auto;
+        /* Let aspect ratio define width */
+        height: 100%;
+        max-height: none;
+        margin: 0;
+    }
+}
+
+.posterImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    /* Ensure faces aren't cut off */
+}
+
+.infoSide {
+    padding: 2.5rem;
+    flex: 1;
+    overflow-y: visible;
+    /* Default mobile: expands with content */
+    display: flex;
+    flex-direction: column;
+}
+
+@media (min-width: 768px) {
+    .infoSide {
+        overflow-y: auto;
+        /* Desktop: independent scrolling pane */
+    }
+}
+
+.header {
+    margin-bottom: 1.5rem;
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #111827;
+    line-height: 1.1;
+    margin: 0 0 0.5rem 0;
+}
+
+.metaRow {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: #6b7280;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.year {
+    font-weight: 600;
+}
+
+.dot {
+    width: 4px;
+    height: 4px;
+    background: #d1d5db;
+    border-radius: 50%;
+}
+
+.rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #f59e0b;
+    font-weight: 700;
+}
+
+.genres {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.genreTag {
+    background: #f3f4f6;
+    color: #4b5563;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.sectionTitle {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #9ca3af;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+}
+
+.synopsis {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #374151;
+    margin-bottom: 2rem;
+}
+
+.providersSection {
+    background: #f9fafb;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-top: auto;
+    border: 1px solid #e5e7eb;
+}
+
+.providersList {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.provider {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    width: 60px;
+}
+
+.providerLogo {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.providerName {
+    font-size: 0.7rem;
+    text-align: center;
+    color: #4b5563;
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.noProviders {
+    color: #6b7280;
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

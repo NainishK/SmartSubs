@@ -239,6 +239,18 @@ def read_plans(service_id: int, db: Session = Depends(get_db), current_user: mod
 def update_user_me(country: str, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
     return crud.update_user_profile(db, user_id=current_user.id, country=country)
 
+@app.get("/media/{media_type}/{tmdb_id}/providers")
+def get_media_providers(media_type: str, tmdb_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    """Fetch watch providers for a specific media item based on user's country"""
+    import tmdb_client
+    return tmdb_client.get_watch_providers(media_type, tmdb_id, region=current_user.country)
+
+@app.get("/media/{media_type}/{tmdb_id}/details")
+def get_media_details(media_type: str, tmdb_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    """Fetch full details for a specific media item"""
+    import tmdb_client
+    return tmdb_client.get_details(media_type, tmdb_id)
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}

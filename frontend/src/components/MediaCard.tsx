@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import styles from './MediaCard.module.css';
-
+import { Trash2, Plus, Check, Star, Tv, Film, Sparkles, ChevronDown } from 'lucide-react';
 import StarRating from './StarRating';
+import MediaDetailsModal from './MediaDetailsModal';
 
 export interface MediaItem {
     id: number; // TMDB ID (usually)
@@ -17,6 +18,7 @@ export interface MediaItem {
     vote_average?: number;
     genre_ids?: number[]; // From Search
     user_rating?: number; // From DB (Watchlist)
+    status?: string; // Watchlist status
 }
 
 interface MediaCardProps {
@@ -48,6 +50,7 @@ export default function MediaCard({
     const [adding, setAdding] = useState(false);
     const [added, setAdded] = useState(false);
     const [error, setError] = useState('');
+    const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
         if (existingStatus) {
@@ -100,30 +103,6 @@ export default function MediaCard({
         // Optimistic update
         setUserRating(rating);
         try {
-            // Need endpoint PUT /watchlist/{id}/rating
-            // But wait, we need the DB ID (`item.id` might be TMDB ID if from Search)
-            // If existingStatus is present, we assume `item.id` matches the watchlist logic?
-            // Actually, for Watchlist items, `item.id` is usually the TMDB ID in the frontend model if using `tmdb_id`.
-            // Let's check WatchlistPage. It passes `item` from `watchlist` response.
-            // `watchlist` response usually has `id` (DB ID) and `tmdb_id`.
-            // Frontend interface `MediaItem` has `id`.
-            // If from WatchlistPage, `id` is DB ID? No, looking at models, `WatchlistItem` has `id`.
-            // Looking at `WatchlistPage.tsx` (from memory/previous view), it maps data.
-            // If `item.id` is TMDB ID, we need to find the DB ID to update rating?
-            // Or the endpoint should support TMDB ID?
-
-            // To be safe, if we are in Watchlist mode (onRemove present), we assume we can rate.
-            // But we need the DB ID.
-            // Assuming `onStatusChange` might handle it or we call API directly.
-            // Let's call API. Assuming `item.id` is passed correctly from WatchlistPage as DB ID?
-            // NO. Watchlist items usually have `tmdb_id` as the main ID for display consistency with Search?
-            // Let's verify `WatchlistPage` mapping.
-
-            // For now, assume endpoint accepts TMDB ID or we pass DB ID separately?
-            // "item" has "id". In Search, it's TMDB ID.
-            // In WatchlistPage, it maps response.
-
-            // Let's use `api.put(`/watchlist/${item.id}/rating`, { rating })`.
             await api.put(`/watchlist/${dbId}/rating`, { rating });
             onStatusChange?.(status, rating);
         } catch (e) {
@@ -138,148 +117,152 @@ export default function MediaCard({
         onStatusChange?.(newStatus);
     };
 
-    const getStatusLabel = (status: string) => {
-        switch (status) {
-            case 'plan_to_watch': return 'Plan to Watch';
-            case 'watching': return 'Watching';
-            case 'watched': return 'Watched';
-            default: return status;
-        }
-    };
-
     const tmdbLink = `https://www.themoviedb.org/${item.media_type}/${item.id}`;
+    const posterUrl = item.poster_path
+        ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+        : null;
 
     // Toggle state for AI Reason vs Plot
     const [showPlot, setShowPlot] = useState(false);
 
     // Determine what text to show in the body
-    let displayValues = {
-        text: item.overview,
-        isAi: false
-    };
-
-    if (aiReason && !showPlot) {
-        displayValues = {
-            text: `"${aiReason}"`,
-            isAi: true
-        };
-    } else if (item.overview) {
-        // Fallback or Plot mode
-        displayValues = {
-            text: item.overview.length > 150 ? `${item.overview.substring(0, 150)}...` : item.overview,
-            isAi: false
-        };
-    } else {
-        displayValues.text = 'No synopsis available.';
-    }
+    const isAiMode = aiReason && !showPlot;
+    const displayText = isAiMode
+        ? `"${aiReason}"`
+        : item.overview
+            ? (item.overview.length > 150 ? `${item.overview.substring(0, 150)}...` : item.overview)
+            : 'No synopsis available.';
 
     return (
-        <div className={styles.card}>
-            <div className={styles.header}>
-                <h3>
-                    <a href={tmdbLink} target="_blank" rel="noopener noreferrer" className={styles.titleLink}>
-                        {item.title || item.name}
-                    </a>
-                </h3>
-                {item.vote_average && (
-                    <span className={styles.rating}>{item.vote_average.toFixed(1)}</span>
-                )}
-            </div>
+        <>
+            <div className={styles.card}>
+                {/* Poster Section (Image First) */}
+                <div
+                    className={styles.posterContainer}
+                    onClick={() => setShowModal(true)}
+                    style={{ cursor: 'pointer' }}
+                >
+                    {posterUrl ? (
+                        <img src={posterUrl} alt={item.title || item.name} className={styles.posterImage} />
+                    ) : (
+                        <div style={{ width: '100%', height: '100%', background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
+                            <Film size={32} strokeWidth={1.5} />
+                        </div>
+                    )}
 
-            <div className={styles.meta}>
-                <span className={`${styles.type} ${item.media_type === 'tv' ? styles.typeTv : styles.typeMovie}`}>
-                    {item.media_type === 'tv' ? 'TV Series' : 'Movie'}
-                </span>
-                {showServiceBadge && (
-                    <span
-                        className={styles.serviceBadge}
-                        style={customBadgeColor ? { backgroundColor: '#f3e5f5', color: customBadgeColor, border: `1px solid ${customBadgeColor}40` } : {}}
-                    >
-                        {showServiceBadge}
-                    </span>
-                )}
-            </div>
+                    {/* Overlays */}
+                    <div className={styles.posterOverlay}>
+                        {/* Add rating interaction here in future? For now, just visual */}
+                    </div>
 
-            {!hideOverview && (
-                <div style={{ position: 'relative' }}>
-                    <p
-                        className={styles.overview}
-                        style={displayValues.isAi ? {
-                            fontStyle: 'italic',
-                            color: '#4a148c',
-                            backgroundColor: '#f3e5f5',
-                            padding: '0.5rem',
-                            borderRadius: '4px',
-                            borderLeft: '3px solid #8e24aa'
-                        } : {}}
-                    >
-                        {displayValues.text}
-                    </p>
+                    <div className={styles.topBadges}>
+                        <span className={`${styles.typeBadge} ${item.media_type === 'tv' ? styles.typeTv : styles.typeMovie}`}>
+                            {item.media_type === 'tv' ? <Tv size={12} /> : <Film size={12} />}
+                            {item.media_type === 'tv' ? 'TV' : 'Movie'}
+                        </span>
+                    </div>
 
-                    {/* Toggle Button for AI Cards */}
-                    {aiReason && (
-                        <button
-                            onClick={(e) => { e.preventDefault(); setShowPlot(!showPlot); }}
-                            style={{
-                                background: 'transparent',
-                                border: 'none',
-                                color: '#1976d2',
-                                fontSize: '0.75rem',
-                                cursor: 'pointer',
-                                padding: 0,
-                                marginTop: '0.2rem',
-                                textDecoration: 'underline'
-                            }}
-                        >
-                            {showPlot ? "Show AI Insight ✨" : "Show Summary 📝"}
-                        </button>
+                    {item.vote_average && (
+                        <span className={styles.ratingBadge}>
+                            <Star size={12} fill="currentColor" />
+                            {item.vote_average.toFixed(1)}
+                        </span>
+                    )}
+
+                    {showServiceBadge && (
+                        <div className={styles.serviceBadge}>
+                            <Check size={12} /> {showServiceBadge}
+                        </div>
                     )}
                 </div>
-            )}
 
-            {/* Rating UI - Only show if in watchlist (existingStatus is set) */}
-            {existingStatus && (
-                <div className={styles.userRating}>
-                    <StarRating rating={userRating} onRate={handleRate} editable={true} />
-                </div>
-            )}
-
-            {existingStatus && !onRemove && (
-                <div className={styles.alreadyAddedBadge}>
-                    In {getStatusLabel(existingStatus)}
-                </div>
-            )}
-
-            <div className={styles.actions}>
-                <select
-                    value={status}
-                    onChange={handleStatusChange}
-                    className={styles.statusSelect}
-                    disabled={added || (existingStatus !== undefined && !onStatusChange)}
-                >
-                    <option value="plan_to_watch">Plan to Watch</option>
-                    <option value="watching">Watching</option>
-                    <option value="watched">Watched</option>
-                </select>
-
-                {onRemove ? (
-                    <button
-                        onClick={onRemove}
-                        className={styles.removeButton}
+                {/* Content Section */}
+                <div className={styles.content}>
+                    <h3
+                        className={styles.title}
+                        onClick={() => setShowModal(true)}
+                        style={{ cursor: 'pointer' }}
                     >
-                        Remove
-                    </button>
-                ) : (
-                    <button
-                        onClick={addToWatchlist}
-                        className={`${styles.addButton} ${added ? styles.addedButton : ''} ${existingStatus ? styles.alreadyAddedButton : ''}`}
-                        disabled={adding || added || existingStatus !== undefined}
-                    >
-                        {existingStatus ? 'Added' : adding ? 'Adding...' : added ? 'Added' : 'Add to Watchlist'}
-                    </button>
-                )}
+                        {item.title || item.name}
+                    </h3>
+
+                    {/* Rating UI - Only show if in watchlist (existingStatus is set) */}
+                    {existingStatus && (
+                        <div style={{ marginBottom: '0.75rem' }}>
+                            <StarRating rating={userRating} onRate={handleRate} editable={true} />
+                        </div>
+                    )}
+
+                    {!hideOverview && (
+                        <>
+                            <p
+                                className={`${styles.overview} ${isAiMode ? styles.aiOverview : ''}`}
+                                onClick={() => setShowModal(true)}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                {isAiMode && <Sparkles size={14} style={{ marginRight: 6, display: 'inline', verticalAlign: 'middle' }} />}
+                                {displayText}
+                            </p>
+
+                            {aiReason && (
+                                <button className={styles.toggleBtn} onClick={(e) => { e.preventDefault(); setShowPlot(!showPlot); }}>
+                                    {showPlot ? <><Sparkles size={12} /> Show AI Insight</> : "Show Plot Summary"}
+                                </button>
+                            )}
+                        </>
+                    )}
+
+                    {/* Actions */}
+                    <div className={styles.actions}>
+                        <div className={styles.statusSelectWrapper}>
+                            <select
+                                value={status}
+                                onChange={handleStatusChange}
+                                className={styles.statusSelect}
+                                disabled={added || (existingStatus !== undefined && !onStatusChange)}
+                            >
+                                <option value="plan_to_watch">Plan to Watch</option>
+                                <option value="watching">Watching</option>
+                                <option value="watched">Watched</option>
+                            </select>
+                            <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#6b7280' }} />
+                        </div>
+
+                        {onRemove ? (
+                            <button
+                                onClick={onRemove}
+                                className={`${styles.actionBtn} ${styles.btnRemove}`}
+                                title="Remove from Watchlist"
+                            >
+                                <Trash2 size={16} />
+                            </button>
+                        ) : (
+                            <button
+                                onClick={addToWatchlist}
+                                className={`${styles.actionBtn} ${styles.btnPrimary}`}
+                                disabled={adding || added || existingStatus !== undefined}
+                            >
+                                {existingStatus ? <Check size={16} /> : added ? <Check size={16} /> : <Plus size={16} />}
+                                {(!existingStatus && !added) && 'Add'}
+                            </button>
+                        )}
+                    </div>
+                    {error && <p className={styles.errorText}>{error}</p>}
+                </div>
             </div>
-            {error && <p className={styles.errorText}>{error}</p>}
-        </div>
+
+            <MediaDetailsModal
+                visible={showModal}
+                onClose={() => setShowModal(false)}
+                mediaType={item.media_type}
+                tmdbId={item.id}
+                initialData={{
+                    title: item.title || item.name || '',
+                    poster_path: item.poster_path,
+                    overview: item.overview,
+                    vote_average: item.vote_average
+                }}
+            />
+        </>
     );
 }
