@@ -126,6 +126,7 @@
     margin: 0 0 0.5rem 0;
     line-height: 1.4;
     display: -webkit-box;
+    line-clamp: 1;
     -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
@@ -137,6 +138,7 @@
     line-height: 1.5;
     margin-bottom: 1rem;
     display: -webkit-box;
+    line-clamp: 3;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
@@ -151,6 +153,9 @@
     border-radius: 4px;
     font-size: 0.85rem;
     font-style: italic;
+    line-clamp: unset !important;
+    -webkit-line-clamp: unset !important;
+    display: block !important;
 }
 
 /* Actions Section */
@@ -187,7 +192,7 @@
 .statusSelect:focus {
     outline: none;
     border-color: #3b82f6;
-    ring: 2px solid rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
 .actionBtn {

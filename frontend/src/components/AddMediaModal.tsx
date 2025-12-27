@@ -156,6 +156,7 @@ export default function AddMediaModal({ isOpen, onClose, onAddSuccess, existingI
 
                         return (
                             <div
+                                key={item.id}
                                 className={`${styles.resultItem} ${isDropdownOpen ? styles.resultItemActive : ''}`}
                                 onClick={() => handleExpand(item.id)}
                             >

@@ -259,43 +259,55 @@ export default function SubscriptionsPage() {
 
             <div className={styles.content}>
                 <div className={styles.leftColumn}>
-                    <div className={styles.subGrid}>
-                        {subscriptions.map((sub) => (
-                            <div key={sub.id} className={styles.subCard}>
-                                <div className={styles.subHeader}>
-                                    <div className={styles.serviceIdentity}>
-                                        <ServiceIcon name={sub.service_name} logoUrl={sub.logo_url} />
-                                        <h3 className={styles.serviceName}>{sub.service_name}</h3>
+                    {subscriptions.length === 0 ? (
+                        <div className={styles.emptyStateContainer}>
+                            <div className={styles.emptyIcon}>
+                                <DollarSign size={48} />
+                            </div>
+                            <h2 className={styles.emptyTitle}>No subscriptions yet</h2>
+                            <p className={styles.emptySubtitle}>
+                                Start tracking your monthly recurring expenses by adding your first subscription service using the form.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className={styles.subGrid}>
+                            {subscriptions.map((sub) => (
+                                <div key={sub.id} className={styles.subCard}>
+                                    <div className={styles.subHeader}>
+                                        <div className={styles.serviceIdentity}>
+                                            <ServiceIcon name={sub.service_name} logoUrl={sub.logo_url} />
+                                            <h3 className={styles.serviceName}>{sub.service_name}</h3>
+                                        </div>
+                                        <span className={styles.statusBadge}>Active</span>
                                     </div>
-                                    <span className={styles.statusBadge}>Active</span>
-                                </div>
 
-                                <div className={styles.subBody}>
-                                    <div className={styles.costSection}>
-                                        <p className={styles.costValue}>{formatCurrency(sub.cost, userCountry)}</p>
-                                        <span className={styles.billingPeriod}>per {sub.billing_cycle === 'monthly' ? 'month' : 'year'}</span>
-                                    </div>
+                                    <div className={styles.subBody}>
+                                        <div className={styles.costSection}>
+                                            <p className={styles.costValue}>{formatCurrency(sub.cost, userCountry)}</p>
+                                            <span className={styles.billingPeriod}>per {sub.billing_cycle === 'monthly' ? 'month' : 'year'}</span>
+                                        </div>
 
-                                    <div className={styles.billingDetail}>
-                                        <div className={styles.detailItem}>
-                                            <span className={styles.detailLabel}>Next Bill</span>
-                                            <span className={styles.detailValue}>{new Date(sub.next_billing_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                        <div className={styles.billingDetail}>
+                                            <div className={styles.detailItem}>
+                                                <span className={styles.detailLabel}>Next Bill</span>
+                                                <span className={styles.detailValue}>{new Date(sub.next_billing_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className={styles.subFooter}>
-                                    <button onClick={() => handleEditClick(sub)} className={styles.editBtn}>
-                                        <Edit2 size={14} />
-                                        Edit
-                                    </button>
-                                    <button onClick={() => openDeleteModal(sub)} className={styles.deleteBtn}>
-                                        Cancel
-                                    </button>
+                                    <div className={styles.subFooter}>
+                                        <button onClick={() => handleEditClick(sub)} className={styles.editBtn}>
+                                            <Edit2 size={14} />
+                                            Edit
+                                        </button>
+                                        <button onClick={() => openDeleteModal(sub)} className={styles.deleteBtn}>
+                                            Cancel
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 <div className={styles.rightColumn}>

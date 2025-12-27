@@ -1,10 +1,10 @@
-/* Login Page Styles - Premium Glassmorphism */
+/* Settings Page Styles - Premium Glassmorphism */
 .container {
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    /* Mesh Gradient Background */
+    /* Mesh Gradient Background (Consistent with Login) */
     background-color: #0f172a;
     background-image:
         radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
@@ -32,17 +32,14 @@
 
 .glassCard {
     background: rgba(255, 255, 255, 0.95);
-    /* Slightly more opaque for better contrast */
     padding: 3rem;
     border-radius: 24px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     border: 1px solid rgba(255, 255, 255, 0.2);
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
     width: 100%;
-    max-width: 420px;
-    align-items: center;
+    max-width: 600px;
     transform: translateY(0);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -52,16 +49,13 @@
     box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.3);
 }
 
-.brandHeader {
-    text-align: center;
-    margin-bottom: 0.5rem;
-}
-
-.logoIcon {
-    font-size: 3rem;
-    margin-bottom: 0.5rem;
-    display: block;
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .title {
@@ -72,28 +66,40 @@
     letter-spacing: -1px;
 }
 
-.subtitle {
-    font-size: 0.95rem;
+.backLink {
     color: #64748b;
-    margin-top: 0.5rem;
-    font-weight: 500;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.form {
+.backLink:hover {
+    color: #334155;
+}
+
+.formSection {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
-    width: 100%;
+    gap: 1.5rem;
 }
 
 .inputGroup {
-    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.5rem;
 }
 
-.input {
+.label {
+    font-weight: 600;
+    color: #334155;
+    font-size: 0.95rem;
+}
+
+.select {
     width: 100%;
     padding: 1rem 1.25rem;
     border: 2px solid #e2e8f0;
@@ -103,38 +109,30 @@
     transition: all 0.2s ease;
     color: #334155;
     outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1.25rem center;
+    background-size: 1rem;
 }
 
-.input:focus {
+.select:focus {
     border-color: #6366f1;
-    /* Indigo focus */
-    background: white;
+    background-color: white;
     box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
-.input::placeholder {
-    color: #94a3b8;
-}
-
-.forgotPassword {
-    align-self: flex-end;
+.helperText {
     font-size: 0.85rem;
-    color: #6366f1;
-    text-decoration: none;
-    font-weight: 600;
-    transition: color 0.2s;
+    color: #64748b;
+    margin: 0;
 }
 
-.forgotPassword:hover {
-    color: #4f46e5;
-    text-decoration: underline;
-}
-
-.button {
-    margin-top: 0.5rem;
+.saveButton {
+    margin-top: 1rem;
     padding: 1rem;
     background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-    /* Indigo gradient */
     color: white;
     border: none;
     border-radius: 12px;
@@ -143,77 +141,44 @@
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
-    position: relative;
-    overflow: hidden;
 }
 
-.button:hover {
+.saveButton:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);
     background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
 }
 
-.button:active {
-    transform: translateY(0);
+.message {
+    padding: 1rem;
+    border-radius: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    animation: slideIn 0.3s ease;
 }
 
-.button:disabled {
-    opacity: 0.7;
-    cursor: wait;
-    transform: none;
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.registerLink {
-    text-align: center;
-    font-size: 0.9rem;
-    color: #64748b;
-    margin-top: 0.5rem;
+.messageSuccess {
+    background-color: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
 }
 
-.registerLink a {
-    color: #6366f1;
-    font-weight: 700;
-    text-decoration: none;
-    margin-left: 0.25rem;
-    transition: color 0.2s;
-}
-
-.registerLink a:hover {
-    color: #4f46e5;
-    text-decoration: underline;
-}
-
-.error {
-    background: #fee2e2;
+.messageError {
+    background-color: #fef2f2;
     color: #dc2626;
-    padding: 0.75rem;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    text-align: center;
-    border: 1px solid #fca5a5;
-    animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-}
-
-@keyframes shake {
-
-    10%,
-    90% {
-        transform: translate3d(-1px, 0, 0);
-    }
-
-    20%,
-    80% {
-        transform: translate3d(2px, 0, 0);
-    }
-
-    30%,
-    50%,
-    70% {
-        transform: translate3d(-4px, 0, 0);
-    }
-
-    40%,
-    60% {
-        transform: translate3d(4px, 0, 0);
-    }
+    border: 1px solid #fecaca;
 }

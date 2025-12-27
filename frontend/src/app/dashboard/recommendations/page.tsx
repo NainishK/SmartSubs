@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
-import styles from '../dashboard.module.css';
+import styles from './recommendations.module.css';
 import { Recommendation } from '@/lib/types';
 import MediaCard, { MediaItem } from '@/components/MediaCard';
 import { useRecommendations } from '@/context/RecommendationsContext';
+import { Sparkles, PlayCircle, AlertTriangle, Search, Lightbulb, RefreshCw, XCircle } from 'lucide-react';
 
 export default function RecommendationsPage() {
     const {
@@ -78,242 +79,209 @@ export default function RecommendationsPage() {
         setRefreshing(false);
     };
 
-    const watchNowRecs = dashboardRecs.filter(r => r.type === 'watch_now');
-    const cancelRecs = dashboardRecs.filter(r => r.type === 'cancel');
+    const handleQuickWatch = (itemName: string, serviceName: string) => {
+        const query = `Watch ${itemName} on ${serviceName}`;
+        window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+    };
 
-    if (loadingDashboard && dashboardRecs.length === 0) return <div className={styles.loading}>Loading...</div>;
+    const watchNowRecs = dashboardRecs.filter(r => r.type === 'watch_now');
+    const cancelRecs = dashboardRecs.filter(r => r.type === 'cancel' && r.service_name !== 'YouTube Premium');
+
+    if (loadingDashboard && dashboardRecs.length === 0) return (
+        <div className={styles.container}>
+            <div className={styles.emptyState}>Loading recommendations...</div>
+        </div>
+    );
 
     return (
         <div className={styles.container}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <h1 className={styles.pageTitle} style={{ marginBottom: 0 }}>Smart Recommendations</h1>
+            <div className={styles.header}>
+                <h1 className={styles.pageTitle}>Smart Recommendations</h1>
             </div>
 
-            <div className={styles.content}>
-                <div className={styles.leftColumn} style={{ width: '100%' }}>
-                    <section className={styles.listSection}>
-                        {dashboardRecs.length === 0 && !loadingSimilar && similarRecs.length === 0 && (
-                            <p style={{ color: '#666', fontStyle: 'italic' }}>No recommendations yet. Add more items to your watchlist!</p>
-                        )}
-
-                        {/* Watch Now Section */}
-                        {watchNowRecs.length > 0 && (
-                            <div className={styles.recGroup}>
-                                <h3 className={styles.recGroupTitle} style={{ color: '#2e7d32' }}>
-                                    ✅ Watch Now
-                                </h3>
-                                <div className={styles.recGrid}>
-                                    {watchNowRecs.map((rec, index) => (
-                                        <div key={index} className={`${styles.recCard} ${styles.recCardGreen}`}>
-                                            <div className={styles.recHeader}>
-                                                <h4>{rec.service_name}</h4>
-                                                <span className={styles.badge}>Included</span>
-                                            </div>
-                                            <p className={styles.recReason}>{rec.reason}</p>
-                                            <div className={styles.recTags}>
-                                                {rec.items.map((item, i) => (
-                                                    <span key={i} className={styles.tag}>{item}</span>
-                                                ))}
-                                            </div>
-                                        </div>
+            {/* Watch Now Section */}
+            {watchNowRecs.length > 0 && (
+                <section className={styles.section}>
+                    <div className={styles.sectionHeader}>
+                        <h2 className={styles.sectionTitle} style={{ color: '#16a34a' }}>
+                            <PlayCircle className={styles.sectionIcon} /> Watch Now
+                        </h2>
+                    </div>
+                    <div className={styles.grid}>
+                        {watchNowRecs.map((rec, index) => (
+                            <div key={index} className={styles.recCard} style={{ cursor: 'default' }}>
+                                <div className={styles.cardHeader}>
+                                    <span className={styles.serviceName}>{rec.service_name}</span>
+                                    <span className={`${styles.badge} ${styles.badgeGreen}`}>Included</span>
+                                </div>
+                                <div className={styles.cardTags}>
+                                    {rec.items.map((item, i) => (
+                                        <button
+                                            key={i}
+                                            className={styles.searchTag}
+                                            onClick={() => handleQuickWatch(item, rec.service_name)}
+                                            title={`Search where to watch ${item}`}
+                                        >
+                                            {item} <Search size={12} />
+                                        </button>
                                     ))}
                                 </div>
                             </div>
-                        )}
+                        ))}
+                    </div>
+                </section>
+            )}
 
-                        {/* Cancel Section - MOVED UP */}
-                        {cancelRecs.length > 0 && (
-                            <div className={styles.recGroup} style={{ marginTop: '1.5rem', marginBottom: '2.5rem' }}>
-                                <h3 className={styles.recGroupTitle} style={{ color: '#c62828' }}>
-                                    ⚠️ Unused Subscriptions
-                                </h3>
-                                <div className={styles.recGrid}>
-                                    {cancelRecs.map((rec, index) => (
-                                        <div key={index} className={`${styles.recCard} ${styles.recCardRed}`}>
-                                            <div className={styles.recHeader}>
-                                                <h4>{rec.service_name}</h4>
-                                                <span className={styles.savingsBadge}>Save ${rec.savings}</span>
-                                            </div>
-                                            <p className={styles.recReason}>{rec.reason}</p>
-                                        </div>
-                                    ))}
+            {/* Unused Subscriptions */}
+            {cancelRecs.length > 0 && (
+                <section className={styles.section}>
+                    <div className={styles.sectionHeader}>
+                        <h2 className={styles.sectionTitle} style={{ color: '#dc2626' }}>
+                            <AlertTriangle className={styles.sectionIcon} /> Unused Subscriptions
+                        </h2>
+                    </div>
+                    <div className={styles.grid}>
+                        {cancelRecs.map((rec, index) => (
+                            <div key={index} className={styles.recCard} style={{ cursor: 'default' }}>
+                                <div className={styles.cardHeader}>
+                                    <span className={styles.serviceName}>{rec.service_name}</span>
+                                    <span className={`${styles.badge} ${styles.badgeRed}`}>Save ${rec.savings}</span>
                                 </div>
+                                <p className={styles.cardReason} style={{ marginBottom: 0 }}>{rec.reason}</p>
                             </div>
-                        )}
+                        ))}
+                    </div>
+                </section>
+            )}
 
-                        {/* AI Curator Section */}
-                        <div className={styles.recGroup} style={{ marginTop: '2.5rem', border: '1px solid #e0e0e0', padding: '1.5rem', borderRadius: '12px', background: 'linear-gradient(to right, #f8f9fa, #ffffff)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <h3 className={styles.recGroupTitle} style={{ color: '#6a1b9a', marginBottom: 0 }}>
-                                        🤖 AI Curator Picks
-                                    </h3>
-                                    <span style={{ fontSize: '0.7rem', backgroundColor: '#e1bee7', color: '#4a148c', padding: '2px 6px', borderRadius: '4px' }}>BETA</span>
-                                </div>
-                                <button
-                                    onClick={handleGenerateAI}
-                                    disabled={loadingAi}
-                                    style={{
-                                        padding: '0.5rem 1rem',
-                                        backgroundColor: loadingAi ? '#9c27b0' : '#8e24aa',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '6px',
-                                        cursor: loadingAi ? 'wait' : 'pointer',
-                                        opacity: loadingAi ? 0.7 : 1,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.4rem',
-                                        fontWeight: 500,
-                                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                                    }}
-                                >
-                                    {loadingAi ? 'Creating...' : '✨ Generate AI Picks'}
-                                </button>
-                            </div>
-
-                            {/* Intro Text */}
-                            {aiRecs.length === 0 && !loadingAi && !aiError && (
-                                <p style={{ color: '#666', fontSize: '0.95rem', lineHeight: '1.5' }}>
-                                    Want deeper insights? Our AI Curator analyzes your entire watch history and tastes to find
-                                    hidden gems available on your subscriptions. Click "Generate" to start.
-                                </p>
-                            )}
-
-                            {/* Error State */}
-                            {aiError && (
-                                <div style={{ padding: '1rem', backgroundColor: '#ffebee', color: '#c62828', borderRadius: '6px', marginBottom: '1rem' }}>
-                                    {aiError}
-                                </div>
-                            )}
-
-                            {/* Loading State */}
-                            {loadingAi && (
-                                <div style={{ padding: '2rem', textAlign: 'center', color: '#6a1b9a' }}>
-                                    <p>Thinking...</p>
-                                    <p style={{ fontSize: '0.8rem', color: '#888' }}>Analyzing your history to find perfect matches.</p>
-                                </div>
-                            )}
-
-                            {/* Results Grid - UNIFIED GRID STYLE */}
-                            {aiRecs.length > 0 && (
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
-                                    {aiRecs.map((rec, index) => {
-                                        // map AI response to MediaCard Item (only if we have an ID)
-                                        if (!rec.tmdb_id) {
-                                            // Fallback for failed enrichment (text only)
-                                            return (
-                                                <div key={index} className={`${styles.recCard}`} style={{ borderLeft: '4px solid #8e24aa' }}>
-                                                    <div className={styles.recHeader} style={{ marginBottom: '0.5rem' }}>
-                                                        <h4 style={{ fontSize: '1.1rem', color: '#333' }}>{rec.title}</h4>
-                                                        <span className={styles.badge} style={{ backgroundColor: '#f3e5f5', color: '#8e24aa' }}>{rec.service}</span>
-                                                    </div>
-                                                    <p className={styles.recReason} style={{ fontSize: '0.95rem', fontStyle: 'italic', color: '#555' }}>"{rec.reason}"</p>
-                                                </div>
-                                            );
-                                        }
-
-                                        const existingItem = watchlist.find(w => w.tmdb_id === rec.tmdb_id);
-
-                                        const item: MediaItem = {
-                                            id: rec.tmdb_id,
-                                            // Pass DB ID if found in watchlist
-                                            dbId: existingItem?.id,
-                                            title: rec.title,
-                                            media_type: rec.media_type || 'movie',
-                                            overview: rec.overview || rec.reason,
-                                            poster_path: rec.poster_path,
-                                            vote_average: rec.vote_average,
-                                            user_rating: existingItem?.user_rating // Pass existing rating
-                                        };
-
-                                        return (
-                                            <div key={index} style={{ display: 'flex', flexDirection: 'column' }}>
-                                                <MediaCard
-                                                    item={item}
-                                                    existingStatus={existingItem?.status}
-                                                    onAddSuccess={fetchWatchlist}
-                                                    showServiceBadge={rec.service} // Badge inside card handles context
-                                                    customBadgeColor="#8e24aa"
-                                                    aiReason={rec.reason} // Pass the AI's logic
-                                                />
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-
-
-
-                        {/* Similar Content Section */}
-                        <div className={styles.recGroup} style={{ marginTop: '1.5rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                <h3 className={styles.recGroupTitle} style={{ color: '#1976d2', marginBottom: 0 }}>
-                                    🎬 You Might Like
-                                </h3>
-                                <button
-                                    onClick={handleRefresh}
-                                    disabled={refreshing || loadingSimilar}
-                                    style={{
-                                        padding: '0.4rem 0.8rem',
-                                        backgroundColor: '#1976d2',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        cursor: (refreshing || loadingSimilar) ? 'not-allowed' : 'pointer',
-                                        opacity: (refreshing || loadingSimilar) ? 0.7 : 1,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.4rem',
-                                        fontSize: '0.9rem'
-                                    }}
-                                >
-                                    {refreshing ? 'Refreshing...' : '🔄 Refresh'}
-                                </button>
-                            </div>
-
-                            {loadingSimilar && similarRecs.length === 0 ? (
-                                <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>
-                                    Finding personalized recommendations...
-                                </div>
-                            ) : similarRecs.length > 0 ? (
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
-                                    {similarRecs.map((rec, index) => {
-                                        const item: MediaItem = {
-                                            id: rec.tmdb_id || 0,
-                                            title: rec.items[0],
-                                            media_type: rec.media_type || 'movie',
-                                            overview: rec.overview || '',
-                                            poster_path: rec.poster_path,
-                                            vote_average: rec.vote_average
-                                        };
-                                        const existingItem = watchlist.find(w => w.tmdb_id === item.id);
-
-                                        return (
-                                            <div key={index} style={{ display: 'flex', flexDirection: 'column' }}>
-                                                <div style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#666' }}>
-                                                    {rec.reason}
-                                                </div>
-                                                <MediaCard
-                                                    item={item}
-                                                    existingStatus={existingItem?.status}
-                                                    onAddSuccess={fetchWatchlist}
-                                                    showServiceBadge={rec.service_name}
-                                                />
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            ) : (
-                                <p style={{ color: '#666', fontStyle: 'italic' }}>
-                                    No similar content found based on your watched items. Try watching more shows!
-                                </p>
-                            )}
-                        </div>
-                    </section>
+            {/* AI Curator Section */}
+            <section className={`${styles.section} ${styles.aiSection}`}>
+                <div className={styles.aiHeader}>
+                    <div className={styles.aiTitleWrapper}>
+                        <h2 className={styles.sectionTitle} style={{ color: '#7c3aed' }}>
+                            <Sparkles className={styles.sectionIcon} /> AI Curator Picks
+                        </h2>
+                        <span className={styles.betaTag}>BETA</span>
+                    </div>
+                    <button
+                        onClick={handleGenerateAI}
+                        disabled={loadingAi}
+                        className={styles.generateBtn}
+                    >
+                        {loadingAi ? <RefreshCw className="animate-spin" size={18} /> : <Sparkles size={18} />}
+                        {loadingAi ? 'Creating...' : 'Generate New Picks'}
+                    </button>
                 </div>
-            </div>
+
+                {/* Intro Text */}
+                {aiRecs.length === 0 && !loadingAi && !aiError && (
+                    <div className={styles.emptyState} style={{ background: 'transparent', padding: '1rem 0' }}>
+                        <p>Our AI analyzes your taste to find hidden gems. Click Check it out!</p>
+                    </div>
+                )}
+
+                {/* Error State */}
+                {aiError && (
+                    <div style={{ padding: '1rem', backgroundColor: '#ffebee', color: '#c62828', borderRadius: '12px', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <XCircle size={18} /> {aiError}
+                    </div>
+                )}
+
+                {/* Loading State */}
+                {loadingAi && (
+                    <div style={{ padding: '3rem', textAlign: 'center', color: '#7c3aed' }}>
+                        <p style={{ fontWeight: 600, fontSize: '1.1rem' }}>Curating your personal lineup...</p>
+                        <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>Analyzing watch history & genres</p>
+                    </div>
+                )}
+
+                {/* Results Grid */}
+                {aiRecs.length > 0 && (
+                    <div className={styles.aiGrid}>
+                        {aiRecs.map((rec, index) => {
+                            if (!rec.tmdb_id) return null; // Skip if no ID
+
+                            const existingItem = watchlist.find(w => w.tmdb_id === rec.tmdb_id);
+                            const item: MediaItem = {
+                                id: rec.tmdb_id,
+                                dbId: existingItem?.id,
+                                title: rec.title,
+                                media_type: rec.media_type || 'movie',
+                                overview: rec.overview || rec.reason,
+                                poster_path: rec.poster_path,
+                                vote_average: rec.vote_average,
+                                user_rating: existingItem?.user_rating
+                            };
+
+                            return (
+                                <div key={index}>
+                                    <MediaCard
+                                        item={item}
+                                        existingStatus={existingItem?.status}
+                                        onAddSuccess={fetchWatchlist}
+                                        showServiceBadge={rec.service}
+                                        customBadgeColor="#7c3aed"
+                                        aiReason={rec.reason}
+                                    />
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </section>
+
+            {/* Similar Content Section */}
+            <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                    <h2 className={styles.sectionTitle} style={{ color: '#2563eb' }}>
+                        <Lightbulb className={styles.sectionIcon} /> You Might Like
+                    </h2>
+                    <button
+                        onClick={handleRefresh}
+                        disabled={refreshing || loadingSimilar}
+                        className={styles.refreshBtn}
+                    >
+                        <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+                        Refresh
+                    </button>
+                </div>
+
+                {loadingSimilar && similarRecs.length === 0 ? (
+                    <div className={styles.emptyState}>Finding personalized recommendations...</div>
+                ) : similarRecs.length > 0 ? (
+                    <div className={styles.grid}>
+                        {similarRecs.map((rec, index) => {
+                            const item: MediaItem = {
+                                id: rec.tmdb_id || 0,
+                                title: rec.items[0],
+                                media_type: rec.media_type || 'movie',
+                                overview: rec.overview || '',
+                                poster_path: rec.poster_path,
+                                vote_average: rec.vote_average
+                            };
+                            const existingItem = watchlist.find(w => w.tmdb_id === item.id);
+
+                            return (
+                                <div key={index} className={styles.recommendationItem}>
+                                    <div className={styles.reasonHeader} title={rec.reason}>
+                                        {rec.reason}
+                                    </div>
+                                    <MediaCard
+                                        item={item}
+                                        existingStatus={existingItem?.status}
+                                        onAddSuccess={fetchWatchlist}
+                                        showServiceBadge={rec.service_name}
+                                    />
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <div className={styles.emptyState}>
+                        No similar content found based on your watched items. Try adding more to your watchlist!
+                    </div>
+                )}
+            </section>
         </div>
     );
 }

@@ -4,6 +4,45 @@
     background-color: #f9fafb;
 }
 
+.cont.main {
+    flex-grow: 1;
+    padding: 2rem;
+    transition: margin-left 0.3s ease;
+    min-height: 100vh;
+    background-color: #f8f9fa;
+    position: relative;
+    /* Context for absolute positioning */
+}
+
+.regionBadge {
+    position: absolute;
+    top: 1.5rem;
+    right: 2rem;
+    background: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    z-index: 10;
+    transition: all 0.2s ease;
+}
+
+.regionBadge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #cbd5e1;
+}
+
+.flag {
+    font-size: 1.2rem;
+}
+
 .main {
     flex: 1;
     margin-left: 250px;

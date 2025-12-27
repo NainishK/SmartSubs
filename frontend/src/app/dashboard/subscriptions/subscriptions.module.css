@@ -504,6 +504,53 @@ select.input {
     box-shadow: 0 4px 12px rgba(255, 77, 79, 0.2);
 }
 
+/* Empty State */
+.emptyStateContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 6rem 2rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+    border: 1px solid #f1f5f9;
+    margin-top: 1rem;
+    width: 100%;
+    grid-column: span 2;
+    min-height: 400px;
+    /* Give it some height for balance */
+}
+
+.emptyIcon {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+    background: #f0f9ff;
+    padding: 1.5rem;
+    border-radius: 50%;
+    color: #0284c7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.1);
+}
+
+.emptyTitle {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.02em;
+}
+
+.emptySubtitle {
+    color: #64748b;
+    max-width: 450px;
+    line-height: 1.6;
+    font-size: 1.1rem;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;

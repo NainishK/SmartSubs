@@ -153,7 +153,9 @@ export default function WatchlistPage() {
             ) : (
                 <div className={styles.emptyState}>
                     <div className={styles.emptyIcon}>
-                        {activeTab === 'watching' ? '📺' : activeTab === 'plan_to_watch' ? '🍿' : '🏆'}
+                        {activeTab === 'watching' ? <Clapperboard size={32} /> :
+                            activeTab === 'plan_to_watch' ? <CalendarClock size={32} /> :
+                                <CheckCircle size={32} />}
                     </div>
                     <h3 className={styles.emptyTitle}>
                         {activeTab === 'watching' ? 'No shows in progress' :
