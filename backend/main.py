@@ -211,7 +211,11 @@ def get_ai_recommendations(db: Session = Depends(get_db), current_user: models.U
     
     # Gather Context
     watchlist = crud.get_watchlist(db, user_id=current_user.id, limit=100)
-    subs = crud.get_user_subscriptions(db, user_id=current_user.id) # Need to ensure this crud exists or query directly
+    subs = db.query(models.Subscription).filter(
+        models.Subscription.user_id == current_user.id,
+        models.Subscription.is_active == True,
+        models.Subscription.category == 'OTT'
+    ).all()
     
     # Format for AI
     history = [{"title": w.title, "status": w.status} for w in watchlist]

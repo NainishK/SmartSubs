@@ -28,6 +28,7 @@ class Subscription(Base):
     start_date = Column(Date)
     next_billing_date = Column(Date)
     is_active = Column(Boolean, default=True)
+    category = Column(String, default="OTT") # OTT, OTHER
 
     owner = relationship("User", back_populates="subscriptions")
 
@@ -74,6 +75,7 @@ class Service(Base):
     base_cost = Column(Float)
     logo_url = Column(String, nullable=True)
     country = Column(String, default="US") # Default region
+    category = Column(String, default="OTT") # OTT, OTHER
     
     plans = relationship("Plan", back_populates="service")
 

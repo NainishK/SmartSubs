@@ -7,6 +7,8 @@ import { Subscription, Service, Plan } from '@/lib/types';
 import { Trash2, Plus, Calendar, DollarSign, Tag, X, Edit2 } from 'lucide-react';
 import { useRecommendations } from '@/context/RecommendationsContext';
 import { formatCurrency, getCurrencySymbol } from '@/lib/currency';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const SERVICE_DOMAINS: Record<string, string> = {
     'Netflix': 'netflix.com',
@@ -54,6 +56,7 @@ export default function SubscriptionsPage() {
         cost: 0,
         currency: 'USD',
         billing_cycle: 'monthly',
+        category: 'OTT',
         start_date: new Date().toISOString().split('T')[0],
         next_billing_date: new Date().toISOString().split('T')[0],
     });
@@ -69,7 +72,11 @@ export default function SubscriptionsPage() {
             fetchPlans(selectedServiceId as number);
             const service = services.find(s => s.id === Number(selectedServiceId));
             if (service) {
-                setNewSub(prev => ({ ...prev, service_name: service.name }));
+                setNewSub(prev => ({
+                    ...prev,
+                    service_name: service.name,
+                    category: service.category || 'OTT'
+                }));
             }
         } else {
             setPlans([]);
@@ -93,18 +100,21 @@ export default function SubscriptionsPage() {
 
     const fetchData = async () => {
         try {
-            const [subsRes, servicesRes, profileRes] = await Promise.all([
-                api.get('/subscriptions/'),
-                api.get('/services/'),
-                api.get('/users/me/')
-            ]);
-            setSubscriptions(subsRes.data);
-            setServices(servicesRes.data);
+            // 1. Fetch User Profile First
+            const profileRes = await api.get('/users/me/');
             const country = profileRes.data.country || 'US';
             setUserCountry(country);
-
-            // Set initial currency based on profile
             setNewSub(prev => ({ ...prev, currency: country === 'IN' ? 'INR' : 'USD' }));
+
+            // 2. Fetch Subscriptions & Services for that Country
+            const [subsRes, servicesRes] = await Promise.all([
+                api.get('/subscriptions/'),
+                api.get(`/services/?country=${country}`)
+            ]);
+
+            setSubscriptions(subsRes.data);
+            setServices(servicesRes.data);
+
         } catch (error) {
             console.error('Failed to fetch data', error);
         } finally {
@@ -136,6 +146,7 @@ export default function SubscriptionsPage() {
             cost: 0,
             currency: 'USD',
             billing_cycle: 'monthly',
+            category: 'OTT',
             start_date: new Date().toISOString().split('T')[0],
             next_billing_date: new Date().toISOString().split('T')[0],
         });
@@ -187,6 +198,7 @@ export default function SubscriptionsPage() {
             cost: sub.cost,
             currency: sub.currency,
             billing_cycle: sub.billing_cycle,
+            category: sub.category || 'OTT',
             start_date: sub.start_date,
             next_billing_date: sub.next_billing_date,
         });
@@ -270,42 +282,57 @@ export default function SubscriptionsPage() {
                             </p>
                         </div>
                     ) : (
-                        <div className={styles.subGrid}>
-                            {subscriptions.map((sub) => (
-                                <div key={sub.id} className={styles.subCard}>
-                                    <div className={styles.subHeader}>
-                                        <div className={styles.serviceIdentity}>
-                                            <ServiceIcon name={sub.service_name} logoUrl={sub.logo_url} />
-                                            <h3 className={styles.serviceName}>{sub.service_name}</h3>
-                                        </div>
-                                        <span className={styles.statusBadge}>Active</span>
-                                    </div>
+                        <div className={styles.categoriesContainer}>
+                            {[
+                                { id: 'OTT', title: 'Streaming (OTT)' },
+                                { id: 'OTHER', title: 'Other Subscriptions' }
+                            ].map(cat => {
+                                const catSubs = subscriptions.filter(s => (s.category || 'OTT') === cat.id);
+                                if (catSubs.length === 0) return null;
 
-                                    <div className={styles.subBody}>
-                                        <div className={styles.costSection}>
-                                            <p className={styles.costValue}>{formatCurrency(sub.cost, userCountry)}</p>
-                                            <span className={styles.billingPeriod}>per {sub.billing_cycle === 'monthly' ? 'month' : 'year'}</span>
-                                        </div>
+                                return (
+                                    <section key={cat.id} className={styles.categorySection}>
+                                        <h2 className={styles.categoryTitle}>{cat.title}</h2>
+                                        <div className={styles.subGrid}>
+                                            {catSubs.map((sub) => (
+                                                <div key={sub.id} className={styles.subCard}>
+                                                    <div className={styles.subHeader}>
+                                                        <div className={styles.serviceIdentity}>
+                                                            <ServiceIcon name={sub.service_name} logoUrl={sub.logo_url} />
+                                                            <h3 className={styles.serviceName}>{sub.service_name}</h3>
+                                                        </div>
+                                                        <span className={styles.statusBadge}>Active</span>
+                                                    </div>
 
-                                        <div className={styles.billingDetail}>
-                                            <div className={styles.detailItem}>
-                                                <span className={styles.detailLabel}>Next Bill</span>
-                                                <span className={styles.detailValue}>{new Date(sub.next_billing_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                                    <div className={styles.subBody}>
+                                                        <div className={styles.costSection}>
+                                                            <p className={styles.costValue}>{formatCurrency(sub.cost, userCountry)}</p>
+                                                            <span className={styles.billingPeriod}>per {sub.billing_cycle === 'monthly' ? 'month' : 'year'}</span>
+                                                        </div>
 
-                                    <div className={styles.subFooter}>
-                                        <button onClick={() => handleEditClick(sub)} className={styles.editBtn}>
-                                            <Edit2 size={14} />
-                                            Edit
-                                        </button>
-                                        <button onClick={() => openDeleteModal(sub)} className={styles.deleteBtn}>
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
+                                                        <div className={styles.billingDetail}>
+                                                            <div className={styles.detailItem}>
+                                                                <span className={styles.detailLabel}>Next Bill</span>
+                                                                <span className={styles.detailValue}>{new Date(sub.next_billing_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className={styles.subFooter}>
+                                                        <button onClick={() => handleEditClick(sub)} className={styles.editBtn}>
+                                                            <Edit2 size={14} />
+                                                            Edit
+                                                        </button>
+                                                        <button onClick={() => openDeleteModal(sub)} className={styles.deleteBtn}>
+                                                            Cancel
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
+                                );
+                            })}
                         </div>
                     )}
                 </div>
@@ -317,6 +344,23 @@ export default function SubscriptionsPage() {
                         </h2>
                         <form onSubmit={handleFormSubmit} className={styles.form}>
                             <div className={styles.field}>
+                                <label>Category</label>
+                                <select
+                                    value={newSub.category}
+                                    onChange={(e) => {
+                                        setNewSub({ ...newSub, category: e.target.value, service_name: '' });
+                                        setSelectedServiceId('');
+                                        setPlans([]);
+                                    }}
+                                    required
+                                    className={styles.input}
+                                >
+                                    <option value="OTT">Streaming (OTT)</option>
+                                    <option value="OTHER">Other Service</option>
+                                </select>
+                            </div>
+
+                            <div className={styles.field}>
                                 <label>Service</label>
                                 <select
                                     value={selectedServiceId}
@@ -326,9 +370,12 @@ export default function SubscriptionsPage() {
                                     disabled={isEditing} // Prevent changing service name when editing for consistency
                                 >
                                     <option value="">Select a service</option>
-                                    {services.map(service => (
-                                        <option key={service.id} value={service.id}>{service.name}</option>
-                                    ))}
+                                    {services
+                                        .filter(s => (s.category || 'OTT') === newSub.category)
+                                        .map(service => (
+                                            <option key={service.id} value={service.id}>{service.name}</option>
+                                        ))
+                                    }
                                     <option value="custom">Other (Custom)</option>
                                 </select>
                             </div>
@@ -394,26 +441,27 @@ export default function SubscriptionsPage() {
 
                             <div className={styles.field}>
                                 <label>Next Billing Date</label>
-                                <div className={styles.iconInputWrapper}>
-                                    <input
-                                        ref={dateInputRef}
-                                        type="date"
-                                        value={newSub.next_billing_date}
-                                        onChange={(e) => setNewSub({ ...newSub, next_billing_date: e.target.value })}
-                                        className={styles.inputWithIcon}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            try {
-                                                // @ts-ignore
-                                                dateInputRef.current?.showPicker();
-                                            } catch (e) { }
+                                <div className={styles.datePickerWrapper}>
+                                    <DatePicker
+                                        selected={newSub.next_billing_date ? new Date(newSub.next_billing_date) : new Date()}
+                                        onChange={(date: Date | null) => {
+                                            if (date) {
+                                                const formatted = date.toISOString().split('T')[0];
+                                                setNewSub({ ...newSub, next_billing_date: formatted });
+                                            }
                                         }}
-                                        className={styles.datePickerBtn}
-                                    >
+                                        className={styles.inputWithIcon}
+                                        dateFormat="MMM d, yyyy"
+                                        minDate={new Date()}
+                                        wrapperClassName={styles.fullWidth}
+                                        showMonthDropdown
+                                        showYearDropdown
+                                        dropdownMode="select"
+                                        popperClassName={styles.datePickerPopper}
+                                    />
+                                    <div className={styles.inputIcon}>
                                         <Calendar size={18} />
-                                    </button>
+                                    </div>
                                 </div>
                             </div>
 

@@ -10,6 +10,7 @@ class SubscriptionBase(BaseModel):
     start_date: date
     next_billing_date: date
     is_active: bool = True
+    category: str = "OTT"
 
 class SubscriptionCreate(SubscriptionBase):
     pass
@@ -22,6 +23,7 @@ class SubscriptionUpdate(BaseModel):
     start_date: Optional[date] = None
     next_billing_date: Optional[date] = None
     is_active: Optional[bool] = None
+    category: Optional[str] = None
 
 class Subscription(SubscriptionBase):
     id: int
@@ -75,6 +77,7 @@ class ServiceBase(BaseModel):
     name: str
     logo_url: Optional[str] = None
     country: str = "US"
+    category: str = "OTT"
 
 class Service(ServiceBase):
     id: int

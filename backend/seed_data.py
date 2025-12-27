@@ -106,10 +106,111 @@ def seed_data():
                 "name": "YouTube Premium",
                 "country": "IN",
                 "domain": "youtube.com",
+                "category": "OTHER",
                 "plans": [
                     {"name": "Individual Monthly", "cost": 149, "currency": "INR", "country": "IN", "billing_cycle": "monthly"},
                     {"name": "Family Monthly", "cost": 299, "currency": "INR", "country": "IN", "billing_cycle": "monthly"},
                     {"name": "Student Monthly", "cost": 79, "currency": "INR", "country": "IN", "billing_cycle": "monthly"}
+                ]
+            },
+            {
+                "name": "Spotify",
+                "country": "IN",
+                "domain": "spotify.com",
+                "category": "OTHER",
+                "plans": [
+                    {"name": "Individual", "cost": 119, "currency": "INR", "country": "IN", "billing_cycle": "monthly"},
+                    {"name": "Duo", "cost": 149, "currency": "INR", "country": "IN", "billing_cycle": "monthly"},
+                    {"name": "Family", "cost": 179, "currency": "INR", "country": "IN", "billing_cycle": "monthly"}
+                ]
+            },
+            {
+                "name": "Apple Music",
+                "country": "IN",
+                "domain": "music.apple.com",
+                "category": "OTHER",
+                "plans": [
+                    {"name": "Individual", "cost": 99, "currency": "INR", "country": "IN", "billing_cycle": "monthly"},
+                    {"name": "Voice", "cost": 49, "currency": "INR", "country": "IN", "billing_cycle": "monthly"},
+                    {"name": "Family", "cost": 149, "currency": "INR", "country": "IN", "billing_cycle": "monthly"}
+                ]
+            },
+            {
+                "name": "ChatGPT Plus",
+                "country": "IN",
+                "domain": "openai.com",
+                "category": "OTHER",
+                "plans": [
+                    {"name": "Plus", "cost": 1999, "currency": "INR", "country": "IN", "billing_cycle": "monthly"} 
+                ]
+            },
+            {
+                "name": "Xbox Game Pass",
+                "country": "IN",
+                "domain": "xbox.com",
+                "category": "OTHER",
+                "plans": [
+                    {"name": "PC", "cost": 349, "currency": "INR", "country": "IN", "billing_cycle": "monthly"},
+                    {"name": "Ultimate", "cost": 549, "currency": "INR", "country": "IN", "billing_cycle": "monthly"}
+                ]
+            },
+            {
+                "name": "Dropbox",
+                "country": "IN",
+                "domain": "dropbox.com",
+                "category": "OTHER",
+                "plans": [
+                    {"name": "Plus", "cost": 999, "currency": "INR", "country": "IN", "billing_cycle": "monthly"}
+                ]
+            },
+            {
+                "name": "Spotify",
+                "country": "US",
+                "domain": "spotify.com",
+                "category": "OTHER",
+                "plans": [
+                    {"name": "Individual", "cost": 11.99, "currency": "USD", "country": "US", "billing_cycle": "monthly"},
+                    {"name": "Duo", "cost": 16.99, "currency": "USD", "country": "US", "billing_cycle": "monthly"},
+                    {"name": "Family", "cost": 19.99, "currency": "USD", "country": "US", "billing_cycle": "monthly"}
+                ]
+            },
+            {
+                "name": "Apple Music",
+                "country": "US",
+                "domain": "music.apple.com",
+                "category": "OTHER",
+                "plans": [
+                    {"name": "Individual", "cost": 10.99, "currency": "USD", "country": "US", "billing_cycle": "monthly"},
+                    {"name": "Family", "cost": 16.99, "currency": "USD", "country": "US", "billing_cycle": "monthly"}
+                ]
+            },
+            {
+                "name": "ChatGPT Plus",
+                "country": "US",
+                "domain": "openai.com",
+                "category": "OTHER",
+                "plans": [
+                    {"name": "Plus", "cost": 20.00, "currency": "USD", "country": "US", "billing_cycle": "monthly"}
+                ]
+            },
+            {
+                "name": "Xbox Game Pass",
+                "country": "US",
+                "domain": "xbox.com",
+                "category": "OTHER",
+                "plans": [
+                    {"name": "Core", "cost": 9.99, "currency": "USD", "country": "US", "billing_cycle": "monthly"},
+                    {"name": "Ultimate", "cost": 16.99, "currency": "USD", "country": "US", "billing_cycle": "monthly"}
+                ]
+            },
+            {
+                "name": "Dropbox",
+                "country": "US",
+                "domain": "dropbox.com",
+                "category": "OTHER",
+                "plans": [
+                    {"name": "Plus", "cost": 11.99, "currency": "USD", "country": "US", "billing_cycle": "monthly"},
+                    {"name": "Essentials", "cost": 22.00, "currency": "USD", "country": "US", "billing_cycle": "monthly"}
                 ]
             }
         ]
@@ -121,7 +222,8 @@ def seed_data():
             service = models.Service(
                 name=svc["name"],
                 country=svc.get("country", "US"),
-                logo_url=logo_url
+                logo_url=logo_url,
+                category=svc.get("category", "OTT")
             )
             db.add(service)
             db.commit()

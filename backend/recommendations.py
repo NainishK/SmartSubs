@@ -133,10 +133,11 @@ def calculate_dashboard_recommendations(db: Session, user_id: int):
     watchlist_query = db.query(models.WatchlistItem).filter(models.WatchlistItem.user_id == user_id).all()
     watchlist = [item for item in watchlist_query if item.status in ['plan_to_watch', 'watching']]
     
-    # 2. Get User's Active Subscriptions
+    # 2. Get User's Active OTT Subscriptions
     subscriptions = db.query(models.Subscription).filter(
         models.Subscription.user_id == user_id,
-        models.Subscription.is_active == True
+        models.Subscription.is_active == True,
+        models.Subscription.category == 'OTT'
     ).all()
     
     if not watchlist and not subscriptions:
@@ -236,7 +237,8 @@ def calculate_similar_content(db: Session, user_id: int):
     watchlist = db.query(models.WatchlistItem).filter(models.WatchlistItem.user_id == user_id).all()
     subscriptions = db.query(models.Subscription).filter(
         models.Subscription.user_id == user_id,
-        models.Subscription.is_active == True
+        models.Subscription.is_active == True,
+        models.Subscription.category == 'OTT'
     ).all()
     
     if not subscriptions:

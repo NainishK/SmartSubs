@@ -8,6 +8,7 @@ export interface Subscription {
     next_billing_date: string;
     is_active: boolean;
     logo_url?: string;
+    category: string;
 }
 
 export interface WatchlistItem {
@@ -42,6 +43,7 @@ export interface Service {
     id: number;
     name: string;
     logo_url?: string;
+    category: string;
 }
 
 export interface Plan {
