@@ -242,6 +242,28 @@ def seed_data():
                     {"name": "Mega Fan", "cost": 99, "currency": "INR", "country": "IN", "billing_cycle": "monthly"},
                     {"name": "Annual Mega Fan", "cost": 999, "currency": "INR", "country": "IN", "billing_cycle": "yearly"}
                 ]
+            },
+            {
+                "name": "Apple TV+",
+                "country": "US",
+                "domain": "tv.apple.com",
+                "category": "OTT",
+                "plans": [
+                    {"name": "Monthly", "cost": 9.99, "currency": "USD", "country": "US", "billing_cycle": "monthly"},
+                    {"name": "Annual", "cost": 99.00, "currency": "USD", "country": "US", "billing_cycle": "yearly"},
+                    {"name": "Apple One (Bundle)", "cost": 19.95, "currency": "USD", "country": "US", "billing_cycle": "monthly"}
+                ]
+            },
+            {
+                "name": "Apple TV+",
+                "country": "IN",
+                "domain": "tv.apple.com",
+                "category": "OTT",
+                "plans": [
+                    {"name": "Monthly", "cost": 99, "currency": "INR", "country": "IN", "billing_cycle": "monthly"},
+                    {"name": "Apple One (Bundle)", "cost": 195, "currency": "INR", "country": "IN", "billing_cycle": "monthly"},
+                    {"name": "Apple One Family", "cost": 365, "currency": "INR", "country": "IN", "billing_cycle": "monthly"}
+                ]
             }
         ]
 
