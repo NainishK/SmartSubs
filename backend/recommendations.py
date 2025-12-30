@@ -107,7 +107,11 @@ def get_dashboard_recommendations(db: Session, user_id: int):
     """
     cached = get_cached_data(db, user_id, "dashboard")
     if cached is not None:
-        return cached
+        # Smart Validation: If we have 0 trending items, assume cache is stale/broken and recalc
+        trending_count = sum(1 for r in cached if r.get("type") == "trending")
+        if trending_count > 0:
+            return cached
+        print(f"Invalidating Dashboard Cache (Trending count: {trending_count})")
         
     # Calculate
     recs = calculate_dashboard_recommendations(db, user_id)
@@ -171,11 +175,52 @@ def calculate_dashboard_recommendations(db: Session, user_id: int):
             potential_services = []
             
             # Find all valid services for this item
+            # Find all valid services for this item
             for provider in providers["flatrate"]:
                 p_name = provider["provider_name"]
+                p_id = str(provider["provider_id"])
+                
                 for sub in subscriptions:
-                    sub_name = sub.service_name.lower()
-                    if sub_name in p_name.lower() or p_name.lower() in sub_name:
+                    # Robust Match Logic (Same as Trending)
+                    is_match = False
+                    
+                    # 1. Check ID Map
+                    s_name_key = sub.service_name.lower()
+                    
+                    # Normalize key for map lookup
+                    PROVIDER_IDS_MAP = {
+                        "netflix": "8",
+                        "hulu": "15", 
+                        "amazon prime video": "9",
+                        "disney plus": "337",
+                        "max": "384|312",
+                        "peacock": "386",
+                        "apple tv plus": "350",
+                        "paramount plus": "83|531",
+                        "crunchyroll": "283",
+                        "hotstar": "122",
+                        "disney+ hotstar": "122",
+                        "jiocinema": "220",
+                        "jiohotstar": "122|220"
+                    }
+                    
+                    mapped_ids = []
+                    # Find correct map key
+                    if s_name_key in PROVIDER_IDS_MAP:
+                        mapped_ids = PROVIDER_IDS_MAP[s_name_key].split("|")
+                    else:
+                        for k, v in PROVIDER_IDS_MAP.items():
+                             if k in s_name_key or s_name_key in k:
+                                 mapped_ids = v.split("|")
+                                 break
+                    
+                    if p_id in mapped_ids:
+                        is_match = True
+                    # 2. Fallback to Name Match
+                    elif sub.service_name.lower() in p_name.lower() or p_name.lower() in sub.service_name.lower():
+                        is_match = True
+                        
+                    if is_match:
                         potential_services.append(sub)
             
             if potential_services:
@@ -226,7 +271,11 @@ def calculate_dashboard_recommendations(db: Session, user_id: int):
         "peacock": "386",
         "apple tv plus": "350",
         "paramount plus": "83|531",
-        "crunchyroll": "283"
+        "crunchyroll": "283",
+        "hotstar": "122",
+        "disney+ hotstar": "122",
+        "jiocinema": "220",
+        "jiohotstar": "122|220" # Covering bases for the merger
     }
     
     valid_provider_ids = set()
@@ -252,6 +301,7 @@ def calculate_dashboard_recommendations(db: Session, user_id: int):
                 with_watch_providers=provider_string,
                 watch_region=country
             )
+            print(f"[DEBUG] Trending FETCH Movies: {len(data_movies.get('results', []))} items")
             movies = data_movies.get("results", [])[:20]
             
             # Fetch TV Shows
@@ -262,6 +312,7 @@ def calculate_dashboard_recommendations(db: Session, user_id: int):
                 with_watch_providers=provider_string,
                 watch_region=country
             )
+            print(f"[DEBUG] Trending FETCH TV: {len(data_tv.get('results', []))} items")
             shows = data_tv.get("results", [])[:20]
             
             # Interleave (Movie, TV, Movie, TV)

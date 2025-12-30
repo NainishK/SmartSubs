@@ -27,23 +27,38 @@ export default function WatchlistPage() {
         try {
             setLoading(true);
             const response = await api.get('/watchlist/');
-            // Transform DB items to MediaItems if needed, or api returns compatible shape
+            // Transform DB items
             const transformed = response.data.map((item: any) => ({
-                id: item.tmdb_id, // MediaCard expects tmdb id as id
-                dbId: item.id,   // DB Primary Key for updates
+                id: item.tmdb_id,
+                dbId: item.id,
                 title: item.title,
-                name: item.title, // Handle both
+                name: item.title,
                 media_type: item.media_type,
                 poster_path: item.poster_path,
                 vote_average: item.vote_average,
                 overview: item.overview,
                 user_rating: item.user_rating,
-                status: item.status
+                status: item.status,
+                available_on: undefined // Start clear
             }));
+
             setItems(transformed);
+            setLoading(false); // Immediate Render
+
+            // 2. Fetch badges in background
+            const ids = transformed.map((i: any) => i.id);
+            if (ids.length > 0) {
+                api.post('/watchlist/availability', ids).then(res => {
+                    const map = res.data;
+                    setItems(prev => prev.map(p => ({
+                        ...p,
+                        available_on: map[p.id] || undefined
+                    })));
+                }).catch(err => console.error("Badge fetch error:", err));
+            }
+
         } catch (error) {
             console.error('Failed to fetch watchlist', error);
-        } finally {
             setLoading(false);
         }
     };

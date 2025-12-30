@@ -11,6 +11,7 @@ class User(Base):
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
     country = Column(String, default="US")
+    preferences = Column(String, nullable=True) # JSON stored as string
 
     subscriptions = relationship("Subscription", back_populates="owner")
     watchlist = relationship("WatchlistItem", back_populates="owner")

@@ -8,6 +8,7 @@ import MediaCard, { MediaItem } from '@/components/MediaCard';
 import { useRecommendations } from '@/context/RecommendationsContext';
 import { PlayCircle, Lightbulb, TrendingUp, Sparkles, RefreshCw, XCircle, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ServiceIcon } from '@/components/ServiceIcon';
+import AIInsightsModal from '@/components/AIInsightsModal';
 
 const TRENDING_VISIBLE = 4;
 
@@ -23,27 +24,14 @@ export default function RecommendationsPage() {
 
     const [watchlist, setWatchlist] = useState<Array<{ id: number; tmdb_id: number; status: string; user_rating?: number }>>([]);
     const [refreshing, setRefreshing] = useState(false);
-    const [aiRecs, setAiRecs] = useState<any[]>([]);
-    const [loadingAi, setLoadingAi] = useState(false);
-    const [aiError, setAiError] = useState<string | null>(null);
+    const [showAIModal, setShowAIModal] = useState(false);
     const [trendingIndex, setTrendingIndex] = useState(0);
 
     useEffect(() => {
         fetchWatchlist();
-        fetchCachedAiRecs();
     }, []);
 
-    const fetchCachedAiRecs = async () => {
-        try {
-            const response = await api.get('/recommendations/ai');
-            if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-                setAiRecs(response.data);
-            }
-        } catch (error) {
-            // calculated silently, no error needed if cache empty
-            console.log('No cached AI recs found or error');
-        }
-    };
+
 
     const fetchWatchlist = async () => {
         try {
@@ -60,23 +48,7 @@ export default function RecommendationsPage() {
         }
     };
 
-    const handleGenerateAI = async () => {
-        setLoadingAi(true);
-        setAiError(null);
-        try {
-            const response = await api.post('/recommendations/ai');
-            if (response.data && Array.isArray(response.data)) {
-                setAiRecs(response.data);
-            } else {
-                setAiError('Failed to generate recommendations.');
-            }
-        } catch (error) {
-            console.error('AI Generation failed', error);
-            setAiError('Failed to generate recommendations. Please try again.');
-        } finally {
-            setLoadingAi(false);
-        }
-    };
+
 
     const handleNextTrending = () => {
         setTrendingIndex(prev =>
@@ -121,6 +93,8 @@ export default function RecommendationsPage() {
             <div className={styles.header}>
                 <h1 className={styles.pageTitle}>Smart Recommendations</h1>
             </div>
+
+            <AIInsightsModal isOpen={showAIModal} onClose={() => setShowAIModal(false)} />
 
             {/* Trending Section - Carousel */}
             {trendingRecs.length > 0 && (
@@ -212,80 +186,55 @@ export default function RecommendationsPage() {
                 </section>
             )}
 
-            {/* AI Curator Section */}
-            <section className={`${styles.section} ${styles.aiSection}`}>
-                <div className={styles.aiHeader}>
-                    <div className={styles.aiTitleWrapper}>
-                        <h2 className={styles.sectionTitle} style={{ color: '#7c3aed' }}>
-                            <Sparkles className={styles.sectionIcon} /> AI Curator Picks
+            {/* Unified AI Analyst Entry Point */}
+            <section className={styles.section}>
+                <div style={{
+                    background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)',
+                    borderRadius: '16px',
+                    padding: '2rem',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '1rem',
+                    boxShadow: '0 10px 25px -5px rgba(124, 58, 237, 0.3)'
+                }}>
+                    <div style={{ flex: 1, minWidth: '300px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                            <Sparkles size={20} className="text-yellow-300" />
+                            <span style={{ fontSize: '0.9rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255,255,255,0.8)' }}>
+                                Unified Intelligence
+                            </span>
+                        </div>
+                        <h2 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0 0 0.5rem 0', lineHeight: 1.2 }}>
+                            Optimize Your Subscriptions & Discover Gems
                         </h2>
-                        <span className={styles.betaTag}>BETA</span>
+                        <p style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.9)', maxWidth: '500px', margin: 0 }}>
+                            Get financial strategy, customized picks, and check for missing content gaps.
+                        </p>
                     </div>
                     <button
-                        onClick={handleGenerateAI}
-                        disabled={loadingAi}
-                        className={styles.generateBtn}
+                        onClick={() => setShowAIModal(true)}
+                        style={{
+                            background: 'white',
+                            color: '#4f46e5',
+                            border: 'none',
+                            padding: '1rem 2rem',
+                            borderRadius: '12px',
+                            fontSize: '1.1rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                            transition: 'transform 0.2s'
+                        }}
                     >
-                        {loadingAi ? <RefreshCw className="animate-spin" size={18} /> : <Sparkles size={18} />}
-                        {loadingAi ? 'Creating...' : 'Generate New Picks'}
+                        <Sparkles size={20} /> Launch AI Analyst
                     </button>
                 </div>
-
-                {/* Intro Text */}
-                {aiRecs.length === 0 && !loadingAi && !aiError && (
-                    <div className={styles.emptyState} style={{ background: 'transparent', padding: '1rem 0' }}>
-                        <p>Our AI analyzes your taste to find hidden gems. Click Check it out!</p>
-                    </div>
-                )}
-
-                {/* Error State */}
-                {aiError && (
-                    <div style={{ padding: '1rem', backgroundColor: '#ffebee', color: '#c62828', borderRadius: '12px', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <XCircle size={18} /> {aiError}
-                    </div>
-                )}
-
-                {/* Loading State */}
-                {loadingAi && (
-                    <div style={{ padding: '3rem', textAlign: 'center', color: '#7c3aed' }}>
-                        <p style={{ fontWeight: 600, fontSize: '1.1rem' }}>Curating your personal lineup...</p>
-                        <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>Analyzing watch history & genres</p>
-                    </div>
-                )}
-
-                {/* Results Grid */}
-                {aiRecs.length > 0 && (
-                    <div className={styles.aiGrid}>
-                        {aiRecs.map((rec, index) => {
-                            if (!rec.tmdb_id) return null; // Skip if no ID
-
-                            const existingItem = watchlist.find(w => w.tmdb_id === rec.tmdb_id);
-                            const item: MediaItem = {
-                                id: rec.tmdb_id,
-                                dbId: existingItem?.id,
-                                title: rec.title,
-                                media_type: rec.media_type || 'movie',
-                                overview: rec.overview || rec.reason,
-                                poster_path: rec.poster_path,
-                                vote_average: rec.vote_average,
-                                user_rating: existingItem?.user_rating
-                            };
-
-                            return (
-                                <div key={index}>
-                                    <MediaCard
-                                        item={item}
-                                        existingStatus={existingItem?.status}
-                                        onAddSuccess={fetchWatchlist}
-                                        showServiceBadge={rec.service}
-                                        customBadgeColor="#7c3aed"
-                                        aiReason={rec.reason}
-                                    />
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
             </section>
 
             {/* Similar Content Section */}

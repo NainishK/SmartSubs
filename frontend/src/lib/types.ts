@@ -58,4 +58,45 @@ export interface AIRecommendation {
     title: string;
     reason: string;
     service: string;
+    tmdb_id?: number;
+    media_type?: string;
+    poster_path?: string;
+    vote_average?: number;
+    overview?: string;
+    logo_url?: string;
+}
+
+export interface UserPreferences {
+    target_budget?: number;
+    target_currency?: string;
+    watch_time_weekly?: number;
+    household_size?: string;
+    languages?: string[];
+    viewing_style?: string;
+    devices?: string[];
+    deal_breakers?: string[];
+}
+
+export interface AIStrategyItem {
+    action: string;
+    service: string;
+    reason: string;
+    savings?: number;
+}
+
+export interface AIGapItem {
+    title: string;
+    service: string;
+    reason: string;
+    tmdb_id?: number;
+    media_type?: string;
+    poster_path?: string;
+    overview?: string;
+    vote_average?: number;
+}
+
+export interface AIUnifiedResponse {
+    picks: AIRecommendation[];
+    strategy: AIStrategyItem[];
+    gaps: AIGapItem[];
 }

@@ -181,6 +181,15 @@ def update_user_profile(db: Session, user_id: int, country: str):
         db.refresh(user)
     return user
 
+def update_user_preferences(db: Session, user_id: int, preferences: schemas.UserPreferences):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if user:
+        # Convert pydantic model to json string
+        user.preferences = preferences.json()
+        db.commit()
+        db.refresh(user)
+    return user
+
 def update_watchlist_item_status(db: Session, item_id: int, user_id: int, status: str):
     db_item = db.query(models.WatchlistItem).filter(
         models.WatchlistItem.id == item_id, 

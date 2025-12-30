@@ -19,6 +19,7 @@ export interface MediaItem {
     genre_ids?: number[]; // From Search
     user_rating?: number; // From DB (Watchlist)
     status?: string; // Watchlist status
+    available_on?: string; // Enriched provider badge
 }
 
 interface MediaCardProps {

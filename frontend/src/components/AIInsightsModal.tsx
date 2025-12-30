@@ -1,0 +1,436 @@
+import React, { useState, useEffect } from 'react';
+import styles from './AIInsightsModal.module.css';
+import { Sparkles, X, Settings, TrendingUp, DollarSign, Check, XCircle, Film, RefreshCw, AlertTriangle } from 'lucide-react';
+import api from '../lib/api';
+import { AIUnifiedResponse, UserPreferences, AIRecommendation } from '../lib/types';
+import MediaCard from './MediaCard';
+import ConfirmationModal from './ConfirmationModal';
+import { COUNTRY_CURRENCY_MAP, COUNTRY_SYMBOL_MAP } from '../lib/currency';
+
+interface AIInsightsModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
+
+const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose }) => {
+    const [activeTab, setActiveTab] = useState<'picks' | 'strategy' | 'preferences'>('picks');
+    const [loading, setLoading] = useState(false);
+    const [data, setData] = useState<AIUnifiedResponse | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+
+    // Preferences Form State
+    const [preferences, setPreferences] = useState<UserPreferences>({
+        target_budget: undefined,
+        watch_time_weekly: undefined,
+        household_size: 'Solo',
+        devices: [],
+        deal_breakers: []
+    });
+    const [savingPref, setSavingPref] = useState(false);
+
+    // Initial Load
+    useEffect(() => {
+        if (isOpen) {
+            fetchPreferences();
+            // Auto-load cached insights on open
+            handleGenerate(false);
+        }
+    }, [isOpen]);
+
+    const [userCountry, setUserCountry] = useState<string>('US'); // Default US
+
+    // ... imports at top should include getCurrencySymbol from currency.ts but let's just map locally for speed or import properly?
+    // Let's assume we can add the import.
+
+    const fetchPreferences = async () => {
+        try {
+            const res = await api.get('/users/me/');
+            if (res.data.country) {
+                setUserCountry(res.data.country);
+            }
+            if (res.data.preferences) {
+                const prefs = JSON.parse(res.data.preferences);
+                // Auto-set currency if missing
+                if (!prefs.target_currency && res.data.country) {
+                    prefs.target_currency = COUNTRY_CURRENCY_MAP[res.data.country] || 'USD';
+                }
+                setPreferences(prefs);
+            } else if (res.data.country) {
+                // Initialize currency even if no prefs yet
+                setPreferences(prev => ({
+                    ...prev,
+                    target_currency: COUNTRY_CURRENCY_MAP[res.data.country] || 'USD'
+                }));
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    // Derived Currency Info
+    const currencySymbol = COUNTRY_SYMBOL_MAP[userCountry] || '$';
+    const currencyCode = COUNTRY_CURRENCY_MAP[userCountry] || 'USD';
+
+    const handleSavePreferences = async () => {
+        setSavingPref(true);
+        try {
+            // Clean up empty strings/arrays if needed
+            const toSend = { ...preferences };
+            await api.put('/users/me/preferences', toSend);
+            // Show success modal
+            setShowSaveConfirm(true);
+        } catch (e) {
+            console.error(e);
+            alert("Failed to save preferences.");
+        } finally {
+            setSavingPref(false);
+        }
+    };
+
+    const handleGenerate = async (force = false) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const url = force ? '/recommendations/insights?force_refresh=true' : '/recommendations/insights';
+            const res = await api.post(url);
+            if (res.data && (res.data.picks || res.data.strategy)) {
+                setData(res.data);
+                if (activeTab === 'preferences') setActiveTab('picks');
+            } else {
+                setError("AI returned incomplete data. Please try again.");
+            }
+        } catch (e) {
+            console.error(e);
+            setError("Failed to generate insights. AI might be busy.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const LANG_OPTIONS = ["English", "Spanish", "French", "German", "Japanese", "Korean", "Hindi", "Mandarin", "Italian"];
+    const DEVICE_OPTIONS = ["Mobile/Tablet", "Laptop", "TV (1080p)", "4K Home Theater"];
+    const STYLE_OPTIONS = ["Casual", "Binge Watcher", "Weekly Releases", "Cinematic Focus"];
+
+    const handleTogglePill = (field: keyof UserPreferences, value: string) => {
+        const current = preferences[field] as string[] || [];
+        const newArray = current.includes(value)
+            ? current.filter(i => i !== value)
+            : [...current, value];
+        setPreferences({ ...preferences, [field]: newArray });
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <>
+            <div className={styles.overlay} onClick={onClose}>
+                <div className={styles.modal} onClick={e => e.stopPropagation()}>
+                    {/* Header */}
+                    <div className={styles.header}>
+                        <div className={styles.titleWrapper}>
+                            <Sparkles size={24} color="#7c3aed" />
+                            <h2 className={styles.title}>AI Intelligence Center</h2>
+                            <span className={styles.betaBadge}>BETA</span>
+                        </div>
+                        <button className={styles.closeButton} onClick={onClose}>
+                            <X size={20} />
+                        </button>
+                    </div>
+
+                    {/* Tabs */}
+                    <div className={styles.tabsContainer}>
+                        <button
+                            className={`${styles.tabBtn} ${activeTab === 'picks' ? styles.activeTab : ''}`}
+                            onClick={() => setActiveTab('picks')}
+                        >
+                            <Film size={18} /> Curator Picks
+                        </button>
+                        <button
+                            className={`${styles.tabBtn} ${activeTab === 'strategy' ? styles.activeTab : ''}`}
+                            onClick={() => setActiveTab('strategy')}
+                        >
+                            <TrendingUp size={18} /> Smart Strategy
+                        </button>
+                        <button
+                            className={`${styles.tabBtn} ${activeTab === 'preferences' ? styles.activeTab : ''}`}
+                            onClick={() => setActiveTab('preferences')}
+                            style={{ marginLeft: 'auto' }}
+                        >
+                            <Settings size={18} /> My Profile
+                            {(!preferences.target_budget || !preferences.household_size) && (
+                                <span className={styles.notificationDot} />
+                            )}
+                        </button>
+                        <button
+                            className={`${styles.tabBtn}`}
+                            onClick={() => handleGenerate(true)}
+                            title="Refresh Intelligence"
+                            style={{ marginLeft: '12px', color: '#7c3aed', background: '#f3f4f6', border: 'none' }}
+                        >
+                            <RefreshCw size={18} />
+                        </button>
+                    </div>
+
+                    {/* Content */}
+                    <div className={styles.content}>
+                        {activeTab === 'picks' && (
+                            <>
+                                {!data && !loading && (
+                                    <div className={styles.loadingWrapper}>
+                                        <Sparkles size={48} color="#ddd" />
+                                        <p>Ready to analyze your library. Click below to start.</p>
+                                        <button className={styles.saveBtn} style={{ maxWidth: 200 }} onClick={() => handleGenerate(false)}>
+                                            Generate Insights
+                                        </button>
+                                    </div>
+                                )}
+
+                                {loading && (
+                                    <div className={styles.loadingWrapper}>
+                                        <RefreshCw className="animate-spin" size={48} color="#7c3aed" />
+                                        <p>Analyzing 28,000+ titles and your watchlist...</p>
+                                    </div>
+                                )}
+
+                                {data && !loading && (
+                                    <>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
+                                            <h3 className={styles.sectionTitle}>Tap to Watch (On your services)</h3>
+                                        </div>
+
+                                        {data.picks.length === 0 ? (
+                                            <div style={{
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                padding: '3rem',
+                                                background: 'white',
+                                                borderRadius: '12px',
+                                                border: '1px solid #e5e7eb',
+                                                color: '#6b7280',
+                                                textAlign: 'center'
+                                            }}>
+                                                <Film size={48} color="#e5e7eb" style={{ marginBottom: '1rem' }} />
+                                                <h4 style={{ margin: '0 0 0.5rem 0', color: '#111827', fontSize: '1.1rem' }}>No perfect matches found</h4>
+                                                <p style={{ margin: 0, maxWidth: '300px' }}>
+                                                    Your preferences might be too strict. Try adding more languages or services to your profile.
+                                                </p>
+                                                <button
+                                                    className={styles.saveBtn}
+                                                    style={{ marginTop: '1.5rem', width: 'auto' }}
+                                                    onClick={() => setActiveTab('preferences')}
+                                                >
+                                                    Adjust Profile
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className={styles.grid}>
+                                                {data.picks.map((rec, idx) => (
+                                                    <div key={idx} style={{ position: 'relative' }}>
+                                                        <MediaCard
+                                                            item={{
+                                                                id: rec.tmdb_id || idx,
+                                                                title: rec.title,
+                                                                overview: rec.overview || '', // Keep original overview for toggling
+                                                                poster_path: rec.poster_path || '',
+                                                                vote_average: rec.vote_average || 0,
+                                                                media_type: rec.media_type || 'movie',
+                                                                status: 'plan_to_watch',
+                                                                user_rating: 0
+                                                            }}
+                                                            showServiceBadge={rec.service}
+                                                            customBadgeColor="#7c3aed"
+                                                            aiReason={rec.reason} // Pass the reason to the card
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </>
+                        )}
+
+                        {activeTab === 'strategy' && (
+                            <>
+                                {!data && !loading && (
+                                    <div className={styles.loadingWrapper}>
+                                        <p>Generate insights to see financial strategy.</p>
+                                        <button className={styles.saveBtn} style={{ maxWidth: 200 }} onClick={() => handleGenerate(false)}>
+                                            Generate
+                                        </button>
+                                    </div>
+                                )}
+                                {data && (
+                                    <>
+                                        <div className={styles.strategyList}>
+                                            {data.strategy.map((item, idx) => (
+                                                <div key={idx} className={styles.strategyCard}>
+                                                    <div className={`${styles.strategyIcon} ${item.action === 'Add' ? styles.iconAdd : styles.iconCancel}`}>
+                                                        {item.action === 'Add' ? <Check size={24} /> : <XCircle size={24} />}
+                                                    </div>
+                                                    <div className={styles.strategyContent}>
+                                                        <h4 className={styles.strategyTitle}>{item.action} {item.service}</h4>
+                                                        <p className={styles.strategyReason}>{item.reason}</p>
+                                                        {item.savings && item.action === 'Cancel' && (
+                                                            <span className={styles.savingsTag} style={{ color: '#166534', background: '#dcfce7', borderColor: '#86efac' }}>
+                                                                Save {currencySymbol}{item.savings}/mo
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {data.strategy.length === 0 && (
+                                                <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+                                                    <Check size={48} style={{ display: 'block', margin: '0 auto 1rem auto', color: '#10b981' }} />
+                                                    <p>Your subscription portfolio looks optimized! No changes recommended.</p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {data.gaps.length > 0 && (
+                                            <div className={styles.gapsSection}>
+                                                <h3 className={styles.sectionTitle}>
+                                                    <AlertTriangle size={20} color="#f59e0b" />
+                                                    Missing Out Checklist
+                                                </h3>
+                                                <div className={styles.grid}>
+                                                    {data.gaps.map((gap, idx) => (
+                                                        <div key={idx} style={{ position: 'relative' }}>
+                                                            <MediaCard
+                                                                item={{
+                                                                    id: gap.tmdb_id || idx,
+                                                                    title: gap.title,
+                                                                    overview: gap.overview || '',
+                                                                    poster_path: gap.poster_path || '',
+                                                                    vote_average: 0,
+                                                                    media_type: gap.media_type || 'movie',
+                                                                    status: 'plan_to_watch',
+                                                                    user_rating: 0
+                                                                }}
+                                                                aiReason={gap.reason}
+                                                                showServiceBadge={gap.service} // Expected service
+                                                                customBadgeColor="#f59e0b" // Amber for missing
+                                                            />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </>
+                        )}
+
+                        {activeTab === 'preferences' && (
+                            <div className={styles.formSection}>
+                                <h3 className={styles.sectionTitle} style={{ marginBottom: '1.5rem' }}>Enhance AI Accuracy</h3>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.label}>Household</label>
+                                        <select
+                                            className={styles.select}
+                                            value={preferences.household_size || 'Solo'}
+                                            onChange={(e) => setPreferences({ ...preferences, household_size: e.target.value })}
+                                        >
+                                            <option value="Solo">Just Me</option>
+                                            <option value="Couple">Couple</option>
+                                            <option value="Family">Family / Shared</option>
+                                        </select>
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                        <label className={styles.label}>Viewing Style</label>
+                                        <select
+                                            className={styles.select}
+                                            value={preferences.viewing_style || 'Casual'}
+                                            onChange={(e) => setPreferences({ ...preferences, viewing_style: e.target.value })}
+                                        >
+                                            {STYLE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className={styles.formGroup}>
+                                    <label className={styles.label}>Target Monthly Budget ({currencySymbol})</label>
+                                    <input
+                                        type="number"
+                                        className={styles.input}
+                                        placeholder={`e.g. 50`}
+                                        value={preferences.target_budget || ''}
+                                        onChange={(e) => setPreferences({ ...preferences, target_budget: parseInt(e.target.value) || undefined })}
+                                    />
+                                    <p className={styles.helperText}>Calculations will respect your region's currency ({currencyCode}).</p>
+                                </div>
+
+                                {/* Languages */}
+                                <div className={styles.formGroup}>
+                                    <label className={styles.label}>Preferred Languages</label>
+                                    <div className={styles.pillContainer}>
+                                        {LANG_OPTIONS.map(lang => (
+                                            <button
+                                                key={lang}
+                                                className={`${styles.pill} ${preferences.languages?.includes(lang) ? styles.pillActive : ''}`}
+                                                onClick={() => handleTogglePill('languages', lang)}
+                                            >
+                                                {lang}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Devices */}
+                                <div className={styles.formGroup}>
+                                    <label className={styles.label}>Primary Devices</label>
+                                    <div className={styles.pillContainer}>
+                                        {DEVICE_OPTIONS.map(dev => (
+                                            <button
+                                                key={dev}
+                                                className={`${styles.pill} ${preferences.devices?.includes(dev) ? styles.pillActive : ''}`}
+                                                onClick={() => handleTogglePill('devices', dev)}
+                                            >
+                                                {dev}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className={styles.formGroup}>
+                                    <label className={styles.label}>Deal Breakers (Comma separated)</label>
+                                    <input
+                                        type="text"
+                                        className={styles.input}
+                                        placeholder="e.g. Horror, Reality TV, Anime"
+                                        value={preferences.deal_breakers?.join(', ') || ''}
+                                        onChange={(e) => setPreferences({ ...preferences, deal_breakers: e.target.value.split(',').map(s => s.trim()) })}
+                                    />
+                                </div>
+
+                                <button className={styles.saveBtn} onClick={handleSavePreferences} disabled={savingPref}>
+                                    {savingPref ? 'Saving...' : 'Save Preferences'}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <ConfirmationModal
+                isOpen={showSaveConfirm}
+                onClose={() => setShowSaveConfirm(false)}
+                onConfirm={() => {
+                    setShowSaveConfirm(false);
+                    setActiveTab('picks');
+                }}
+                title="Preferences Saved"
+                message="Your AI profile has been updated. The analyst will now use these settings to generate more accurate recommendations."
+                confirmLabel="Awesome"
+                isDangerous={false}
+            />
+        </>
+    );
+};
+
+export default AIInsightsModal;

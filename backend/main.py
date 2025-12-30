@@ -139,7 +139,86 @@ def add_to_watchlist(item: schemas.WatchlistItemCreate, db: Session = Depends(ge
 
 @app.get("/watchlist/", response_model=list[schemas.WatchlistItem])
 def read_watchlist(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    print("DEBUG: GET /watchlist HIT")
+    # Optimized: Return raw list immediately. Enrichment happens via separate endpoint.
     return crud.get_watchlist(db, user_id=current_user.id, skip=skip, limit=limit)
+
+@app.post("/watchlist/availability")
+def check_watch_availability(item_ids: list[int], db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    import tmdb_client
+    
+    # Fetch items for context
+    items = db.query(models.WatchlistItem).filter(
+        models.WatchlistItem.user_id == current_user.id,
+        models.WatchlistItem.tmdb_id.in_(item_ids)
+    ).all()
+    
+    subs = db.query(models.Subscription).filter(
+        models.Subscription.user_id == current_user.id,
+        models.Subscription.is_active == True,
+        models.Subscription.category == 'OTT'
+    ).all()
+    
+    # Robust Provider Map
+    PROVIDER_IDS_MAP = {
+        "netflix": "8",
+        "hulu": "15", 
+        "amazon prime video": "9",
+        "disney plus": "337",
+        "max": "384|312",
+        "peacock": "386",
+        "apple tv plus": "350",
+        "paramount plus": "83|531",
+        "crunchyroll": "283",
+        "hotstar": "122",
+        "disney+ hotstar": "122",
+        "jiocinema": "220",
+        "jiohotstar": "122|220"
+    }
+    
+    availability_map = {}
+    
+    for item in items:
+        # Optimization: Only check relevant items
+        if item.status in ['plan_to_watch', 'watching']:
+            try:
+                providers = tmdb_client.get_watch_providers(item.media_type, item.tmdb_id, region=current_user.country or "US")
+                matched_sub = None
+                
+                if "flatrate" in providers:
+                    for p in providers["flatrate"]:
+                        p_name = p["provider_name"]
+                        p_id = str(p["provider_id"])
+                        
+                        for sub in subs:
+                            # 1. ID Match
+                            s_key = sub.service_name.lower()
+                            mapped_ids = []
+                            if s_key in PROVIDER_IDS_MAP:
+                                mapped_ids = PROVIDER_IDS_MAP[s_key].split("|")
+                            else:
+                                for k, v in PROVIDER_IDS_MAP.items():
+                                    if k in s_key or s_key in k:
+                                        mapped_ids = v.split("|")
+                                        break
+                            
+                            if p_id in mapped_ids:
+                                matched_sub = sub.service_name
+                                break
+                            
+                            # 2. Name Match
+                            if sub.service_name.lower() in p_name.lower() or p_name.lower() in sub.service_name.lower():
+                                matched_sub = sub.service_name
+                                break
+                        if matched_sub: break
+                
+                if matched_sub:
+                    availability_map[item.tmdb_id] = matched_sub
+                    
+            except Exception as e:
+                print(f"Availability check failed for {item.tmdb_id}: {e}")
+            
+    return availability_map
 
 @app.delete("/watchlist/{item_id}", response_model=schemas.WatchlistItem)
 def delete_watchlist_item(item_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
@@ -231,6 +310,75 @@ def get_ai_recommendations(db: Session = Depends(get_db), current_user: models.U
         
     return recommendations_list
 
+@app.post("/recommendations/insights", response_model=schemas.AIUnifiedResponse)
+@app.post("/recommendations/insights", response_model=schemas.AIUnifiedResponse)
+def get_unified_insights(
+    force_refresh: bool = False,
+    db: Session = Depends(get_db), 
+    current_user: models.User = Depends(dependencies.get_current_user)
+):
+    """Generate comprehensive AI insights (Picks, Strategy, Gaps)"""
+    import ai_client
+    import crud
+    import json
+    
+    # Check cache first? (Optional - lets do fresh for now or cache with 24h expiry)
+    import recommendations
+    if current_user.subscriptions and not force_refresh: 
+         # Using a distinct category for this unified blob
+         cached = recommendations.get_cached_data(db, user_id=current_user.id, category="unified_insights")
+         if cached and (cached.get('picks') or cached.get('strategy')):
+             # Validate and filter bad items, but keep good ones (Partial Cache Strategy)
+             valid_picks = []
+             if cached.get('picks'):
+                 for pick in cached['picks']:
+                     if pick.get('tmdb_id') and pick.get('tmdb_id') != 0 and pick.get('poster_path'):
+                         valid_picks.append(pick)
+             
+             # If we have at least some valid picks, return them to prevent constant loading loops
+             if len(valid_picks) > 0:
+                 cached['picks'] = valid_picks
+                 return cached
+
+    # Gather Context
+    watchlist = crud.get_watchlist(db, user_id=current_user.id, limit=100)
+    subs = db.query(models.Subscription).filter(
+        models.Subscription.user_id == current_user.id,
+        models.Subscription.is_active == True,
+        models.Subscription.category == 'OTT'
+    ).all()
+    
+    # Parse Preferences
+    preferences = {}
+    if current_user.preferences:
+        try:
+            preferences = json.loads(current_user.preferences)
+        except:
+            pass
+            
+    # Format Data
+    history = [{"title": w.title, "status": w.status} for w in watchlist]
+    ratings = [{"title": w.title, "rating": w.user_rating} for w in watchlist if w.user_rating]
+    active_subs = [s.service_name for s in subs]
+    
+    # Generate
+    insights = ai_client.generate_unified_insights(
+        user_history=history,
+        user_ratings=ratings,
+        active_subs=active_subs,
+        preferences=preferences,
+        country=current_user.country
+    )
+    
+    if not insights:
+        # Return empty structure on failure
+        return {"picks": [], "strategy": [], "gaps": []}
+        
+    # Cache
+    recommendations.set_cached_data(db, user_id=current_user.id, category="unified_insights", data=insights)
+    
+    return insights
+
 @app.get("/services/", response_model=list[schemas.Service])
 def read_services(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
     return crud.get_services(db, country=current_user.country)
@@ -242,6 +390,10 @@ def read_plans(service_id: int, db: Session = Depends(get_db), current_user: mod
 @app.put("/users/me", response_model=schemas.User)
 def update_user_me(country: str, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
     return crud.update_user_profile(db, user_id=current_user.id, country=country)
+
+@app.put("/users/me/preferences", response_model=schemas.User)
+def update_user_preferences(preferences: schemas.UserPreferences, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    return crud.update_user_preferences(db, user_id=current_user.id, preferences=preferences)
 
 @app.get("/media/{media_type}/{tmdb_id}/providers")
 def get_media_providers(media_type: str, tmdb_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):

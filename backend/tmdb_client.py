@@ -4,26 +4,8 @@ from config import settings
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
 
 def search_multi(query: str):
-    if settings.TMDB_API_KEY == "YOUR_TMDB_API_KEY_HERE":
-        # Mock response if no key provided
-        return {
-            "results": [
-                {
-                    "id": 550,
-                    "title": "Fight Club (Mock)",
-                    "media_type": "movie",
-                    "overview": "A ticking-time-bomb insomniac...",
-                    "poster_path": None
-                },
-                {
-                    "id": 1399,
-                    "name": "Game of Thrones (Mock)",
-                    "media_type": "tv",
-                    "overview": "Seven noble families fight for control...",
-                    "poster_path": None
-                }
-            ]
-        }
+    if not settings.TMDB_API_KEY or settings.TMDB_API_KEY == "YOUR_TMDB_API_KEY_HERE":
+        return {"results": []}
     
     url = f"{TMDB_BASE_URL}/search/multi"
     params = {
@@ -31,47 +13,40 @@ def search_multi(query: str):
         "query": query,
         "include_adult": False
     }
+    headers = {
+        "User-Agent": "SubscriptionManager/1.0",
+        "Accept": "application/json"
+    }
     
-    # Try up to 3 times with exponential backoff
+    import urllib3
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            # print(f"Searching TMDB for: {query}... (Attempt {attempt + 1})") # Reduced logging
-            response = requests.get(url, params=params, timeout=10)
-            response.raise_for_status()
-            data = response.json()
+            response = requests.get(url, params=params, headers=headers, timeout=10, verify=False)
+            # response.raise_for_status() # Let's be lenient like raw script
             
-            # Simple filtering: just remove person results
-            results = data.get("results", [])
-            filtered_results = [
-                r for r in results
-                if r.get("media_type") in ["movie", "tv"]  # Exclude person results only
-            ]
-            
-            # Sort by popularity to show most relevant results first
-            filtered_results.sort(key=lambda x: x.get("popularity", 0), reverse=True)
-            
-            return {"results": filtered_results}
-        except requests.exceptions.RequestException as e:
-            # Retry on all request errors (connection, timeout, 5xx, 429)
-            # Check for 429 Too Many Requests specifically to wait longer?
-            is_429 = False
-            if isinstance(e, requests.exceptions.HTTPError) and e.response is not None and e.response.status_code == 429:
-                is_429 = True
-            
+            if response.status_code == 200:
+                data = response.json()
+                # Basic filtering for safety
+                results = data.get("results", [])
+                filtered = [
+                    r for r in results 
+                    if r.get("media_type") in ["movie", "tv"]
+                ]
+                return {"results": filtered}
+            else:
+                print(f"TMDB Error {response.status_code}: {response.text}")
+                return {"results": []}
+                
+        except Exception as e:
+            print(f"TMDB Exception (Attempt {attempt+1}/{max_retries}): {e}")
             if attempt < max_retries - 1:
                 import time
-                wait_time = (2 ** attempt) if not is_429 else (5) # Wait longer for 429
-                print(f"TMDB Error ({e}). Retrying in {wait_time}s...")
-                time.sleep(wait_time)
-            else:
-                print(f"Max retries searched. Error: {e}")
-                return {"results": []}
-        except Exception as e:
-            print(f"Unexpected error: {e}")
+                time.sleep(1)
+                continue
             return {"results": []}
-            
-    return {"results": []}
 
 def get_watch_providers(media_type: str, tmdb_id: int, region: str = "US"):
     """
@@ -84,10 +59,17 @@ def get_watch_providers(media_type: str, tmdb_id: int, region: str = "US"):
     url = f"{TMDB_BASE_URL}/{media_type}/{tmdb_id}/watch/providers"
     params = {"api_key": settings.TMDB_API_KEY}
     
+    headers = {
+        "User-Agent": "SubscriptionManager/1.0",
+        "Accept": "application/json"
+    }
+    import urllib3
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            response = requests.get(url, params=params, timeout=5)
+            response = requests.get(url, params=params, headers=headers, timeout=5, verify=False)
             response.raise_for_status()
             data = response.json()
             # Return providers for the specified region or empty dict
@@ -116,8 +98,12 @@ def get_similar(media_type: str, tmdb_id: int):
     url = f"{TMDB_BASE_URL}/{media_type}/{tmdb_id}/similar"
     params = {"api_key": settings.TMDB_API_KEY, "page": 1}
     
+    headers = {
+        "User-Agent": "SubscriptionManager/1.0",
+        "Accept": "application/json"
+    }
     try:
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, headers=headers, verify=False)
         response.raise_for_status()
         data = response.json()
         return data
@@ -129,8 +115,12 @@ def get_details(media_type: str, tmdb_id: int):
     """Fetch full details including genres."""
     url = f"{TMDB_BASE_URL}/{media_type}/{tmdb_id}"
     params = {"api_key": settings.TMDB_API_KEY}
+    headers = {
+        "User-Agent": "SubscriptionManager/1.0",
+        "Accept": "application/json"
+    }
     try:
-        response = requests.get(url, params=params, timeout=5)
+        response = requests.get(url, params=params, headers=headers, timeout=5, verify=False)
         if response.status_code == 200:
             return response.json()
     except Exception as e:
@@ -155,10 +145,23 @@ def discover_media(media_type: str, with_genres: str = None, sort_by: str = "pop
         params["with_watch_providers"] = with_watch_providers
         params["watch_region"] = watch_region
         
-    try:
-        response = requests.get(url, params=params, timeout=10)
-        if response.status_code == 200:
-            return response.json()
-    except Exception as e:
-        print(f"Error discovering media: {e}")
+    headers = {
+        "User-Agent": "SubscriptionManager/1.0",
+        "Accept": "application/json"
+    }
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(url, params=params, headers=headers, timeout=10, verify=False)
+            if response.status_code == 200:
+                return response.json()
+        except requests.exceptions.RequestException as e:
+            if attempt < max_retries - 1:
+                import time
+                time.sleep(1)
+                continue
+            print(f"Error discovering media (Attempt {attempt+1}): {e}")
+        except Exception as e:
+            print(f"Error discovering media: {e}")
+            break
     return {"results": []}

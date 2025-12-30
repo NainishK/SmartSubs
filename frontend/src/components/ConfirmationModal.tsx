@@ -25,7 +25,7 @@ export default function ConfirmationModal({ isOpen, onClose, onConfirm, title, m
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000,
+            zIndex: 2000,
             backdropFilter: 'blur(4px)'
         }}>
             <div style={{
@@ -61,17 +61,17 @@ export default function ConfirmationModal({ isOpen, onClose, onConfirm, title, m
                             padding: '0.6rem 1.2rem',
                             borderRadius: '8px',
                             border: 'none',
-                            background: '#ef4444',
+                            background: isDangerous ? '#ef4444' : '#7c3aed',
                             color: 'white',
                             cursor: 'pointer',
                             fontWeight: 500,
-                            boxShadow: '0 4px 6px -1px rgba(239, 68, 68, 0.2)'
+                            boxShadow: isDangerous ? '0 4px 6px -1px rgba(239, 68, 68, 0.2)' : '0 4px 6px -1px rgba(124, 58, 237, 0.2)'
                         }}
                     >
-                        Logout
+                        {confirmLabel}
                     </button>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

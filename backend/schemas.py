@@ -42,6 +42,7 @@ class WatchlistItemBase(BaseModel):
     overview: Optional[str] = None
     status: str = "plan_to_watch"
     user_rating: Optional[int] = None # 1-10
+    available_on: Optional[str] = None # Enriched field for UI badges
 
 class WatchlistRatingUpdate(BaseModel):
     rating: int
@@ -93,9 +94,21 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
+
+class UserPreferences(BaseModel):
+    target_budget: Optional[int] = None
+    target_currency: Optional[str] = "USD" # New: Store currency context
+    watch_time_weekly: Optional[int] = None
+    household_size: Optional[str] = None # Solo, Couple, Family
+    languages: Optional[List[str]] = None # New: English, Hindi, etc.
+    viewing_style: Optional[str] = None # New: Binge, Weekly, Casual
+    devices: Optional[List[str]] = None
+    deal_breakers: Optional[List[str]] = None
+
 class User(UserBase):
     id: int
     is_active: bool
+    preferences: Optional[str] = None # JSON string
     subscriptions: List[Subscription] = []
     watchlist: List[WatchlistItem] = []
 
@@ -112,3 +125,22 @@ class AIRecommendation(BaseModel):
     vote_average: Optional[float] = None
     overview: Optional[str] = None
     logo_url: Optional[str] = None
+
+class AIStrategyItem(BaseModel):
+    action: str # "Cancel", "Add", "Keep"
+    service: str
+    reason: str
+    savings: Optional[float] = None
+
+class AIGapItem(BaseModel):
+    title: str
+    service: str
+    reason: str
+    tmdb_id: Optional[int] = None
+    media_type: Optional[str] = "movie"
+    poster_path: Optional[str] = None
+
+class AIUnifiedResponse(BaseModel):
+    picks: List[AIRecommendation]
+    strategy: List[AIStrategyItem]
+    gaps: List[AIGapItem]
