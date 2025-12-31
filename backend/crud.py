@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import func
 import models, schemas, security
 
 def get_user(db: Session, user_id: int):
@@ -200,3 +201,18 @@ def update_watchlist_item_status(db: Session, item_id: int, user_id: int, status
         db.commit()
         db.refresh(db_item)
     return db_item
+
+def update_user_ai_usage(db: Session, user_id: int):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if user:
+        # Reset count if it's a new day/period (handled by logic or just naive check here)
+        # We'll trust logic did the check, but here we just increment
+        # Actually, let's reset here if needed to be safe, or just increment?
+        # Let's just increment and timestamp. Logic in main.py decides whether to reset FIRST.
+        # Wait, if main logic sees "It's a new day", it should reset.
+        
+        # Simple approach: validate_ai_access handles the "Reset if new day".
+        # This function just "Marks usage".
+        user.last_ai_usage = func.now()
+        user.ai_usage_count = (user.ai_usage_count or 0) + 1
+        db.commit()

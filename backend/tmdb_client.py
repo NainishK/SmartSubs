@@ -1,5 +1,15 @@
-import requests
 from config import settings
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# Global Robust Session
+session = requests.Session()
+retries = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504])
+session.mount('https://', HTTPAdapter(max_retries=retries))
 
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
 
@@ -18,36 +28,32 @@ def search_multi(query: str):
         "Accept": "application/json"
     }
     
-    import urllib3
-    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            response = requests.get(url, params=params, headers=headers, timeout=10, verify=False)
-            # response.raise_for_status() # Let's be lenient like raw script
-            
-            if response.status_code == 200:
-                data = response.json()
-                # Basic filtering for safety
-                results = data.get("results", [])
-                filtered = [
-                    r for r in results 
-                    if r.get("media_type") in ["movie", "tv"]
-                ]
-                return {"results": filtered}
-            else:
-                print(f"TMDB Error {response.status_code}: {response.text}")
-                return {"results": []}
-                
-        except Exception as e:
-            print(f"TMDB Exception (Attempt {attempt+1}/{max_retries}): {e}")
-            if attempt < max_retries - 1:
-                import time
-                time.sleep(1)
-                continue
+    try:
+        # Use global session
+        response = session.get(url, params=params, headers=headers, timeout=10, verify=False)
+        # response.raise_for_status() # Let's be lenient like raw script
+        
+        if response.status_code == 200:
+            data = response.json()
+            # Basic filtering for safety
+            results = data.get("results", [])
+            filtered = [
+                r for r in results 
+                if r.get("media_type") in ["movie", "tv"]
+            ]
+            return {"results": filtered}
+        else:
+            print(f"TMDB Error {response.status_code}: {response.text}")
             return {"results": []}
+                
+    except Exception as e:
+        print(f"TMDB Exception: {e}")
+        return {"results": []}
 
+from functools import lru_cache
+
+@lru_cache(maxsize=128)
 def get_watch_providers(media_type: str, tmdb_id: int, region: str = "US"):
     """
     Fetch watch providers for a movie or TV show.
@@ -63,28 +69,16 @@ def get_watch_providers(media_type: str, tmdb_id: int, region: str = "US"):
         "User-Agent": "SubscriptionManager/1.0",
         "Accept": "application/json"
     }
-    import urllib3
-    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            response = requests.get(url, params=params, headers=headers, timeout=5, verify=False)
-            response.raise_for_status()
-            data = response.json()
-            # Return providers for the specified region or empty dict
-            return data.get("results", {}).get(region, {})
-        except requests.exceptions.RequestException as e:
-             # Retry on all request errors
-            if attempt < max_retries - 1:
-                import time
-                wait_time = 1 * (attempt + 1)
-                time.sleep(wait_time)
-                continue
-            print(f"Error fetching providers for {media_type}/{tmdb_id}: {e}")
-        except Exception as e:
-            print(f"Error fetching providers for {media_type}/{tmdb_id}: {e}")
-            break
+    try:
+        # Use global session
+        response = session.get(url, params=params, headers=headers, timeout=10, verify=False)
+        response.raise_for_status()
+        data = response.json()
+        # Return providers for the specified region or empty dict
+        return data.get("results", {}).get(region, {})
+    except Exception as e:
+         print(f"Error fetching providers for {media_type}/{tmdb_id}: {e}")
             
     return {}
 
@@ -103,7 +97,8 @@ def get_similar(media_type: str, tmdb_id: int):
         "Accept": "application/json"
     }
     try:
-        response = requests.get(url, params=params, headers=headers, verify=False)
+        # Use global session
+        response = session.get(url, params=params, headers=headers, timeout=10, verify=False)
         response.raise_for_status()
         data = response.json()
         return data
@@ -120,7 +115,8 @@ def get_details(media_type: str, tmdb_id: int):
         "Accept": "application/json"
     }
     try:
-        response = requests.get(url, params=params, headers=headers, timeout=5, verify=False)
+        # Use global session
+        response = session.get(url, params=params, headers=headers, timeout=10, verify=False)
         if response.status_code == 200:
             return response.json()
     except Exception as e:
@@ -152,7 +148,8 @@ def discover_media(media_type: str, with_genres: str = None, sort_by: str = "pop
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            response = requests.get(url, params=params, headers=headers, timeout=10, verify=False)
+            # Use global session
+            response = session.get(url, params=params, headers=headers, timeout=10, verify=False)
             if response.status_code == 200:
                 return response.json()
         except requests.exceptions.RequestException as e:

@@ -12,6 +12,13 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     country = Column(String, default="US")
     preferences = Column(String, nullable=True) # JSON stored as string
+    
+    # AI Access Controls
+    ai_allowed = Column(Boolean, default=True)
+    ai_quota_policy = Column(String, default="unlimited") # unlimited, daily, weekly
+    ai_request_limit = Column(Integer, default=5) # Max requests per period
+    ai_usage_count = Column(Integer, default=0) # Current usage in period
+    last_ai_usage = Column(DateTime(timezone=True), nullable=True)
 
     subscriptions = relationship("Subscription", back_populates="owner")
     watchlist = relationship("WatchlistItem", back_populates="owner")
@@ -45,6 +52,7 @@ class WatchlistItem(Base):
     vote_average = Column(Float, nullable=True)
     overview = Column(String, nullable=True)
     user_rating = Column(Integer, nullable=True) # 1-5 scale (or 1-10)
+    available_on = Column(String, nullable=True) # Badge cache
     genre_ids = Column(String, nullable=True) # JSON string or comma-separated list of genre IDs
     status = Column(String, default="plan_to_watch") # plan_to_watch, watching, watched
     added_at = Column(DateTime(timezone=True), server_default=func.now())

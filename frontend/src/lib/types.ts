@@ -24,7 +24,7 @@ export interface WatchlistItem {
 }
 
 export interface Recommendation {
-    type: 'watch_now' | 'cancel' | 'subscribe' | 'similar_content' | 'trending';
+    type: 'watch_now' | 'cancel' | 'subscribe' | 'similar_content' | 'trending' | 'global_trending';
     service_name: string;
     logo_url?: string;
     items: string[];
@@ -99,4 +99,5 @@ export interface AIUnifiedResponse {
     picks: AIRecommendation[];
     strategy: AIStrategyItem[];
     gaps: AIGapItem[];
+    warning?: string;
 }

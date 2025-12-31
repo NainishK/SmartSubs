@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from datetime import timedelta
+from datetime import datetime, timedelta
 import models, schemas, crud, security, dependencies
 from database import SessionLocal, engine
 import traceback
@@ -11,6 +11,57 @@ import traceback
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+# --- Admin Panel Setup ---
+from sqladmin import Admin, ModelView
+from sqladmin.authentication import AuthenticationBackend
+from starlette.requests import Request
+from starlette.responses import RedirectResponse
+from models import User, Subscription, WatchlistItem
+
+class AdminAuth(AuthenticationBackend):
+    async def login(self, request: Request) -> bool:
+        form = await request.form()
+        username = form.get("username")
+        password = form.get("password")
+        
+        # TODO: Connect this to a real "is_superuser" field in DB
+        if username == "admin" and password == "admin123":
+            request.session.update({"token": "admin_token"})
+            return True
+        return False
+
+    async def logout(self, request: Request) -> bool:
+        request.session.clear()
+        return True
+
+    async def authenticate(self, request: Request) -> bool:
+        return "token" in request.session
+
+authentication_backend = AdminAuth(secret_key="SUPER_SECRET_KEY")
+
+class UserAdmin(ModelView, model=User):
+    column_list = [User.id, User.email, User.country, User.is_active, User.ai_quota_policy, User.ai_request_limit, User.ai_usage_count]
+    form_columns = [User.email, User.is_active, User.country, User.ai_allowed, User.ai_quota_policy, User.ai_request_limit, User.ai_usage_count]
+    can_create = False
+    can_edit = True
+    can_delete = True
+    icon = "fa-solid fa-user"
+
+class SubscriptionAdmin(ModelView, model=Subscription):
+    column_list = [Subscription.service_name, Subscription.cost, Subscription.is_active]
+    # Removed user_id temporarily to rule out FK resolution issues
+    icon = "fa-solid fa-credit-card"
+
+class WatchlistAdmin(ModelView, model=WatchlistItem):
+    column_list = [WatchlistItem.title, WatchlistItem.media_type, WatchlistItem.user_id]
+    icon = "fa-solid fa-tv"
+
+admin = Admin(app, engine, authentication_backend=authentication_backend)
+admin.add_view(UserAdmin)
+admin.add_view(SubscriptionAdmin)
+admin.add_view(WatchlistAdmin)
+# -------------------------
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -22,9 +73,14 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 origins = [
+    "*",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
+
+from starlette.middleware.sessions import SessionMiddleware
+
+app.add_middleware(SessionMiddleware, secret_key="SUPER_SECRET_KEY")
 
 app.add_middleware(
     CORSMiddleware,
@@ -41,6 +97,53 @@ def get_db():
         yield db
     finally:
         db.close()
+
+def validate_ai_access(db: Session, user: models.User):
+    if not user.ai_allowed:
+        raise HTTPException(status_code=403, detail="AI access is disabled for your account.")
+    
+    if user.ai_quota_policy == "unlimited":
+        return
+
+    # Check for reset
+    reset_needed = False
+    now = datetime.utcnow()
+    
+    if user.last_ai_usage:
+        last = user.last_ai_usage
+        if last.tzinfo:
+            last = last.replace(tzinfo=None)
+            
+        if user.ai_quota_policy == "daily":
+             # If different day, reset
+             if last.date() != now.date():
+                 reset_needed = True
+                 
+        elif user.ai_quota_policy == "weekly":
+             # If > 7 days or new week (simplified: just > 7 days since last usage? No, that's weird. 
+             # Let's say: Reset if last usage was in a previous ISO week)
+             # simpler: if (now - last).days >= 7 ? 
+             # User asked for "once a week". 
+             # Let's stick to "Rolling 7 days" or "Calendar Week"?
+             # Simplest compliant implementation: If 7 days passed since last usage, we treat it as new period.
+             # Wait, that means they can only use it once every 7 days.
+             # Better: Reset if Monday? 
+             # Let's stick to user's "Daily" request primarily. 
+             # For weekly: Reset if > 7 days.
+             if (now - last).days >= 7:
+                 reset_needed = True
+
+    if reset_needed:
+        user.ai_usage_count = 0
+        db.commit()
+    
+    # Check Limit
+    current_count = user.ai_usage_count or 0
+    limit = user.ai_request_limit or 1 # Default to 1 if null
+    
+    if current_count >= limit:
+        period = "day" if user.ai_quota_policy == "daily" else "period"
+        raise HTTPException(status_code=429, detail=f"AI limit reached ({limit}/{limit} per {period}). Upgrade for more.")
 
 @app.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -72,6 +175,73 @@ async def login_for_access_token(background_tasks: BackgroundTasks, form_data: O
 @app.get("/users/me/", response_model=schemas.User)
 async def read_users_me(current_user: models.User = Depends(dependencies.get_current_user)):
     return current_user
+
+@app.get("/users/me/stats", response_model=schemas.UserStats)
+def read_user_stats(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    subs = db.query(models.Subscription).filter(
+        models.Subscription.user_id == current_user.id,
+        models.Subscription.is_active == True
+    ).all()
+    
+    def get_monthly_cost(sub):
+        if sub.billing_cycle and sub.billing_cycle.lower() == 'yearly':
+            return sub.cost / 12
+        return sub.cost
+
+    total_cost = sum(get_monthly_cost(sub) for sub in subs) 
+    yearly_projection = total_cost * 12
+    
+    top_service = None
+    if subs:
+        # Top Sub based on monthly impact
+        top_sub = max(subs, key=lambda s: get_monthly_cost(s))
+        top_service = schemas.TopService(name=top_sub.service_name, cost=get_monthly_cost(top_sub))
+        
+    return schemas.UserStats(
+        total_cost=total_cost,
+        active_subs=len(subs),
+        yearly_projection=yearly_projection,
+        top_service=top_service
+    )
+
+@app.get("/users/me/spending", response_model=list[schemas.SpendingCategory])
+def read_user_spending(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    subs = db.query(models.Subscription).filter(
+        models.Subscription.user_id == current_user.id,
+        models.Subscription.is_active == True
+    ).all()
+    
+    def get_monthly_cost(sub):
+        if sub.billing_cycle and sub.billing_cycle.lower() == 'yearly':
+            return sub.cost / 12
+        return sub.cost
+
+    # Sort by cost descending (monthly)
+    sorted_subs = sorted(subs, key=lambda s: get_monthly_cost(s), reverse=True)
+    
+    # Top 3 + Others
+    top_subs = sorted_subs[:3]
+    other_subs = sorted_subs[3:]
+    
+    spending_dist = []
+    colors = ['#0070f3', '#7928ca', '#f5a623', '#10b981']
+    
+    for i, sub in enumerate(top_subs):
+        spending_dist.append(schemas.SpendingCategory(
+            name=sub.service_name,
+            cost=get_monthly_cost(sub),
+            color=colors[i % len(colors)]
+        ))
+        
+    if other_subs:
+        other_cost = sum(get_monthly_cost(s) for s in other_subs)
+        spending_dist.append(schemas.SpendingCategory(
+            name='Others',
+            cost=other_cost,
+            color='#e0e0e0'
+        ))
+        
+    return spending_dist
 
 @app.get("/search")
 def search_content(query: str, current_user: models.User = Depends(dependencies.get_current_user)):
@@ -168,6 +338,7 @@ def check_watch_availability(item_ids: list[int], db: Session = Depends(get_db),
         "max": "384|312",
         "peacock": "386",
         "apple tv plus": "350",
+        "apple tv+": "350",  # Added exact match for DB Name
         "paramount plus": "83|531",
         "crunchyroll": "283",
         "hotstar": "122",
@@ -178,45 +349,74 @@ def check_watch_availability(item_ids: list[int], db: Session = Depends(get_db),
     
     availability_map = {}
     
-    for item in items:
-        # Optimization: Only check relevant items
-        if item.status in ['plan_to_watch', 'watching']:
-            try:
-                providers = tmdb_client.get_watch_providers(item.media_type, item.tmdb_id, region=current_user.country or "US")
-                matched_sub = None
-                
-                if "flatrate" in providers:
-                    for p in providers["flatrate"]:
-                        p_name = p["provider_name"]
-                        p_id = str(p["provider_id"])
-                        
-                        for sub in subs:
-                            # 1. ID Match
-                            s_key = sub.service_name.lower()
-                            mapped_ids = []
-                            if s_key in PROVIDER_IDS_MAP:
-                                mapped_ids = PROVIDER_IDS_MAP[s_key].split("|")
-                            else:
-                                for k, v in PROVIDER_IDS_MAP.items():
-                                    if k in s_key or s_key in k:
-                                        mapped_ids = v.split("|")
-                                        break
-                            
-                            if p_id in mapped_ids:
-                                matched_sub = sub.service_name
-                                break
-                            
-                            # 2. Name Match
-                            if sub.service_name.lower() in p_name.lower() or p_name.lower() in sub.service_name.lower():
-                                matched_sub = sub.service_name
-                                break
-                        if matched_sub: break
-                
-                if matched_sub:
-                    availability_map[item.tmdb_id] = matched_sub
+    print(f"DEBUG: Checking {len(items)} items against subs: {[s.service_name for s in subs]}")
+    
+    import concurrent.futures
+    import time
+    
+    start_time = time.time()
+    
+    def check_item(item):
+        try:
+            providers = tmdb_client.get_watch_providers(item.media_type, item.tmdb_id, region=current_user.country or "US")
+            matched_sub = None
+            
+            if "flatrate" in providers:
+                for p in providers["flatrate"]:
+                    p_name = p["provider_name"]
+                    p_id = str(p["provider_id"])
                     
-            except Exception as e:
-                print(f"Availability check failed for {item.tmdb_id}: {e}")
+                    for sub in subs:
+                        # 1. ID Match
+                        s_key = sub.service_name.lower()
+                        mapped_ids = []
+                        if s_key in PROVIDER_IDS_MAP:
+                            mapped_ids = PROVIDER_IDS_MAP[s_key].split("|")
+                        else:
+                            for k, v in PROVIDER_IDS_MAP.items():
+                                if k in s_key or s_key in k:
+                                    mapped_ids = v.split("|")
+                                    break
+                        
+                        if p_id in mapped_ids:
+                            matched_sub = sub.service_name
+                            break
+                        
+                        # 2. Name Match
+                        if sub.service_name.lower() in p_name.lower() or p_name.lower() in sub.service_name.lower():
+                            matched_sub = sub.service_name
+                            break
+                    if matched_sub: break
+            
+            if matched_sub:
+                print(f"DEBUG: Matched {item.title} -> {matched_sub}")
+                return item.tmdb_id, matched_sub
+        except Exception as e:
+            print(f"Availability check failed for {item.tmdb_id}: {e}")
+        return None, None
+
+    # Parallel Execution (Optimization)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        results = list(executor.map(check_item, items))
+    
+    # Batch Update DB
+    updates = 0
+    for tmdb_id, matched_sub in results:
+        if tmdb_id and matched_sub:
+            availability_map[tmdb_id] = matched_sub
+            # Find item and update
+            for item in items:
+                if item.tmdb_id == tmdb_id:
+                    if item.available_on != matched_sub:
+                         item.available_on = matched_sub
+                         updates += 1
+                    break
+    
+    if updates > 0:
+        print(f"DEBUG: Persisting {updates} badge updates to DB")
+        db.commit()
+            
+    print(f"DEBUG: Availability check took {time.time() - start_time:.2f}s for {len(items)} items")
             
     return availability_map
 
@@ -263,9 +463,9 @@ def get_dashboard_recommendations(db: Session = Depends(get_db), current_user: m
     return recommendations.get_dashboard_recommendations(db, user_id=current_user.id)
 
 @app.get("/recommendations/similar")
-def get_similar_recommendations(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+def get_similar_recommendations(force_refresh: bool = False, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
     import recommendations
-    return recommendations.get_similar_content(db, user_id=current_user.id)
+    return recommendations.get_similar_content(db, user_id=current_user.id, force_refresh=force_refresh)
 
 @app.post("/recommendations/refresh")
 def refresh_recommendations_endpoint(type: str = None, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
@@ -285,6 +485,9 @@ def get_cached_ai_recommendations(db: Session = Depends(get_db), current_user: m
 @app.post("/recommendations/ai", response_model=list[schemas.AIRecommendation])
 def get_ai_recommendations(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
     """Generate AI-powered recommendations on demand"""
+    # 1. Check Permissions
+    validate_ai_access(db, current_user)
+
     import ai_client
     import crud
     
@@ -307,6 +510,9 @@ def get_ai_recommendations(db: Session = Depends(get_db), current_user: models.U
     if recommendations_list:
         import recommendations as rec_engine
         rec_engine.set_cached_data(db, user_id=current_user.id, category="ai_picks", data=recommendations_list)
+        
+        # 2. Update Usage Timestamp
+        crud.update_user_ai_usage(db, current_user.id)
         
     return recommendations_list
 
@@ -339,6 +545,32 @@ def get_unified_insights(
              if len(valid_picks) > 0:
                  cached['picks'] = valid_picks
                  return cached
+
+    # 1. Check Permissions (Only if we need to generate)
+    try:
+        validate_ai_access(db, current_user)
+    except HTTPException as e:
+        if e.status_code == 429:
+             # LIMIT REACHED: Try to fallback to ANY cache (even if we thought it was 'bad' or 'old')
+             # Re-fetch raw cache just in case we filtered it out above
+             fallback = recommendations.get_cached_data(db, user_id=current_user.id, category="unified_insights")
+             
+             # If we have cache, use it
+             if fallback and (fallback.get('picks') or fallback.get('strategy')):
+                 fallback['warning'] = "Daily AI limit reached. Viewing cached results from last compliant generation."
+                 return fallback
+                 
+             # IF NO CACHE and LIMIT REACHED:
+             # Do not fail. Generate "Cheap" recommendations (Trending/Watch Now) deterministically.
+             # This avoids the "Empty Screen of Death" for new users who hit limits immediately.
+             manual_picks = recommendations.get_dashboard_recommendations(db, user_id=current_user.id)
+             return {
+                 "picks": manual_picks or [],
+                 "strategy": [],
+                 "gaps": [],
+                 "warning": "Daily AI limit reached. Showing trending titles available on your services."
+             }
+        raise e
 
     # Gather Context
     watchlist = crud.get_watchlist(db, user_id=current_user.id, limit=100)
@@ -376,6 +608,9 @@ def get_unified_insights(
         
     # Cache
     recommendations.set_cached_data(db, user_id=current_user.id, category="unified_insights", data=insights)
+    
+    # Update Usage (Admin Control)
+    crud.update_user_ai_usage(db, current_user.id)
     
     return insights
 

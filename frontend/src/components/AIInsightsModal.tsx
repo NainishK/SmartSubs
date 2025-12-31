@@ -100,9 +100,18 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose }) =>
             } else {
                 setError("AI returned incomplete data. Please try again.");
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
-            setError("Failed to generate insights. AI might be busy.");
+            let msg = "Failed to generate insights. AI might be busy.";
+
+            // Extract Axios error message
+            if (e.response && e.response.data && e.response.data.detail) {
+                msg = e.response.data.detail;
+            } else if (e.message === "Network Error") {
+                msg = "Network Error: Please check if the backend is running.";
+            }
+
+            setError(msg);
         } finally {
             setLoading(false);
         }
@@ -174,6 +183,40 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose }) =>
 
                     {/* Content */}
                     <div className={styles.content}>
+                        {error && (
+                            <div style={{
+                                background: '#fee2e2',
+                                border: '1px solid #ef4444',
+                                color: '#b91c1c',
+                                padding: '1rem',
+                                borderRadius: '8px',
+                                marginBottom: '1rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem'
+                            }}>
+                                <AlertTriangle size={20} />
+                                <span>{error}</span>
+                            </div>
+                        )}
+
+                        {data && data.warning && (
+                            <div style={{
+                                background: '#fffbeb',
+                                border: '1px solid #f59e0b',
+                                color: '#b45309',
+                                padding: '1rem',
+                                borderRadius: '8px',
+                                marginBottom: '1rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem'
+                            }}>
+                                <AlertTriangle size={20} />
+                                <span>{data.warning}</span>
+                            </div>
+                        )}
+
                         {activeTab === 'picks' && (
                             <>
                                 {!data && !loading && (

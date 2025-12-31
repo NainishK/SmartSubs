@@ -148,6 +148,12 @@
     gap: 2rem;
 }
 
+.mediaGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
 .recCard {
     background: white;
     padding: 1.5rem;

@@ -144,3 +144,21 @@ class AIUnifiedResponse(BaseModel):
     picks: List[AIRecommendation]
     strategy: List[AIStrategyItem]
     gaps: List[AIGapItem]
+    warning: Optional[str] = None # To convey limits or stale data info
+
+class TopService(BaseModel):
+    name: str
+    cost: float
+    currency: str = "USD"
+
+class UserStats(BaseModel):
+    total_cost: float
+    active_subs: int
+    yearly_projection: float
+    top_service: Optional[TopService] = None
+
+class SpendingCategory(BaseModel):
+    name: str
+    cost: float
+    color: str
+

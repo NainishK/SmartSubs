@@ -9,8 +9,8 @@ interface RecommendationsContextType {
     similarRecs: Recommendation[];
     loadingDashboard: boolean;
     loadingSimilar: boolean;
-    refreshRecommendations: () => Promise<void>;
-    fetchSimilarData: () => Promise<void>;
+    refreshRecommendations: (force?: boolean) => Promise<void>;
+    fetchSimilarData: (force?: boolean) => Promise<void>;
     lastUpdated: Date | null;
 }
 
@@ -47,12 +47,12 @@ export function RecommendationsProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const fetchSimilarData = async () => {
+    const fetchSimilarData = async (force: boolean = false) => {
         setLoadingSimilar(true);
         try {
             // Add timestamp for cache-busting and silent auth
             // @ts-ignore
-            const response = await api.get(`/recommendations/similar?t=${Date.now()}`, { _silentAuth: true });
+            const response = await api.get(`/recommendations/similar?t=${Date.now()}&force_refresh=${force}`, { _silentAuth: true });
             setSimilarRecs(response.data);
         } catch (error) {
             console.error('Failed to fetch similar recommendations', error);
@@ -61,16 +61,17 @@ export function RecommendationsProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const refreshRecommendations = async () => {
+    const refreshRecommendations = async (force: boolean = false) => {
         setLoadingDashboard(true);
         setLoadingSimilar(true);
 
         try {
             // 1. Trigger backend refresh (Synchronous POST)
+            // Note: POST /refresh endpoint is always forceful check backend
             await api.post('/recommendations/refresh');
 
             // 2. Fetch fresh data immediately (since POST is synchronous)
-            await Promise.all([fetchDashboardData(), fetchSimilarData()]);
+            await Promise.all([fetchDashboardData(), fetchSimilarData(force)]);
             setLastUpdated(new Date());
         } catch (error) {
             console.error('Failed to refresh recommendations', error);

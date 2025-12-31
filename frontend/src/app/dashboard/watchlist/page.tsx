@@ -50,9 +50,10 @@ export default function WatchlistPage() {
             if (ids.length > 0) {
                 api.post('/watchlist/availability', ids).then(res => {
                     const map = res.data;
+                    console.log("DEBUG: Availability Map Recv:", map); // <--- Added Log
                     setItems(prev => prev.map(p => ({
                         ...p,
-                        available_on: map[p.id] || undefined
+                        available_on: map[p.id] || map[String(p.id)] || undefined
                     })));
                 }).catch(err => console.error("Badge fetch error:", err));
             }
@@ -159,6 +160,7 @@ export default function WatchlistPage() {
                             key={item.dbId}
                             item={item}
                             existingStatus={item.status}
+                            showServiceBadge={item.available_on}
 
                             onRemove={() => confirmRemove(item)}
                             onStatusChange={(s, r) => handleStatusUpdate(item.dbId!, s, r)}
