@@ -10,9 +10,11 @@ import { COUNTRY_CURRENCY_MAP, COUNTRY_SYMBOL_MAP } from '../lib/currency';
 interface AIInsightsModalProps {
     isOpen: boolean;
     onClose: () => void;
+    watchlist?: Array<{ id: number; tmdb_id: number; status: string; user_rating?: number }>;
+    onWatchlistUpdate?: () => void;
 }
 
-const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose }) => {
+const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watchlist = [], onWatchlistUpdate }) => {
     const [activeTab, setActiveTab] = useState<'picks' | 'strategy' | 'preferences'>('picks');
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<AIUnifiedResponse | null>(null);
@@ -270,25 +272,34 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose }) =>
                                             </div>
                                         ) : (
                                             <div className={styles.grid}>
-                                                {data.picks.map((rec, idx) => (
-                                                    <div key={idx} style={{ position: 'relative' }}>
-                                                        <MediaCard
-                                                            item={{
-                                                                id: rec.tmdb_id || idx,
-                                                                title: rec.title,
-                                                                overview: rec.overview || '', // Keep original overview for toggling
-                                                                poster_path: rec.poster_path || '',
-                                                                vote_average: rec.vote_average || 0,
-                                                                media_type: rec.media_type || 'movie',
-                                                                status: 'plan_to_watch',
-                                                                user_rating: 0
-                                                            }}
-                                                            showServiceBadge={rec.service}
-                                                            customBadgeColor="#7c3aed"
-                                                            aiReason={rec.reason} // Pass the reason to the card
-                                                        />
-                                                    </div>
-                                                ))}
+                                                {data.picks.map((rec, idx) => {
+                                                    const tmdbId = rec.tmdb_id || 0;
+                                                    const existingItem = watchlist.find(w => w.tmdb_id === tmdbId || (w.tmdb_id === 0 && rec.title === 'Title needed'));
+
+                                                    return (
+                                                        <div key={idx} style={{ position: 'relative' }}>
+                                                            <MediaCard
+                                                                item={{
+                                                                    id: tmdbId,
+                                                                    dbId: existingItem?.id,
+                                                                    title: rec.title,
+                                                                    overview: rec.overview || '', // Keep original overview for toggling
+                                                                    poster_path: rec.poster_path || '',
+                                                                    vote_average: rec.vote_average || 0,
+                                                                    media_type: rec.media_type || 'movie',
+                                                                    status: existingItem?.status,
+                                                                    user_rating: existingItem?.user_rating || 0
+                                                                }}
+                                                                showServiceBadge={rec.service}
+                                                                customBadgeColor="#7c3aed"
+                                                                aiReason={rec.reason} // Pass the reason to the card
+                                                                existingStatus={existingItem?.status}
+                                                                onAddSuccess={onWatchlistUpdate}
+                                                                onStatusChange={() => onWatchlistUpdate?.()}
+                                                            />
+                                                        </div>
+                                                    )
+                                                })}
                                             </div>
                                         )}
                                     </>
@@ -340,25 +351,33 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose }) =>
                                                     Missing Out Checklist
                                                 </h3>
                                                 <div className={styles.grid}>
-                                                    {data.gaps.map((gap, idx) => (
-                                                        <div key={idx} style={{ position: 'relative' }}>
-                                                            <MediaCard
-                                                                item={{
-                                                                    id: gap.tmdb_id || idx,
-                                                                    title: gap.title,
-                                                                    overview: gap.overview || '',
-                                                                    poster_path: gap.poster_path || '',
-                                                                    vote_average: 0,
-                                                                    media_type: gap.media_type || 'movie',
-                                                                    status: 'plan_to_watch',
-                                                                    user_rating: 0
-                                                                }}
-                                                                aiReason={gap.reason}
-                                                                showServiceBadge={gap.service} // Expected service
-                                                                customBadgeColor="#f59e0b" // Amber for missing
-                                                            />
-                                                        </div>
-                                                    ))}
+                                                    {data.gaps.map((gap, idx) => {
+                                                        const tmdbId = gap.tmdb_id || 0;
+                                                        const existingItem = watchlist.find(w => w.tmdb_id === tmdbId);
+
+                                                        return (
+                                                            <div key={idx} style={{ position: 'relative' }}>
+                                                                <MediaCard
+                                                                    item={{
+                                                                        id: tmdbId,
+                                                                        dbId: existingItem?.id,
+                                                                        title: gap.title,
+                                                                        overview: gap.overview || '',
+                                                                        poster_path: gap.poster_path || '',
+                                                                        vote_average: 0,
+                                                                        media_type: gap.media_type || 'movie',
+                                                                        status: existingItem?.status,
+                                                                        user_rating: existingItem?.user_rating || 0
+                                                                    }}
+                                                                    aiReason={gap.reason}
+                                                                    showServiceBadge={gap.service} // Expected service
+                                                                    customBadgeColor="#f59e0b" // Amber for missing
+                                                                    existingStatus={existingItem?.status}
+                                                                    onAddSuccess={onWatchlistUpdate}
+                                                                />
+                                                            </div>
+                                                        )
+                                                    })}
                                                 </div>
                                             </div>
                                         )}

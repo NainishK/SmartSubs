@@ -94,7 +94,12 @@ export default function RecommendationsPage() {
                 <h1 className={styles.pageTitle}>Smart Recommendations</h1>
             </div>
 
-            <AIInsightsModal isOpen={showAIModal} onClose={() => setShowAIModal(false)} />
+            <AIInsightsModal
+                isOpen={showAIModal}
+                onClose={() => setShowAIModal(false)}
+                watchlist={watchlist}
+                onWatchlistUpdate={fetchWatchlist}
+            />
 
             {/* Trending Section - Carousel */}
             {trendingRecs.length > 0 && (
@@ -140,26 +145,33 @@ export default function RecommendationsPage() {
                         </div>
                     </div>
                     <div className={styles.grid}>
-                        {trendingRecs.slice(trendingIndex, trendingIndex + TRENDING_VISIBLE).map((rec, index) => (
-                            <div key={`${trendingIndex}-${index}`} className={styles.recommendationItem}>
+                        {trendingRecs.slice(trendingIndex, trendingIndex + TRENDING_VISIBLE).map((rec, index) => {
+                            const tmdbId = rec.tmdb_id || 0;
+                            const existingItem = watchlist.find(w => w.tmdb_id === tmdbId || (w.tmdb_id === 0 && rec.items[0] === 'Title needed')); // Strict ID match preference
 
-
-                                <MediaCard
-                                    item={{
-                                        id: rec.tmdb_id || index,
-                                        title: rec.items[0],
-                                        overview: rec.overview || '',
-                                        poster_path: rec.poster_path || '',
-                                        vote_average: rec.vote_average || 0,
-                                        media_type: rec.media_type || 'movie',
-                                        user_rating: 0,
-                                        status: 'plan_to_watch'
-                                    }}
-                                    showServiceBadge={rec.service_name}
-                                    customBadgeColor="#db2777"
-                                />
-                            </div>
-                        ))}
+                            return (
+                                <div key={`${trendingIndex}-${index}`} className={styles.recommendationItem}>
+                                    <MediaCard
+                                        item={{
+                                            id: tmdbId,
+                                            dbId: existingItem?.id,
+                                            title: rec.items[0],
+                                            overview: rec.overview || '',
+                                            poster_path: rec.poster_path || '',
+                                            vote_average: rec.vote_average || 0,
+                                            media_type: rec.media_type || 'movie',
+                                            user_rating: existingItem?.user_rating || 0,
+                                            status: existingItem?.status
+                                        }}
+                                        showServiceBadge={rec.service_name}
+                                        customBadgeColor="#db2777"
+                                        existingStatus={existingItem?.status}
+                                        onAddSuccess={fetchWatchlist}
+                                        onStatusChange={() => fetchWatchlist()}
+                                    />
+                                </div>
+                            )
+                        })}
                     </div>
                 </section>
             )}
