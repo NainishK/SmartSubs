@@ -14,7 +14,9 @@ class User(Base):
     preferences = Column(String, nullable=True) # JSON stored as string
     
     # AI Access Controls
-    ai_allowed = Column(Boolean, default=True)
+    # AI Access Controls
+    ai_allowed = Column(Boolean, default=False)
+    ai_access_status = Column(String, default="none") # none, requested, approved, rejected
     ai_quota_policy = Column(String, default="unlimited") # unlimited, daily, weekly
     ai_request_limit = Column(Integer, default=5) # Max requests per period
     ai_usage_count = Column(Integer, default=0) # Current usage in period

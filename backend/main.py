@@ -41,8 +41,8 @@ class AdminAuth(AuthenticationBackend):
 authentication_backend = AdminAuth(secret_key="SUPER_SECRET_KEY")
 
 class UserAdmin(ModelView, model=User):
-    column_list = [User.id, User.email, User.country, User.is_active, User.ai_quota_policy, User.ai_request_limit, User.ai_usage_count]
-    form_columns = [User.email, User.is_active, User.country, User.ai_allowed, User.ai_quota_policy, User.ai_request_limit, User.ai_usage_count]
+    column_list = [User.id, User.email, User.ai_access_status, User.ai_allowed, User.country, User.is_active, User.ai_quota_policy, User.ai_usage_count]
+    form_columns = [User.email, User.is_active, User.country, User.ai_allowed, User.ai_access_status, User.ai_quota_policy, User.ai_request_limit, User.ai_usage_count]
     can_create = False
     can_edit = True
     can_delete = True
@@ -175,6 +175,30 @@ async def login_for_access_token(background_tasks: BackgroundTasks, form_data: O
 @app.get("/users/me/", response_model=schemas.User)
 async def read_users_me(current_user: models.User = Depends(dependencies.get_current_user)):
     return current_user
+
+@app.post("/users/me/access/ai")
+async def request_ai_access(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(dependencies.get_current_user)
+):
+    if current_user.ai_allowed or current_user.ai_access_status == 'approved':
+        if not current_user.ai_allowed:
+            # Self-repair: Admin set status text but forgot boolean
+            user = db.query(models.User).filter(models.User.id == current_user.id).first()
+            if user:
+                user.ai_allowed = True
+                db.commit()
+                
+        return {"status": "approved", "message": "You have been approved! Please refresh."}
+    
+    user = db.query(models.User).filter(models.User.id == current_user.id).first()
+    if not user:
+         raise HTTPException(status_code=404, detail="User not found")
+         
+    user.ai_access_status = "requested"
+    db.commit()
+    db.refresh(user)
+    return {"status": "requested", "message": "Access requested. Waiting for approval."}
 
 @app.get("/users/me/stats", response_model=schemas.UserStats)
 def read_user_stats(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
@@ -594,13 +618,39 @@ def get_unified_insights(
     active_subs = [s.service_name for s in subs]
     
     # Generate
-    insights = ai_client.generate_unified_insights(
-        user_history=history,
-        user_ratings=ratings,
-        active_subs=active_subs,
-        preferences=preferences,
-        country=current_user.country
-    )
+    try:
+        from google.api_core.exceptions import ResourceExhausted
+        insights = ai_client.generate_unified_insights(
+            user_history=history,
+            user_ratings=ratings,
+            active_subs=active_subs,
+            preferences=preferences,
+            country=current_user.country
+        )
+    except Exception as e:
+         error_str = str(e)
+         is_quota = "429" in error_str or "quota" in error_str.lower() or "ResourceExhausted" in error_str
+         
+         if is_quota:
+             print(f"DEBUG: Gemini Quota Exceeded: {e}")
+             
+             # 1. Try Cache
+             fallback = recommendations.get_cached_data(db, user_id=current_user.id, category="unified_insights")
+             if fallback and (fallback.get('picks') or fallback.get('strategy')):
+                 fallback['warning'] = "Daily AI limit reached. Viewing cached results."
+                 return fallback
+                 
+             # 2. Return Unavailable State (Frontend will handle this)
+             return {
+                 "picks": [],
+                 "strategy": [],
+                 "gaps": [],
+                 "warning": "AI_QUOTA_EXCEEDED"
+             }
+         
+         # Reraise other errors
+         print(f"ERROR: AI Generation Failed: {e}")
+         raise e
     
     if not insights:
         # Return empty structure on failure

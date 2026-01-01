@@ -25,10 +25,17 @@ def _call_gemini_rest(prompt: str, model_name: str = "gemini-flash-latest"):
         response = requests.post(url, headers=headers, json=data)
         if response.status_code == 200:
             return response.json()
+        elif response.status_code == 429:
+            # Raise exception so main.py can trigger Quota UI
+            logger.error(f"Gemini Quota Exceeded (429): {response.text}")
+            raise Exception("Gemini 429: Resource Exhausted")
         else:
             logger.error(f"Gemini REST Error {response.status_code}: {response.text}")
             return None
     except Exception as e:
+        # Re-raise 429 exceptions
+        if "429" in str(e):
+             raise e
         logger.error(f"Gemini REST Request Failed: {e}")
         return None
 

@@ -109,6 +109,9 @@ class User(UserBase):
     id: int
     is_active: bool
     preferences: Optional[str] = None # JSON string
+    ai_allowed: bool
+    ai_access_status: Optional[str] = "none"
+    last_ai_usage: Optional[datetime] = None
     subscriptions: List[Subscription] = []
     watchlist: List[WatchlistItem] = []
 
