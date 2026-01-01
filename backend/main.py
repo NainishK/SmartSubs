@@ -333,7 +333,7 @@ def add_to_watchlist(item: schemas.WatchlistItemCreate, db: Session = Depends(ge
 
 @app.get("/watchlist/", response_model=list[schemas.WatchlistItem])
 def read_watchlist(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
-    print("DEBUG: GET /watchlist HIT")
+
     # Optimized: Return raw list immediately. Enrichment happens via separate endpoint.
     return crud.get_watchlist(db, user_id=current_user.id, skip=skip, limit=limit)
 
@@ -373,7 +373,7 @@ def check_watch_availability(item_ids: list[int], db: Session = Depends(get_db),
     
     availability_map = {}
     
-    print(f"DEBUG: Checking {len(items)} items against subs: {[s.service_name for s in subs]}")
+    # print(f"DEBUG: Checking {len(items)} items against subs: {[s.service_name for s in subs]}")
     
     import concurrent.futures
     import time
@@ -413,7 +413,7 @@ def check_watch_availability(item_ids: list[int], db: Session = Depends(get_db),
                     if matched_sub: break
             
             if matched_sub:
-                print(f"DEBUG: Matched {item.title} -> {matched_sub}")
+    # print(f"DEBUG: Availability check took {time.time() - start_time:.2f}s for {len(items)} items")
                 return item.tmdb_id, matched_sub
         except Exception as e:
             print(f"Availability check failed for {item.tmdb_id}: {e}")
@@ -541,7 +541,7 @@ def get_ai_recommendations(db: Session = Depends(get_db), current_user: models.U
     return recommendations_list
 
 @app.post("/recommendations/insights", response_model=schemas.AIUnifiedResponse)
-@app.post("/recommendations/insights", response_model=schemas.AIUnifiedResponse)
+
 def get_unified_insights(
     force_refresh: bool = False,
     db: Session = Depends(get_db), 
