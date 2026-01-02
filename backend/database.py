@@ -20,26 +20,11 @@ else:
     if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
         SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
         
-    print(f"DEBUG: Connecting to Database URL starting with: {SQLALCHEMY_DATABASE_URL[:15]}...")
-        
     connect_args = {} # Postgres does not need check_same_thread
 
-try:
-    engine = create_engine(
-        SQLALCHEMY_DATABASE_URL, connect_args=connect_args
-    )
-except Exception as e:
-    print(f"CRITICAL ERROR: Failed to create DB engine.")
-    # Diagnostic - mask password
-    safe_url = SQLALCHEMY_DATABASE_URL
-    if "@" in safe_url:
-        part1 = safe_url.split("@")[1]
-        print(f"DEBUG: Host part seems to be: {part1}")
-        
-    print(f"DEBUG: Full URL length: {len(SQLALCHEMY_DATABASE_URL)}")
-    print(f"DEBUG: Starts with: {SQLALCHEMY_DATABASE_URL[:15]}...")
-    print(f"DEBUG: Ends with char code: {ord(SQLALCHEMY_DATABASE_URL[-1]) if SQLALCHEMY_DATABASE_URL else 'EMPTY'}")
-    raise e
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args=connect_args
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
