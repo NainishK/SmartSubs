@@ -14,8 +14,14 @@ if not SQLALCHEMY_DATABASE_URL:
 else:
     # Cloud (Postgres)
     # Fix for Render/Heroku which often use 'postgres://' which SQLAlchemy deprecated
+    # Also handle accidental quotes or whitespace from copy-pasting
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.strip().strip('"').strip("'")
+    
     if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
         SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+        
+    print(f"DEBUG: Connecting to Database URL starting with: {SQLALCHEMY_DATABASE_URL[:15]}...")
+        
     connect_args = {} # Postgres does not need check_same_thread
 
 engine = create_engine(
