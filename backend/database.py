@@ -4,6 +4,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -16,6 +19,10 @@ else:
     # Fix for Render/Heroku which often use 'postgres://' which SQLAlchemy deprecated
     # Also handle accidental quotes or whitespace from copy-pasting
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.strip().strip('"').strip("'")
+    
+    # Handle psql command paste
+    if SQLALCHEMY_DATABASE_URL.startswith("psql "):
+        SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("psql ", "", 1).strip().strip("'").strip('"')
     
     if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
         SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)

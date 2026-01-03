@@ -3,7 +3,8 @@ import os
 
 # Create a path to the backend directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
-backend_dir = current_dir  # Should be the backend folder itself since script is in backend/
+# current_dir is .../backend/scripts. We need .../backend
+backend_dir = os.path.dirname(current_dir)
 sys.path.append(backend_dir)
 
 from sqlalchemy.orm import Session

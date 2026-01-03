@@ -10,6 +10,7 @@ export default function SignupPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [country, setCountry] = useState('IN'); // Default to India
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
@@ -30,7 +31,7 @@ export default function SignupPage() {
 
         setLoading(true);
         try {
-            await api.post('/users/', { email, password });
+            await api.post('/users/', { email, password, country });
             // Auto login after signup
             const params = new URLSearchParams();
             params.append('username', email);
@@ -93,6 +94,18 @@ export default function SignupPage() {
                         />
                     </div>
 
+                    <div className={styles.inputGroup}>
+                        <select
+                            value={country}
+                            onChange={(e) => setCountry(e.target.value)}
+                            className={styles.input}
+                            style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'white' }}
+                        >
+                            <option value="IN">India (IN)</option>
+                            <option value="US">United States (US)</option>
+                        </select>
+                    </div>
+
                     <button type="submit" className={styles.button} disabled={loading}>
                         {loading ? 'Creating Account...' : 'Create Account'}
                     </button>
@@ -102,7 +115,7 @@ export default function SignupPage() {
                         <Link href="/login">Sign In</Link>
                     </div>
                 </form>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
