@@ -30,6 +30,76 @@
     }
 }
 
+/* Mobile Tabs */
+.mobileTabs {
+    display: none;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+    .mobileTabs {
+        display: flex;
+    }
+}
+
+.tabButton {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.activeTab {
+    background: white;
+    color: #0070f3;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Category Filter Pills */
+.filterContainer {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    /* Hide scrollbar */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.filterContainer::-webkit-scrollbar {
+    display: none;
+}
+
+.filterPill {
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #64748b;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.activePill {
+    background: #1a1a1a;
+    color: white;
+    border-color: #1a1a1a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
 /* Subscriptions Grid */
 .subGrid {
     display: grid;

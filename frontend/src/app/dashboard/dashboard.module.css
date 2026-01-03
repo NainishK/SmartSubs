@@ -284,6 +284,46 @@
     background: #e6f7ff;
     color: #0070f3;
     border-color: #1890ff;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 5px rgba(0, 112, 243, 0.15);
-}
+
+    /* Mobile Optimizations */
+    @media (max-width: 768px) {
+        .container {
+            padding: 1.5rem 1rem;
+        }
+
+        .header {
+            margin-bottom: 1.5rem;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .pageTitle {
+            font-size: 1.5rem;
+        }
+
+        .dateLabel {
+            font-size: 0.85rem;
+        }
+
+        .statsGrid {
+            grid-template-columns: 1fr;
+            /* Stack vertically */
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .statCard {
+            height: auto;
+            /* Allow flexible height */
+            padding: 1.25rem;
+            min-height: 120px;
+        }
+
+        .statValue {
+            font-size: 1.8rem;
+        }
+
+        .spendingSection {
+            padding: 1.5rem;
+        }
+    }

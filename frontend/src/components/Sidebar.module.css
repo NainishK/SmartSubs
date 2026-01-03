@@ -148,8 +148,81 @@
     padding: 0.8rem 0;
 }
 
-.logoutBtn:hover {
-    background-color: #fff1f0;
-    color: #d32f2f;
-    border-color: #ffeef0;
+/* Mobile Overlay */
+.mobileOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 90;
+    display: none;
+    /* Hidden on desktop */
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(0);
+        /* On mobile, standard state is visible (if not collapsed logic overridden) */
+        /* Actually, we want: Collapsed = Hidden offscreen. Expanded = Visible. */
+    }
+
+    .sidebar.collapsed {
+        transform: translateX(-100%);
+        width: 250px;
+        /* Keep width fixed even when "collapsed" (hidden) so it slides out nicely */
+    }
+
+    .mobileOverlay {
+        display: block;
+    }
+}
+
+.navItem:hover {
+    background-color: #f9f9f9;
+    color: #000;
+}
+
+.regionBadge {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.8rem 1rem;
+    margin-bottom: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #ebedf0;
+    color: #475569;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.collapsed .regionBadge {
+    justify-content: center;
+    padding: 0.8rem 0;
+    background: transparent;
+    border: none;
+}
+
+.flag {
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+.regionText {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

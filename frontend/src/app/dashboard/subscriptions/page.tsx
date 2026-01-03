@@ -40,6 +40,11 @@ export default function SubscriptionsPage() {
     const [loading, setLoading] = useState(true);
     const [userCountry, setUserCountry] = useState('US');
 
+    // Mobile View State
+    const [viewMode, setViewMode] = useState<'list' | 'add'>('list');
+    const [isMobile, setIsMobile] = useState(false);
+    const [filterCategory, setFilterCategory] = useState<'ALL' | 'OTT' | 'OTHER'>('ALL');
+
     // Editing State
     const [isEditing, setIsEditing] = useState(false);
     const [editSubId, setEditSubId] = useState<number | null>(null);
@@ -65,6 +70,14 @@ export default function SubscriptionsPage() {
 
     useEffect(() => {
         fetchData();
+
+        // Handle Resize
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        handleResize(); // Initial check
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     useEffect(() => {
@@ -154,6 +167,7 @@ export default function SubscriptionsPage() {
         setSelectedPlanId('');
         setIsEditing(false);
         setEditSubId(null);
+        if (isMobile) setViewMode('list');
     };
 
     const handleFormSubmit = async (e: React.FormEvent) => {
@@ -203,8 +217,12 @@ export default function SubscriptionsPage() {
             next_billing_date: sub.next_billing_date,
         });
 
-        // Scroll to form
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Scroll to form (only needed on desktop or if we don't switch view)
+        if (!isMobile) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            setViewMode('add');
+        }
     };
 
     const openDeleteModal = (sub: Subscription) => {
@@ -270,214 +288,264 @@ export default function SubscriptionsPage() {
             <h1 className={styles.pageTitle}>My Subscriptions</h1>
 
             <div className={styles.content}>
-                <div className={styles.leftColumn}>
-                    {subscriptions.length === 0 ? (
-                        <div className={styles.emptyStateContainer}>
-                            <div className={styles.emptyIcon}>
-                                <DollarSign size={48} />
-                            </div>
-                            <h2 className={styles.emptyTitle}>No subscriptions yet</h2>
-                            <p className={styles.emptySubtitle}>
-                                Start tracking your monthly recurring expenses by adding your first subscription service using the form.
-                            </p>
-                        </div>
-                    ) : (
-                        <div className={styles.categoriesContainer}>
-                            {[
-                                { id: 'OTT', title: 'Streaming (OTT)' },
-                                { id: 'OTHER', title: 'Other Subscriptions' }
-                            ].map(cat => {
-                                const catSubs = subscriptions.filter(s => (s.category || 'OTT') === cat.id);
-                                if (catSubs.length === 0) return null;
+                {/* Mobile Tabs */}
+                {isMobile && (
+                    <div className={styles.mobileTabs}>
+                        <button
+                            className={`${styles.tabButton} ${viewMode === 'list' ? styles.activeTab : ''}`}
+                            onClick={() => setViewMode('list')}
+                        >
+                            My Subscriptions
+                        </button>
+                        <button
+                            className={`${styles.tabButton} ${viewMode === 'add' ? styles.activeTab : ''}`}
+                            onClick={() => setViewMode('add')}
+                        >
+                            {isEditing ? 'Edit Subscription' : 'Add New'}
+                        </button>
+                    </div>
+                )}
 
-                                return (
-                                    <section key={cat.id} className={styles.categorySection}>
-                                        <h2 className={styles.categoryTitle}>{cat.title}</h2>
-                                        <div className={styles.subGrid}>
-                                            {catSubs.map((sub) => (
-                                                <div key={sub.id} className={styles.subCard}>
-                                                    <div className={styles.subHeader}>
-                                                        <div className={styles.serviceIdentity}>
-                                                            <ServiceIcon name={sub.service_name} logoUrl={sub.logo_url} />
-                                                            <h3 className={styles.serviceName}>{sub.service_name}</h3>
-                                                        </div>
-                                                        <span className={styles.statusBadge}>Active</span>
-                                                    </div>
-
-                                                    <div className={styles.subBody}>
-                                                        <div className={styles.costSection}>
-                                                            <p className={styles.costValue}>{formatCurrency(sub.cost, userCountry)}</p>
-                                                            <span className={styles.billingPeriod}>per {sub.billing_cycle === 'monthly' ? 'month' : 'year'}</span>
-                                                        </div>
-
-                                                        <div className={styles.billingDetail}>
-                                                            <div className={styles.detailItem}>
-                                                                <span className={styles.detailLabel}>Next Bill</span>
-                                                                <span className={styles.detailValue}>{new Date(sub.next_billing_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className={styles.subFooter}>
-                                                        <button onClick={() => handleEditClick(sub)} className={styles.editBtn}>
-                                                            <Edit2 size={14} />
-                                                            Edit
-                                                        </button>
-                                                        <button onClick={() => openDeleteModal(sub)} className={styles.deleteBtn}>
-                                                            Cancel
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </section>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-
-                <div className={styles.rightColumn}>
-                    <section className={styles.addSection}>
-                        <h2 className={styles.sectionTitle}>
-                            {isEditing ? 'Edit Subscription' : 'Add New Subscription'}
-                        </h2>
-                        <form onSubmit={handleFormSubmit} className={styles.form}>
-                            <div className={styles.field}>
-                                <label>Category</label>
-                                <select
-                                    value={newSub.category}
-                                    onChange={(e) => {
-                                        setNewSub({ ...newSub, category: e.target.value, service_name: '' });
-                                        setSelectedServiceId('');
-                                        setPlans([]);
-                                    }}
-                                    required
-                                    className={styles.input}
-                                >
-                                    <option value="OTT">Streaming (OTT)</option>
-                                    <option value="OTHER">Other Service</option>
-                                </select>
-                            </div>
-
-                            <div className={styles.field}>
-                                <label>Service</label>
-                                <select
-                                    value={selectedServiceId}
-                                    onChange={(e) => setSelectedServiceId(e.target.value === 'custom' ? 'custom' : Number(e.target.value))}
-                                    required
-                                    className={styles.input}
-                                    disabled={isEditing} // Prevent changing service name when editing for consistency
-                                >
-                                    <option value="">Select a service</option>
-                                    {services
-                                        .filter(s => (s.category || 'OTT') === newSub.category)
-                                        .map(service => (
-                                            <option key={service.id} value={service.id}>{service.name}</option>
-                                        ))
-                                    }
-                                    <option value="custom">Other (Custom)</option>
-                                </select>
-                            </div>
-
-                            {selectedServiceId === 'custom' && (
-                                <div className={styles.field}>
-                                    <label>Custom Name</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Enter service name"
-                                        value={newSub.service_name}
-                                        onChange={(e) => setNewSub({ ...newSub, service_name: e.target.value })}
-                                        required
-                                        className={styles.input}
-                                        disabled={isEditing}
-                                    />
+                {(!isMobile || viewMode === 'list') && (
+                    <div className={styles.leftColumn}>
+                        {subscriptions.length === 0 ? (
+                            <div className={styles.emptyStateContainer}>
+                                <div className={styles.emptyIcon}>
+                                    <DollarSign size={48} />
                                 </div>
-                            )}
+                                <h2 className={styles.emptyTitle}>No subscriptions yet</h2>
+                                <p className={styles.emptySubtitle}>
+                                    Start tracking your monthly recurring expenses by adding your first subscription service using the form.
+                                </p>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Mobile Category Filter */}
+                                {isMobile && (
+                                    <div className={styles.filterContainer}>
+                                        <button
+                                            className={`${styles.filterPill} ${filterCategory === 'ALL' ? styles.activePill : ''}`}
+                                            onClick={() => setFilterCategory('ALL')}
+                                        >
+                                            All
+                                        </button>
+                                        <button
+                                            className={`${styles.filterPill} ${filterCategory === 'OTT' ? styles.activePill : ''}`}
+                                            onClick={() => setFilterCategory('OTT')}
+                                        >
+                                            OTT
+                                        </button>
+                                        <button
+                                            className={`${styles.filterPill} ${filterCategory === 'OTHER' ? styles.activePill : ''}`}
+                                            onClick={() => setFilterCategory('OTHER')}
+                                        >
+                                            Others
+                                        </button>
+                                    </div>
+                                )}
 
-                            {plans.length > 0 && selectedServiceId !== 'custom' && (
+                                <div className={styles.categoriesContainer}>
+                                    {[
+                                        { id: 'OTT', title: 'Streaming (OTT)' },
+                                        { id: 'OTHER', title: 'Other Subscriptions' }
+                                    ]
+                                        .filter(cat => filterCategory === 'ALL' || cat.id === filterCategory)
+                                        .map(cat => {
+                                            const catSubs = subscriptions.filter(s => (s.category || 'OTT') === cat.id);
+                                            if (catSubs.length === 0) return null;
+
+                                            return (
+                                                <section key={cat.id} className={styles.categorySection}>
+                                                    <h2 className={styles.categoryTitle}>{cat.title}</h2>
+                                                    <div className={styles.subGrid}>
+                                                        {catSubs.map((sub) => (
+                                                            <div key={sub.id} className={styles.subCard}>
+                                                                <div className={styles.subHeader}>
+                                                                    <div className={styles.serviceIdentity}>
+                                                                        <ServiceIcon name={sub.service_name} logoUrl={sub.logo_url} />
+                                                                        <h3 className={styles.serviceName}>{sub.service_name}</h3>
+                                                                    </div>
+                                                                    <span className={styles.statusBadge}>Active</span>
+                                                                </div>
+
+                                                                <div className={styles.subBody}>
+                                                                    <div className={styles.costSection}>
+                                                                        <p className={styles.costValue}>{formatCurrency(sub.cost, userCountry)}</p>
+                                                                        <span className={styles.billingPeriod}>per {sub.billing_cycle === 'monthly' ? 'month' : 'year'}</span>
+                                                                    </div>
+
+                                                                    <div className={styles.billingDetail}>
+                                                                        <div className={styles.detailItem}>
+                                                                            <span className={styles.detailLabel}>Next Bill</span>
+                                                                            <span className={styles.detailValue}>{new Date(sub.next_billing_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className={styles.subFooter}>
+                                                                    <button onClick={() => handleEditClick(sub)} className={styles.editBtn}>
+                                                                        <Edit2 size={14} />
+                                                                        Edit
+                                                                    </button>
+                                                                    <button onClick={() => openDeleteModal(sub)} className={styles.deleteBtn}>
+                                                                        Cancel
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </section>
+                                            );
+                                        })}
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
+
+                {(!isMobile || viewMode === 'add') && (
+                    <div className={styles.rightColumn}>
+                        <section className={styles.addSection}>
+                            <h2 className={styles.sectionTitle}>
+                                {isEditing ? 'Edit Subscription' : 'Add New Subscription'}
+                            </h2>
+                            <form onSubmit={handleFormSubmit} className={styles.form}>
                                 <div className={styles.field}>
-                                    <label>Plan</label>
+                                    <label>Category</label>
                                     <select
-                                        value={selectedPlanId}
-                                        onChange={(e) => setSelectedPlanId(Number(e.target.value))}
+                                        value={newSub.category}
+                                        onChange={(e) => {
+                                            setNewSub({ ...newSub, category: e.target.value, service_name: '' });
+                                            setSelectedServiceId('');
+                                            setPlans([]);
+                                        }}
+                                        required
                                         className={styles.input}
                                     >
-                                        <option value="">Select a plan</option>
-                                        {plans.map(plan => (
-                                            <option key={plan.id} value={plan.id}>{plan.name} - {formatCurrency(plan.cost, userCountry)}</option>
-                                        ))}
+                                        <option value="OTT">Streaming (OTT)</option>
+                                        <option value="OTHER">Other Service</option>
                                     </select>
                                 </div>
-                            )}
 
-                            <div className={styles.field}>
-                                <label>Cost</label>
-                                <div className={styles.iconInputWrapper}>
-                                    <span className={styles.currencySymbol}>{getCurrencySymbol(userCountry)}</span>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        placeholder="0.00"
-                                        value={newSub.cost || ''}
-                                        onChange={(e) => setNewSub({ ...newSub, cost: parseFloat(e.target.value) || 0 })}
+                                <div className={styles.field}>
+                                    <label>Service</label>
+                                    <select
+                                        value={selectedServiceId}
+                                        onChange={(e) => setSelectedServiceId(e.target.value === 'custom' ? 'custom' : Number(e.target.value))}
                                         required
-                                        className={styles.inputWithIcon}
-                                    />
+                                        className={styles.input}
+                                        disabled={isEditing} // Prevent changing service name when editing for consistency
+                                    >
+                                        <option value="">Select a service</option>
+                                        {services
+                                            .filter(s => (s.category || 'OTT') === newSub.category)
+                                            .map(service => (
+                                                <option key={service.id} value={service.id}>{service.name}</option>
+                                            ))
+                                        }
+                                        <option value="custom">Other (Custom)</option>
+                                    </select>
                                 </div>
-                            </div>
 
-                            <div className={styles.field}>
-                                <label>Billing Cycle</label>
-                                <select
-                                    value={newSub.billing_cycle}
-                                    onChange={(e) => setNewSub({ ...newSub, billing_cycle: e.target.value })}
-                                    className={styles.input}
-                                >
-                                    <option value="monthly">Monthly</option>
-                                    <option value="yearly">Yearly</option>
-                                </select>
-                            </div>
+                                {selectedServiceId === 'custom' && (
+                                    <div className={styles.field}>
+                                        <label>Custom Name</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Enter service name"
+                                            value={newSub.service_name}
+                                            onChange={(e) => setNewSub({ ...newSub, service_name: e.target.value })}
+                                            required
+                                            className={styles.input}
+                                            disabled={isEditing}
+                                        />
+                                    </div>
+                                )}
 
-                            <div className={styles.field}>
-                                <label>Next Billing Date</label>
-                                <div className={styles.datePickerWrapper}>
-                                    <DatePicker
-                                        selected={newSub.next_billing_date ? new Date(newSub.next_billing_date) : new Date()}
-                                        onChange={(date: Date | null) => {
-                                            if (date) {
-                                                const formatted = date.toISOString().split('T')[0];
-                                                setNewSub({ ...newSub, next_billing_date: formatted });
-                                            }
-                                        }}
-                                        className={styles.inputWithIcon}
-                                        dateFormat="MMM d, yyyy"
-                                        minDate={new Date()}
-                                        wrapperClassName={styles.fullWidth}
-                                        showMonthDropdown
-                                        showYearDropdown
-                                        dropdownMode="select"
-                                        popperClassName={styles.datePickerPopper}
-                                    />
-                                    <div className={styles.inputIcon}>
-                                        <Calendar size={18} />
+                                {plans.length > 0 && selectedServiceId !== 'custom' && (
+                                    <div className={styles.field}>
+                                        <label>Plan</label>
+                                        <select
+                                            value={selectedPlanId}
+                                            onChange={(e) => setSelectedPlanId(Number(e.target.value))}
+                                            className={styles.input}
+                                        >
+                                            <option value="">Select a plan</option>
+                                            {plans.map(plan => (
+                                                <option key={plan.id} value={plan.id}>{plan.name} - {formatCurrency(plan.cost, userCountry)}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
+
+                                <div className={styles.field}>
+                                    <label>Cost</label>
+                                    <div className={styles.iconInputWrapper}>
+                                        <span className={styles.currencySymbol}>{getCurrencySymbol(userCountry)}</span>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="0.00"
+                                            value={newSub.cost || ''}
+                                            onChange={(e) => setNewSub({ ...newSub, cost: parseFloat(e.target.value) || 0 })}
+                                            required
+                                            className={styles.inputWithIcon}
+                                        />
                                     </div>
                                 </div>
-                            </div>
 
-                            <button type="submit" className={styles.button}>
-                                {isEditing ? <Edit2 size={18} className={styles.btnIcon} /> : <Plus size={18} className={styles.btnIcon} />}
-                                {isEditing ? 'Update Subscription' : 'Add Subscription'}
-                            </button>
+                                <div className={styles.field}>
+                                    <label>Billing Cycle</label>
+                                    <select
+                                        value={newSub.billing_cycle}
+                                        onChange={(e) => setNewSub({ ...newSub, billing_cycle: e.target.value })}
+                                        className={styles.input}
+                                    >
+                                        <option value="monthly">Monthly</option>
+                                        <option value="yearly">Yearly</option>
+                                    </select>
+                                </div>
 
-                            {isEditing && (
-                                <button type="button" onClick={resetForm} className={styles.secondaryButton}>
-                                    Cancel Editing
+                                <div className={styles.field}>
+                                    <label>Next Billing Date</label>
+                                    <div className={styles.datePickerWrapper}>
+                                        <DatePicker
+                                            selected={newSub.next_billing_date ? new Date(newSub.next_billing_date) : new Date()}
+                                            onChange={(date: Date | null) => {
+                                                if (date) {
+                                                    const formatted = date.toISOString().split('T')[0];
+                                                    setNewSub({ ...newSub, next_billing_date: formatted });
+                                                }
+                                            }}
+                                            className={styles.inputWithIcon}
+                                            dateFormat="MMM d, yyyy"
+                                            minDate={new Date()}
+                                            wrapperClassName={styles.fullWidth}
+                                            showMonthDropdown
+                                            showYearDropdown
+                                            dropdownMode="select"
+                                            popperClassName={styles.datePickerPopper}
+                                        />
+                                        <div className={styles.inputIcon}>
+                                            <Calendar size={18} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="submit" className={styles.button}>
+                                    {isEditing ? <Edit2 size={18} className={styles.btnIcon} /> : <Plus size={18} className={styles.btnIcon} />}
+                                    {isEditing ? 'Update Subscription' : 'Add Subscription'}
                                 </button>
-                            )}
-                        </form>
-                    </section>
-                </div>
+
+                                {isEditing && (
+                                    <button type="button" onClick={resetForm} className={styles.secondaryButton}>
+                                        Cancel Editing
+                                    </button>
+                                )}
+                            </form>
+                        </section>
+                    </div>
+                )}
             </div>
 
             {/* Custom Modal */}

@@ -1,52 +1,112 @@
 .container {
     display: flex;
-    min-height: 100vh;
+    min-height: 100dvh;
     background-color: #f9fafb;
-}
-
-.cont.main {
-    flex-grow: 1;
-    padding: 2rem;
-    transition: margin-left 0.3s ease;
-    min-height: 100vh;
-    background-color: #f8f9fa;
     position: relative;
-    /* Context for absolute positioning */
-}
-
-.regionBadge {
-    position: absolute;
-    top: 1.5rem;
-    right: 2rem;
-    background: white;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #475569;
-    border: 1px solid #e2e8f0;
-    z-index: 10;
-    transition: all 0.2s ease;
-}
-
-.regionBadge:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border-color: #cbd5e1;
-}
-
-.flag {
-    font-size: 1.2rem;
+    overflow-x: hidden;
 }
 
 .main {
     flex: 1;
-    margin-left: 250px;
-    /* Width of sidebar */
     padding: 2rem;
+    width: 100%;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mainExpanded {
+    margin-left: 250px;
     max-width: calc(100% - 250px);
+}
+
+.mainCollapsed {
+    margin-left: 80px;
+    max-width: calc(100% - 80px);
+}
+
+@media (max-width: 768px) {
+    .main {
+        margin-left: 0 !important;
+        max-width: 100% !important;
+        padding: 1rem;
+        padding-top: 5rem;
+        /* Space for mobile header */
+    }
+
+    .regionBadge {
+        top: 0.75rem;
+        right: 1rem;
+        z-index: 101;
+        /* Above mobile header if needed, or adjust */
+    }
+}
+
+/* Mobile Header Styles */
+.mobileHeader {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    /* Slightly shorter */
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 0 1rem;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 95;
+    border-bottom: 1px solid #f0f0f0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.mobileLeft {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.mobileRegionBadge {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #f1f5f9;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.mobileLogo {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #111;
+    text-decoration: none;
+    background: linear-gradient(135deg, #111 0%, #555 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.mobileMenuBtn {
+    background: transparent;
+    border: none;
+    color: #444;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.desktopOnly {
+    display: flex;
+}
+
+@media (max-width: 768px) {
+    .mobileHeader {
+        display: flex;
+    }
+
+    .desktopOnly {
+        display: none !important;
+    }
 }

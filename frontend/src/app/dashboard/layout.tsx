@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Sidebar from '@/components/Sidebar';
 import styles from './layout.module.css';
 import { RecommendationsProvider } from '@/context/RecommendationsContext';
+import { Menu } from 'lucide-react';
 
 export default function DashboardLayout({
     children,
@@ -11,7 +13,7 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     const [isCollapsed, setIsCollapsed] = useState(false);
-    const [country, setCountry] = useState('US');
+    const [country, setCountry] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchCountry = async () => {
@@ -24,6 +26,21 @@ export default function DashboardLayout({
             }
         };
         fetchCountry();
+
+        // Auto-collapse on mobile
+        const handleResize = () => {
+            if (window.innerWidth < 768) {
+                setIsCollapsed(true);
+            } else {
+                setIsCollapsed(false);
+            }
+        };
+
+        // Initial check
+        handleResize();
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
     const getFlag = (code: string) => {
@@ -35,19 +52,35 @@ export default function DashboardLayout({
 
     return (
         <div className={styles.container}>
-            <Sidebar isCollapsed={isCollapsed} toggle={() => setIsCollapsed(!isCollapsed)} />
-            <main
-                className={styles.main}
-                style={{
-                    marginLeft: isCollapsed ? '80px' : '250px',
-                    maxWidth: isCollapsed ? 'calc(100% - 80px)' : 'calc(100% - 250px)',
-                    transition: 'margin-left 0.3s ease, max-width 0.3s ease'
-                }}
-            >
-                <div className={styles.regionBadge} title="Current Region">
-                    <span className={styles.flag}>{getFlag(country)}</span>
-                    <span>{country}</span>
+            {/* Mobile Header */}
+            <header className={styles.mobileHeader}>
+                <div className={styles.mobileLeft}>
+                    <button
+                        className={styles.mobileMenuBtn}
+                        onClick={() => setIsCollapsed(!isCollapsed)}
+                    >
+                        <Menu size={24} />
+                    </button>
+                    <Link href="/dashboard" className={styles.mobileLogo}>
+                        SmartSubs
+                    </Link>
                 </div>
+
+            </header>
+
+            <Sidebar
+                isCollapsed={isCollapsed}
+                toggle={() => setIsCollapsed(!isCollapsed)}
+                className={isCollapsed ? styles.sidebarCollapsed : styles.sidebarExpanded}
+                countryCode={country}
+            />
+
+            <main
+                className={`${styles.main} ${isCollapsed ? styles.mainCollapsed : styles.mainExpanded}`}
+            >
+                {/* Desktop Region Badge - Now in Sidebar */}
+                {/* Hidden here, maintained in Mobile Header for mobile view */}
+
                 <RecommendationsProvider>
                     {children}
                 </RecommendationsProvider>
