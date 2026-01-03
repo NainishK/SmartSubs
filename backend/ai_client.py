@@ -45,7 +45,7 @@ def generate_ai_recommendations(user_history: list, user_ratings: list, active_s
 
     # Construct Context
     history_text = "\n".join([f"- {h['title']} ({h['status']})" for h in user_history[-20:]]) 
-    ratings_text = "\n".join([f"- {r['title']}: {r['rating']}/5 Stars" for r in user_ratings])
+    ratings_text = "\n".join([f"- {r['title']}: {round(r['rating']/2, 1)}/5 Stars" for r in user_ratings])
     subs_text = ", ".join(active_subs)
     
     prompt = f"""
@@ -132,7 +132,7 @@ def generate_unified_insights(user_history: list, user_ratings: list, active_sub
 
     # Context
     history_text = "\n".join([f"- {h['title']} ({h['status']})" for h in user_history[-20:]])
-    ratings_text = "\n".join([f"- {r['title']}: {r['rating']}/5" for r in user_ratings])
+    ratings_text = "\n".join([f"- {r['title']}: {round(r['rating']/2, 1)}/5" for r in user_ratings])
     subs_text = ", ".join(active_subs)
     pref_text = json.dumps(preferences, indent=2)
     
