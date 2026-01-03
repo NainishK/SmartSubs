@@ -29,12 +29,30 @@ export default function WatchlistPage() {
         const checkMobile = () => {
             const mobile = window.innerWidth < 768;
             setIsMobile(mobile);
-            setViewMode(mobile ? 'list' : 'grid');
+
+            // Only auto-switch if no user preference is saved
+            const savedMode = localStorage.getItem('watchlist_view_mode');
+            if (savedMode) {
+                setViewMode(savedMode as 'grid' | 'list');
+            } else {
+                setViewMode(mobile ? 'list' : 'grid');
+            }
         };
+
         checkMobile();
+        // We only want to listen to resize for updating isMobile state, 
+        // but maybe we SHOULD NOT auto-switch viewMode on resize if user has set a preference?
+        // Let's just keep checkMobile simplistic for now:
+        // If window resizes, we might want to respect preference over screen size.
+
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
+
+    const handleViewChange = (mode: 'grid' | 'list') => {
+        setViewMode(mode);
+        localStorage.setItem('watchlist_view_mode', mode);
+    };
 
     const fetchWatchlist = async (isBackground = false) => {
         try {
@@ -148,14 +166,14 @@ export default function WatchlistPage() {
                     <div className={styles.viewToggle}>
                         <button
                             className={`${styles.toggleBtn} ${viewMode === 'grid' ? styles.activeToggle : ''}`}
-                            onClick={() => setViewMode('grid')}
+                            onClick={() => handleViewChange('grid')}
                             title="Grid View"
                         >
                             <LayoutGrid size={18} />
                         </button>
                         <button
                             className={`${styles.toggleBtn} ${viewMode === 'list' ? styles.activeToggle : ''}`}
-                            onClick={() => setViewMode('list')}
+                            onClick={() => handleViewChange('list')}
                             title="List View"
                         >
                             <List size={18} />

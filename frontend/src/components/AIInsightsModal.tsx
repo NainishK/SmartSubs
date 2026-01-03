@@ -234,9 +234,8 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                                 <TrendingUp size={18} /> Smart Strategy
                             </button>
                             <button
-                                className={`${styles.tabBtn} ${activeTab === 'preferences' ? styles.activeTab : ''}`}
+                                className={`${styles.tabBtn} ${activeTab === 'preferences' ? styles.activeTab : ''} ${styles.profileTab}`}
                                 onClick={() => setActiveTab('preferences')}
-                                style={{ marginLeft: 'auto' }}
                             >
                                 <Settings size={18} /> My Profile
                                 {(!preferences.target_budget || !preferences.household_size) && (
@@ -244,11 +243,10 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                                 )}
                             </button>
                             <button
-                                className={`${styles.tabBtn}`}
+                                className={`${styles.tabBtn} ${styles.refreshTab}`}
                                 onClick={() => hasData && handleGenerate(true)}
                                 disabled={!hasData}
                                 title="Refresh Intelligence"
-                                style={{ marginLeft: '12px', color: '#7c3aed', background: '#f3f4f6', border: 'none', opacity: hasData ? 1 : 0.5 }}
                             >
                                 <RefreshCw size={18} />
                             </button>

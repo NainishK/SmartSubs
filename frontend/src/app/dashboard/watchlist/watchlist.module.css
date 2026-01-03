@@ -355,27 +355,34 @@
     }
 
     .tabs {
-        gap: 0.5rem;
+        gap: 2px;
+        /* Tight gap */
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         padding-bottom: 0.5rem;
+        justify-content: space-between;
+        /* Spread evenly */
     }
 
     .tab {
         white-space: nowrap;
-        font-size: 0.85rem;
-        padding: 0.75rem 0.25rem;
+        font-size: 0.8rem;
+        /* Smaller font */
+        padding: 0.75rem 0.2rem;
+        /* Tight padding */
+        flex-shrink: 1;
+        /* Allow slight shrink */
     }
 
     .tabIcon {
         display: none;
-        /* Hide icons on mobile to save space? Or keep them small. Let's hide them to fit text. */
+        /* Hide icons */
     }
 
     .tabCount {
-        font-size: 0.75rem;
-        min-width: 20px;
-        height: 20px;
-        padding: 0 0.3rem;
+        font-size: 0.7rem;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 0.25rem;
     }
 }

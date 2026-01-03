@@ -426,3 +426,123 @@
         opacity: 1;
     }
 }
+
+/* Specific Tab Spacing */
+.profileTab {
+    margin-left: auto;
+}
+
+.refreshTab {
+    margin-left: 12px;
+    color: #7c3aed;
+    background: #f3f4f6;
+    border: none;
+    opacity: 1;
+}
+
+.refreshTab:disabled {
+    opacity: 0.5;
+}
+
+@media (max-width: 768px) {
+    .modal {
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+        max-width: none;
+    }
+
+    .grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .tabsContainer {
+        padding: 0 0.25rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 2px;
+        justify-content: space-between;
+    }
+
+    .tabBtn {
+        padding: 0.75rem 0.35rem;
+        /* Ultra tight padding */
+        font-size: 0.75rem;
+        /* Smaller font */
+        white-space: nowrap;
+        gap: 4px;
+        /* Reduced gap if icons were visible (now hidden) */
+        flex-shrink: 1;
+        /* Allow shrinking */
+    }
+
+    /* Hide decorative icons in tabs to fit text on one line without scroll */
+    .tabBtn:not(.refreshTab) svg {
+        display: none;
+    }
+
+    .profileTab,
+    .refreshTab {
+        margin-left: 0;
+    }
+
+    .header {
+        padding: 0.75rem 1rem;
+    }
+
+    .content {
+        padding: 1rem;
+    }
+
+    /* Compact Strategy Cards */
+    .strategyCard {
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    .strategyIcon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+    }
+
+    .strategyIcon svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .strategyTitle {
+        font-size: 0.95rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .strategyReason {
+        font-size: 0.85rem;
+    }
+
+    .sectionTitle {
+        font-size: 1.1rem;
+    }
+
+    /* Profile Form Compact */
+    .formSection {
+        padding: 1rem;
+    }
+
+    .label {
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .select,
+    .input {
+        font-size: 0.9rem;
+        padding: 0.6rem;
+    }
+
+    .pill {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+    }
+}

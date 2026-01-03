@@ -129,20 +129,11 @@ export default function RecommendationsPage() {
                             <PlayCircle className={styles.sectionIcon} /> Trending on Your Services
                         </h2>
                         {/* Carousel Controls */}
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <div className={styles.carouselControls}>
                             <button
                                 onClick={handlePrevTrending}
                                 disabled={trendingIndex === 0}
                                 className={styles.carouselBtn}
-                                style={{
-                                    padding: '8px',
-                                    borderRadius: '50%',
-                                    border: '1px solid #ddd',
-                                    background: 'white',
-                                    color: '#111827',
-                                    cursor: trendingIndex === 0 ? 'default' : 'pointer',
-                                    opacity: trendingIndex === 0 ? 0.3 : 1
-                                }}
                             >
                                 <ChevronLeft size={20} />
                             </button>
@@ -150,15 +141,6 @@ export default function RecommendationsPage() {
                                 onClick={handleNextTrending}
                                 disabled={trendingIndex + TRENDING_VISIBLE >= trendingRecs.length}
                                 className={styles.carouselBtn}
-                                style={{
-                                    padding: '8px',
-                                    borderRadius: '50%',
-                                    border: '1px solid #ddd',
-                                    background: 'white',
-                                    color: '#111827',
-                                    cursor: trendingIndex + TRENDING_VISIBLE >= trendingRecs.length ? 'default' : 'pointer',
-                                    opacity: trendingIndex + TRENDING_VISIBLE >= trendingRecs.length ? 0.3 : 1
-                                }}
                             >
                                 <ChevronRight size={20} />
                             </button>
@@ -221,49 +203,24 @@ export default function RecommendationsPage() {
 
             {/* Unified AI Analyst Entry Point */}
             <section className={styles.section}>
-                <div style={{
-                    background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)',
-                    borderRadius: '16px',
-                    padding: '2rem',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '1rem',
-                    boxShadow: '0 10px 25px -5px rgba(124, 58, 237, 0.3)'
-                }}>
-                    <div style={{ flex: 1, minWidth: '300px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                            <Sparkles size={20} className="text-yellow-300" />
-                            <span style={{ fontSize: '0.9rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255,255,255,0.8)' }}>
+                <div className={styles.aiBanner}>
+                    <div className={styles.aiBannerContent}>
+                        <div className={styles.aiLabel}>
+                            <Sparkles size={18} className="text-yellow-300" style={{ color: '#fde047' }} />
+                            <span className={styles.aiLabelText}>
                                 Unified Intelligence
                             </span>
                         </div>
-                        <h2 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0 0 0.5rem 0', lineHeight: 1.2 }}>
+                        <h2 className={styles.aiBannerTitle}>
                             Optimize Your Subscriptions & Discover Gems
                         </h2>
-                        <p style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.9)', maxWidth: '500px', margin: 0 }}>
+                        <p className={styles.aiBannerDesc}>
                             Get financial strategy, customized picks, and check for missing content gaps.
                         </p>
                     </div>
                     <button
                         onClick={() => setShowAIModal(true)}
-                        style={{
-                            background: 'white',
-                            color: '#4f46e5',
-                            border: 'none',
-                            padding: '1rem 2rem',
-                            borderRadius: '12px',
-                            fontSize: '1.1rem',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                            transition: 'transform 0.2s'
-                        }}
+                        className={styles.aiLaunchBtn}
                     >
                         <Sparkles size={20} /> Launch AI Analyst
                     </button>
@@ -287,7 +244,10 @@ export default function RecommendationsPage() {
                 </div>
 
                 {loadingSimilar && similarRecs.length === 0 ? (
-                    <div className={styles.emptyState}>Finding personalized recommendations...</div>
+                    <div className={styles.emptyState}>
+                        <Sparkles size={48} style={{ opacity: 0.2 }} />
+                        <p>Finding personalized recommendations...</p>
+                    </div>
                 ) : similarRecs.length > 0 ? (
                     <div className={styles.grid}>
                         {similarRecs.map((rec, index) => {
@@ -304,7 +264,10 @@ export default function RecommendationsPage() {
                             return (
                                 <div key={index} className={styles.recommendationItem}>
                                     <div className={styles.reasonHeader} title={rec.reason}>
-                                        {rec.reason}
+                                        <div className={styles.reasonBadge}>
+                                            <Lightbulb size={14} style={{ flexShrink: 0, marginTop: 2 }} />
+                                            {rec.reason}
+                                        </div>
                                     </div>
                                     <MediaCard
                                         item={item}
@@ -320,7 +283,8 @@ export default function RecommendationsPage() {
                     </div>
                 ) : (
                     <div className={styles.emptyState}>
-                        No recommendations found. Try adding more items to your watchlist!
+                        <Lightbulb size={48} style={{ opacity: 0.2 }} />
+                        <p>No recommendations found. Try adding more items to your watchlist!</p>
                     </div>
                 )}
             </section>

@@ -284,46 +284,57 @@
     background: #e6f7ff;
     color: #0070f3;
     border-color: #1890ff;
+}
 
-    /* Mobile Optimizations */
-    @media (max-width: 768px) {
-        .container {
-            padding: 1.5rem 1rem;
-        }
-
-        .header {
-            margin-bottom: 1.5rem;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .pageTitle {
-            font-size: 1.5rem;
-        }
-
-        .dateLabel {
-            font-size: 0.85rem;
-        }
-
-        .statsGrid {
-            grid-template-columns: 1fr;
-            /* Stack vertically */
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .statCard {
-            height: auto;
-            /* Allow flexible height */
-            padding: 1.25rem;
-            min-height: 120px;
-        }
-
-        .statValue {
-            font-size: 1.8rem;
-        }
-
-        .spendingSection {
-            padding: 1.5rem;
-        }
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+    .container {
+        padding: 1.5rem 1rem;
     }
+
+    .header {
+        margin-bottom: 2rem;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .pageTitle {
+        font-size: 1.4rem;
+        /* Reduced from 2rem */
+    }
+
+    .dateLabel {
+        font-size: 0.85rem;
+    }
+
+    .sectionTitle {
+        font-size: 1.15rem;
+        /* Reduced from 1.25rem */
+    }
+
+    .statsGrid {
+        grid-template-columns: 1fr;
+        /* Stack vertically */
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .statCard {
+        height: auto;
+        padding: 1.25rem;
+        min-height: 110px;
+    }
+
+    .statValue {
+        font-size: 1.5rem;
+        /* Significant reduction for large numbers */
+    }
+
+    .spendingSection {
+        padding: 1.5rem;
+    }
+
+    .legendItem {
+        font-size: 0.8rem;
+    }
+}

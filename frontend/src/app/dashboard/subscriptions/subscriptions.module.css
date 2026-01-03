@@ -795,7 +795,52 @@ select.input {
     outline: none;
 }
 
-:global(.react-datepicker__month-select:focus),
 :global(.react-datepicker__year-select:focus) {
     border-color: #0070f3;
+}
+
+/* Mobile Typography & Layout Overrides */
+@media (max-width: 768px) {
+    .container {
+        padding: 1.5rem 1rem;
+    }
+
+    .pageTitle {
+        font-size: 1.5rem;
+        /* Reduced from 2rem */
+        margin-bottom: 1.5rem;
+    }
+
+    .categoryTitle {
+        font-size: 0.95rem;
+        /* Reduced from 1.1rem */
+        margin-bottom: 1rem;
+    }
+
+    .subGrid {
+        gap: 1rem;
+    }
+
+    .subCard {
+        padding: 1.25rem;
+    }
+
+    .serviceName {
+        font-size: 1rem;
+        /* Reduced from 1.1rem */
+    }
+
+    .costValue {
+        font-size: 1.5rem;
+        /* Reduced from 1.75rem */
+    }
+
+    .sectionTitle {
+        font-size: 1.2rem;
+        /* Reduced from 1.4rem */
+    }
+
+    .addSection {
+        padding: 1.5rem;
+    }
 }
