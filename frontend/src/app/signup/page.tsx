@@ -99,7 +99,6 @@ export default function SignupPage() {
                             value={country}
                             onChange={(e) => setCountry(e.target.value)}
                             className={styles.input}
-                            style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'white' }}
                         >
                             <option value="IN">India (IN)</option>
                             <option value="US">United States (US)</option>
