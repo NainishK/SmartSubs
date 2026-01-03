@@ -6,7 +6,7 @@ import api from '@/lib/api';
 import MediaCard, { MediaItem } from '@/components/MediaCard';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import AddMediaModal from '@/components/AddMediaModal';
-import { Plus, Search, Loader2, Clapperboard, CalendarClock, CheckCircle } from 'lucide-react';
+import { Plus, Search, Loader2, Clapperboard, CalendarClock, CheckCircle, LayoutGrid, List } from 'lucide-react';
 import styles from './watchlist.module.css';
 
 export default function WatchlistPage() {
@@ -14,6 +14,8 @@ export default function WatchlistPage() {
     const [items, setItems] = useState<MediaItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('watching');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [isMobile, setIsMobile] = useState(false);
 
     // Modal State
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -21,6 +23,17 @@ export default function WatchlistPage() {
 
     useEffect(() => {
         fetchWatchlist();
+    }, []);
+
+    useEffect(() => {
+        const checkMobile = () => {
+            const mobile = window.innerWidth < 768;
+            setIsMobile(mobile);
+            setViewMode(mobile ? 'list' : 'grid');
+        };
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
     const fetchWatchlist = async (isBackground = false) => {
@@ -131,12 +144,30 @@ export default function WatchlistPage() {
                     <h1 className={styles.title}>My Watchlist</h1>
                     <p className={styles.subtitle}>Track what you're watching and discover new favorites.</p>
                 </div>
-                <button
-                    onClick={() => setIsAddModalOpen(true)}
-                    className={styles.addButton}
-                >
-                    <Plus size={20} /> Add New
-                </button>
+                <div className={styles.headerActions}>
+                    <div className={styles.viewToggle}>
+                        <button
+                            className={`${styles.toggleBtn} ${viewMode === 'grid' ? styles.activeToggle : ''}`}
+                            onClick={() => setViewMode('grid')}
+                            title="Grid View"
+                        >
+                            <LayoutGrid size={18} />
+                        </button>
+                        <button
+                            className={`${styles.toggleBtn} ${viewMode === 'list' ? styles.activeToggle : ''}`}
+                            onClick={() => setViewMode('list')}
+                            title="List View"
+                        >
+                            <List size={18} />
+                        </button>
+                    </div>
+                    <button
+                        onClick={() => setIsAddModalOpen(true)}
+                        className={styles.addButton}
+                    >
+                        <Plus size={20} /> Add New
+                    </button>
+                </div>
             </div>
 
             <div className={styles.tabs}>
@@ -154,14 +185,14 @@ export default function WatchlistPage() {
             </div>
 
             {filteredItems.length > 0 ? (
-                <div className={styles.watchlistGrid}>
+                <div className={viewMode === 'grid' ? styles.watchlistGrid : styles.watchlistList}>
                     {filteredItems.map(item => (
                         <MediaCard
                             key={item.dbId}
                             item={item}
                             existingStatus={item.status}
                             showServiceBadge={item.available_on}
-
+                            layout={viewMode}
                             onRemove={() => confirmRemove(item)}
                             onStatusChange={(s, r) => handleStatusUpdate(item.dbId!, s, r)}
                         />

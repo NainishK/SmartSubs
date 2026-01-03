@@ -32,6 +32,7 @@ interface MediaCardProps {
     hideOverview?: boolean;
     customBadgeColor?: string;
     aiReason?: string;
+    layout?: 'grid' | 'list';
 }
 
 export default function MediaCard({
@@ -43,7 +44,8 @@ export default function MediaCard({
     onStatusChange,
     hideOverview,
     customBadgeColor,
-    aiReason
+    aiReason,
+    layout = 'grid'
 }: MediaCardProps) {
     const [status, setStatus] = useState(existingStatus || 'plan_to_watch');
     const [userRating, setUserRating] = useState(item.user_rating || 0);
@@ -140,9 +142,11 @@ export default function MediaCard({
             ? (item.overview.length > 150 ? `${item.overview.substring(0, 150)}...` : item.overview)
             : 'No synopsis available.';
 
+    const isList = layout === 'list';
+
     return (
         <>
-            <div className={styles.card}>
+            <div className={`${styles.card} ${isList ? styles.cardList : ''}`}>
                 {/* Poster Section (Image First) */}
                 <div
                     className={styles.posterContainer}
@@ -185,40 +189,41 @@ export default function MediaCard({
 
                 {/* Content Section */}
                 <div className={styles.content}>
-                    <h3
-                        className={styles.title}
-                        onClick={() => setShowModal(true)}
-                        style={{ cursor: 'pointer' }}
-                    >
-                        {item.title || item.name}
-                    </h3>
+                    <div className={styles.detailsColumn}>
+                        <h3
+                            className={styles.title}
+                            onClick={() => setShowModal(true)}
+                            style={{ cursor: 'pointer' }}
+                        >
+                            {item.title || item.name}
+                        </h3>
 
-                    {/* Rating UI - Only show if in watchlist (existingStatus is set) */}
-                    {/* Rating UI - Only show if in watchlist (existingStatus is set) AND not plan_to_watch */}
-                    {(existingStatus && status !== 'plan_to_watch') && (
-                        <div style={{ marginBottom: '0.75rem' }}>
-                            <StarRating rating={userRating} onRatingChange={handleRate} />
-                        </div>
-                    )}
+                        {/* Rating UI - Only show if in watchlist (existingStatus is set) AND not plan_to_watch */}
+                        {(existingStatus && status !== 'plan_to_watch') && (
+                            <div style={{ marginBottom: '0.75rem' }}>
+                                <StarRating rating={userRating} onRatingChange={handleRate} />
+                            </div>
+                        )}
 
-                    {!hideOverview && (
-                        <>
-                            <p
-                                className={`${styles.overview} ${isAiMode ? styles.aiOverview : ''}`}
-                                onClick={() => setShowModal(true)}
-                                style={{ cursor: 'pointer' }}
-                            >
-                                {isAiMode && <Sparkles size={14} style={{ marginRight: 6, display: 'inline', verticalAlign: 'middle' }} />}
-                                {displayText}
-                            </p>
+                        {!hideOverview && (
+                            <>
+                                <p
+                                    className={`${styles.overview} ${isAiMode ? styles.aiOverview : ''}`}
+                                    onClick={() => setShowModal(true)}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    {isAiMode && <Sparkles size={14} style={{ marginRight: 6, display: 'inline', verticalAlign: 'middle' }} />}
+                                    {displayText}
+                                </p>
 
-                            {aiReason && (
-                                <button className={styles.toggleBtn} onClick={(e) => { e.preventDefault(); setShowPlot(!showPlot); }}>
-                                    {showPlot ? <><Sparkles size={12} /> Show AI Insight</> : "Show Plot Summary"}
-                                </button>
-                            )}
-                        </>
-                    )}
+                                {aiReason && (
+                                    <button className={styles.toggleBtn} onClick={(e) => { e.preventDefault(); setShowPlot(!showPlot); }}>
+                                        {showPlot ? <><Sparkles size={12} /> Show AI Insight</> : "Show Plot Summary"}
+                                    </button>
+                                )}
+                            </>
+                        )}
+                    </div>
 
                     {/* Actions */}
                     <div className={styles.actions}>

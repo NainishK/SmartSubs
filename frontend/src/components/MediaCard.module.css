@@ -113,6 +113,13 @@
     flex-direction: column;
 }
 
+.detailsColumn {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    /* In grid view, this takes up available space, pushing actions down if we use margin-top: auto on actions */
+}
+
 .titleLink {
     text-decoration: none;
     color: inherit;
@@ -277,4 +284,130 @@
     align-items: center;
     gap: 4px;
     z-index: 10;
+}
+
+/* ========================================= */
+/* List Layout Overrides                     */
+/* ========================================= */
+
+.cardList {
+    flex-direction: row;
+    height: auto;
+    min-height: 140px;
+    align-items: stretch;
+}
+
+.cardList .posterContainer {
+    width: 100px;
+    aspect-ratio: auto;
+    height: auto;
+    flex-shrink: 0;
+}
+
+.cardList .posterImage {
+    border-radius: 0;
+}
+
+/* On Desktop List View, make the content flow horizontally */
+@media (min-width: 768px) {
+    .cardList .content {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+    }
+
+    .cardList .actions {
+        margin-top: 0;
+        width: auto;
+        flex-shrink: 0;
+    }
+
+    .cardList .statusSelectWrapper {
+        width: 160px;
+        /* Fixed reasonable width */
+        flex: none;
+        /* Don't grow */
+    }
+}
+
+.cardList .title {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.cardList .overview {
+    font-size: 0.8rem;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    margin-bottom: 0.5rem;
+    display: none;
+    /* Hide overview on list view by default for compactness, or maybe show strictly 2 lines on desktop only? Let's hide on mobile via media query if needed, but flex row usually has space. */
+}
+
+/* On mobile list view, definitely hide overview to save vertical space */
+@media (max-width: 768px) {
+    .cardList .overview {
+        display: none;
+    }
+
+    .cardList .posterContainer {
+        width: 80px;
+    }
+
+    .cardList .content {
+        padding: 0.75rem;
+    }
+
+    .cardList .topBadges {
+        top: 6px;
+        left: 6px;
+        transform: scale(0.8);
+        transform-origin: top left;
+    }
+
+    .cardList .ratingBadge {
+        top: auto;
+        bottom: 6px;
+        left: 6px;
+        right: auto;
+        transform: scale(0.8);
+        transform-origin: bottom left;
+        padding: 2px 6px;
+    }
+
+    .cardList .serviceBadge {
+        display: none;
+        /* Too cluttered */
+    }
+}
+
+/* List View Badge Polish (Desktop & Mobile) */
+.cardList .topBadges {
+    transform: scale(0.85);
+    transform-origin: top left;
+    top: 8px;
+    left: 8px;
+}
+
+.cardList .ratingBadge {
+    /* If we want rating badge shown in list view poster? */
+    /* Currently it overlaps with top badges or service badge */
+    /* Let's move it to bottom left or hide if cluttered */
+    bottom: 8px;
+    top: auto;
+    right: auto;
+    left: 8px;
+    transform: scale(0.85);
+    transform-origin: bottom left;
+}
+
+.cardList .serviceBadge {
+    /* Hide service badge on small posters in list view to avoid clutter */
+    display: none;
+}
+
+.cardList .actions {
+    margin-top: 0;
+    /* In list view, we might want actions to be more compact or integrated */
 }

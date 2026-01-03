@@ -10,7 +10,7 @@
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    padding-top: 5rem;
+    padding-top: 2rem;
     z-index: 1100;
     animation: fadeIn 0.2s ease-out;
 }
@@ -35,6 +35,20 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+}
+
+@media (max-width: 768px) {
+    .header {
+        padding: 1rem;
+    }
+
+    .searchSection {
+        padding: 1rem;
+    }
+
+    .resultsList {
+        padding: 0 1rem 250px 1rem;
+    }
 }
 
 .title {
@@ -163,6 +177,30 @@
     width: 100%;
 }
 
+@media (max-width: 768px) {
+    .itemMain {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .poster {
+        width: 50px;
+        height: 75px;
+    }
+
+    .info {
+        min-width: calc(100% - 70px);
+        /* Fill remaining space next to poster */
+    }
+
+    .actions {
+        width: 100%;
+        margin-left: 66px;
+        /* Align with info start (poster width + gap) */
+        justify-content: flex-start;
+    }
+}
+
 .poster {
     width: 60px;
     height: 90px;
@@ -243,6 +281,19 @@
     /* For dropdown positioning */
     display: flex;
     align-items: center;
+}
+
+@media (max-width: 768px) {
+    .addButton {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .dropdownMenu {
+        left: 0;
+        right: auto;
+        width: 100%;
+    }
 }
 
 .addButton {
