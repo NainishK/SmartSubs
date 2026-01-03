@@ -328,8 +328,19 @@ def update_subscription(subscription_id: int, subscription: schemas.Subscription
     return db_sub
 
 @app.post("/watchlist/", response_model=schemas.WatchlistItem)
-def add_to_watchlist(item: schemas.WatchlistItemCreate, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
-    return crud.create_watchlist_item(db=db, item=item, user_id=current_user.id)
+def add_to_watchlist(
+    item: schemas.WatchlistItemCreate, 
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db), 
+    current_user: models.User = Depends(dependencies.get_current_user)
+):
+    new_item = crud.create_watchlist_item(db=db, item=item, user_id=current_user.id)
+    
+    # Trigger recommendation refresh to update "Unused Subs" and "Watch Now"
+    import recommendations
+    background_tasks.add_task(recommendations.refresh_recommendations, SessionLocal(), current_user.id, force=True)
+    
+    return new_item
 
 @app.get("/watchlist/", response_model=list[schemas.WatchlistItem])
 def read_watchlist(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
@@ -338,7 +349,7 @@ def read_watchlist(skip: int = 0, limit: int = 100, db: Session = Depends(get_db
     return crud.get_watchlist(db, user_id=current_user.id, skip=skip, limit=limit)
 
 @app.post("/watchlist/availability")
-def check_watch_availability(item_ids: list[int], db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+def check_watch_availability(item_ids: list[int], background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
     import tmdb_client
     
     # Fetch items for context
@@ -442,13 +453,27 @@ def check_watch_availability(item_ids: list[int], db: Session = Depends(get_db),
             
     print(f"DEBUG: Availability check took {time.time() - start_time:.2f}s for {len(items)} items")
             
+    # Trigger refresh since availability changed (affecting "Unused Subs")
+    import recommendations
+    background_tasks.add_task(recommendations.refresh_recommendations, SessionLocal(), current_user.id, force=True)
+    
     return availability_map
 
 @app.delete("/watchlist/{item_id}", response_model=schemas.WatchlistItem)
-def delete_watchlist_item(item_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+def delete_watchlist_item(
+    item_id: int, 
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db), 
+    current_user: models.User = Depends(dependencies.get_current_user)
+):
     db_item = crud.delete_watchlist_item(db, item_id=item_id, user_id=current_user.id)
     if db_item is None:
         raise HTTPException(status_code=404, detail="Item not found")
+        
+    # Trigger refresh
+    import recommendations
+    background_tasks.add_task(recommendations.refresh_recommendations, SessionLocal(), current_user.id, force=True)
+    
     return db_item
 
 @app.put("/watchlist/{item_id}/status", response_model=schemas.WatchlistItem)
@@ -617,6 +642,9 @@ def get_unified_insights(
     ratings = [{"title": w.title, "rating": w.user_rating} for w in watchlist if w.user_rating]
     active_subs = [s.service_name for s in subs]
     
+    # Determine Currency
+    currency = "INR" if current_user.country == "IN" else "USD"
+    
     # Generate
     try:
         from google.api_core.exceptions import ResourceExhausted
@@ -625,7 +653,8 @@ def get_unified_insights(
             user_ratings=ratings,
             active_subs=active_subs,
             preferences=preferences,
-            country=current_user.country
+            country=current_user.country,
+            currency=currency
         )
     except Exception as e:
          error_str = str(e)

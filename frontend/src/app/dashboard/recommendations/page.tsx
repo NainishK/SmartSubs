@@ -12,6 +12,10 @@ import AIInsightsModal from '@/components/AIInsightsModal';
 
 const TRENDING_VISIBLE = 4;
 
+import ConfirmationModal from '@/components/ConfirmationModal';
+
+// ... (imports)
+
 export default function RecommendationsPage() {
     const {
         dashboardRecs,
@@ -22,33 +26,49 @@ export default function RecommendationsPage() {
         fetchSimilarData: fetchSimilarRecs
     } = useRecommendations();
 
-    const [watchlist, setWatchlist] = useState<Array<{ id: number; tmdb_id: number; status: string; user_rating?: number }>>([]);
+    const [watchlist, setWatchlist] = useState<Array<{ id: number; tmdb_id: number; status: string; user_rating?: number; title?: string }>>([]); // Added title for consistency
     const [refreshing, setRefreshing] = useState(false);
     const [showAIModal, setShowAIModal] = useState(false);
     const [trendingIndex, setTrendingIndex] = useState(0);
+
+    // Deletion State
+    const [itemToRemove, setItemToRemove] = useState<{ id: number; title: string } | null>(null);
 
     useEffect(() => {
         fetchWatchlist();
     }, []);
 
-
-
     const fetchWatchlist = async () => {
         try {
             const response = await api.get('/watchlist/');
-            // Map all necessary fields
             setWatchlist(response.data.map((item: any) => ({
-                id: item.id, // Database ID
+                id: item.id,
                 tmdb_id: item.tmdb_id,
                 status: item.status,
-                user_rating: item.user_rating
+                user_rating: item.user_rating,
+                title: item.title
             })));
         } catch (error) {
             console.error('Failed to fetch watchlist', error);
         }
     };
 
+    const confirmRemove = (id: number, title: string) => {
+        setItemToRemove({ id, title });
+    };
 
+    const handleRemove = async () => {
+        if (!itemToRemove) return;
+        try {
+            await api.delete(`/watchlist/${itemToRemove.id}`);
+            await fetchWatchlist(); // Refresh local state
+            setItemToRemove(null);
+        } catch (error) {
+            console.error("Failed to delete", error);
+        }
+    };
+
+    // ... (rest of simple handlers)
 
     const handleNextTrending = () => {
         setTrendingIndex(prev =>
@@ -168,6 +188,7 @@ export default function RecommendationsPage() {
                                         existingStatus={existingItem?.status}
                                         onAddSuccess={fetchWatchlist}
                                         onStatusChange={() => fetchWatchlist()}
+                                        onRemove={existingItem ? () => confirmRemove(existingItem.id, rec.items[0]) : undefined}
                                     />
                                 </div>
                             )
@@ -290,6 +311,8 @@ export default function RecommendationsPage() {
                                         existingStatus={existingItem?.status}
                                         onAddSuccess={fetchWatchlist}
                                         showServiceBadge={rec.service_name}
+                                        onRemove={existingItem ? () => confirmRemove(existingItem.id, rec.items[0]) : undefined}
+                                        onStatusChange={() => fetchWatchlist()}
                                     />
                                 </div>
                             );
@@ -301,6 +324,17 @@ export default function RecommendationsPage() {
                     </div>
                 )}
             </section>
+
+            <ConfirmationModal
+                isOpen={!!itemToRemove}
+                onClose={() => setItemToRemove(null)}
+                // Use a default title if itemToRemove is somehow null during fade-out
+                title={`Remove ${itemToRemove?.title || 'Item'}?`}
+                message={`Are you sure you want to remove ${itemToRemove?.title || 'this item'} from your watchlist?`}
+                confirmLabel="Remove"
+                onConfirm={handleRemove}
+                isDangerous={true}
+            />
         </div>
     );
 }

@@ -54,18 +54,12 @@ export default function MediaCard({
     const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
-        if (existingStatus) {
-            setStatus(existingStatus);
-        }
-        if (item.user_rating) {
-            setUserRating(item.user_rating);
-        }
-        if (item.dbId) {
-            setDbId(item.dbId);
-        }
+        setStatus(existingStatus || 'plan_to_watch');
+        setUserRating(item.user_rating || 0);
+        setDbId(item.dbId);
     }, [existingStatus, item.user_rating, item.dbId]);
 
-    const addToWatchlist = async () => {
+    const addToWatchlist = async (statusOverride?: string) => {
         setAdding(true);
         setError('');
         try {
@@ -76,7 +70,7 @@ export default function MediaCard({
                 poster_path: item.poster_path,
                 vote_average: item.vote_average,
                 overview: item.overview,
-                status: status,
+                status: statusOverride || status,
                 genre_ids: item.genre_ids
             });
             setDbId(response.data.id); // Capture DB ID
@@ -112,10 +106,22 @@ export default function MediaCard({
         }
     };
 
-    const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newStatus = e.target.value;
         setStatus(newStatus);
-        onStatusChange?.(newStatus);
+
+        if (dbId) {
+            try {
+                await api.put(`/watchlist/${dbId}/status?status=${newStatus}`);
+                onStatusChange?.(newStatus);
+            } catch (err) {
+                console.error("Failed to update status", err);
+                // Revert? For now just log
+            }
+        } else {
+            // Item not in watchlist? Add it with this status
+            await addToWatchlist(newStatus);
+        }
     };
 
     const tmdbLink = `https://www.themoviedb.org/${item.media_type}/${item.id}`;
@@ -240,7 +246,7 @@ export default function MediaCard({
                             </button>
                         ) : (
                             <button
-                                onClick={addToWatchlist}
+                                onClick={() => addToWatchlist()}
                                 className={`${styles.actionBtn} ${styles.btnPrimary}`}
                                 disabled={adding || added || existingStatus !== undefined}
                             >

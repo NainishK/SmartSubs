@@ -123,9 +123,12 @@ def generate_ai_recommendations(user_history: list, user_ratings: list, active_s
     return validated_recs
 
 
-def generate_unified_insights(user_history: list, user_ratings: list, active_subs: list, preferences: dict, country: str = "US"):
+def generate_unified_insights(user_history: list, user_ratings: list, active_subs: list, preferences: dict, country: str = "US", currency: str = "USD"):
     if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY == "YOUR_GEMINI_API_KEY_HERE":
         return None
+
+    from datetime import datetime
+    current_date = datetime.now().strftime("%B %Y")
 
     # Context
     history_text = "\n".join([f"- {h['title']} ({h['status']})" for h in user_history[-20:]])
@@ -135,6 +138,8 @@ def generate_unified_insights(user_history: list, user_ratings: list, active_sub
     
     prompt = f"""
     Act as an elite streaming consultant and financial optimizer for a user in {country}.
+    Current Date: {current_date} (Use this to filter out already released content when suggesting "Upcoming" items).
+    User Currency: {currency}
     
     User Profile:
     - Active Subscriptions: {subs_text}
@@ -147,7 +152,7 @@ def generate_unified_insights(user_history: list, user_ratings: list, active_sub
     
     Task: Provide a 3-part comprehensive report in STRICT JSON format:
     1. "picks": 12 Hidden Gems/Matches. Priority to active subs. (We will filter best 6).
-    2. "strategy": 1-3 Financial Actions (Cancel/Add).
+    2. "strategy": 1-3 Financial Actions (Cancel/Add). ALL monetary values must be in {currency}.
     3. "gaps": 8 specific titles they are missing out on. (We will filter best 4).
     
     Output JSON Structure:

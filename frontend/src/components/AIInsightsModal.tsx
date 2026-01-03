@@ -36,6 +36,9 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
     const [accessStatus, setAccessStatus] = useState<string>('none');
     const [requestingAccess, setRequestingAccess] = useState(false);
 
+    // Deletion State
+    const [itemToDelete, setItemToDelete] = useState<{ id: number; title: string } | null>(null);
+
     // Usage State for First-Time Logic
     const [lastAiUsage, setLastAiUsage] = useState<string | null>(null);
     const [hasData, setHasData] = useState(false);
@@ -118,6 +121,22 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
             alert("Failed to save preferences.");
         } finally {
             setSavingPref(false);
+        }
+    };
+
+    const confirmDelete = (id: number, title: string) => {
+        setItemToDelete({ id, title });
+    };
+
+    const handleDelete = async () => {
+        if (!itemToDelete) return;
+        try {
+            await api.delete(`/watchlist/${itemToDelete.id}`);
+            if (onWatchlistUpdate) onWatchlistUpdate();
+            setItemToDelete(null);
+        } catch (e) {
+            console.error("Failed to delete", e);
+            alert("Failed to remove item");
         }
     };
 
@@ -443,6 +462,7 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                                                                                 existingStatus={existingItem?.status}
                                                                                 onAddSuccess={onWatchlistUpdate}
                                                                                 onStatusChange={() => onWatchlistUpdate?.()}
+                                                                                onRemove={existingItem ? () => confirmDelete(existingItem.id, rec.title) : undefined}
                                                                             />
                                                                         </div>
                                                                     )
@@ -534,6 +554,8 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                                                                                     customBadgeColor="#f59e0b" // Amber for missing
                                                                                     existingStatus={existingItem?.status}
                                                                                     onAddSuccess={onWatchlistUpdate}
+                                                                                    onStatusChange={() => onWatchlistUpdate?.()}
+                                                                                    onRemove={existingItem ? () => confirmDelete(existingItem.id, gap.title) : undefined}
                                                                                 />
                                                                             </div>
                                                                         )
@@ -655,6 +677,16 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                 message="Your AI profile has been updated. The analyst will now use these settings to generate more accurate recommendations."
                 confirmLabel="Awesome"
                 isDangerous={false}
+            />
+
+            <ConfirmationModal
+                isOpen={!!itemToDelete}
+                onClose={() => setItemToDelete(null)}
+                onConfirm={handleDelete}
+                title={`Remove ${itemToDelete?.title || 'Item'}?`}
+                message={`Are you sure you want to remove ${itemToDelete?.title || 'this item'} from your watchlist?`}
+                confirmLabel="Remove"
+                isDangerous={true}
             />
         </>
     );

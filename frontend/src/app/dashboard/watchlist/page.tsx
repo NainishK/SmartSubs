@@ -23,9 +23,9 @@ export default function WatchlistPage() {
         fetchWatchlist();
     }, []);
 
-    const fetchWatchlist = async () => {
+    const fetchWatchlist = async (isBackground = false) => {
         try {
-            setLoading(true);
+            if (!isBackground) setLoading(true);
             const response = await api.get('/watchlist/');
             // Transform DB items
             const transformed = response.data.map((item: any) => ({
@@ -43,7 +43,7 @@ export default function WatchlistPage() {
             }));
 
             setItems(transformed);
-            setLoading(false); // Immediate Render
+            if (!isBackground) setLoading(false); // Only toggle if we touched it
 
             // 2. Fetch badges in background
             const ids = transformed.map((i: any) => i.id);
@@ -209,7 +209,7 @@ export default function WatchlistPage() {
             <AddMediaModal
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
-                onAddSuccess={() => fetchWatchlist()}
+                onAddSuccess={() => fetchWatchlist(true)} // Background refresh
                 existingIds={new Set(items.map(item => item.id))}
             />
         </div>
