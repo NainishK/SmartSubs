@@ -2,20 +2,25 @@
 
 **AI-Powered Optimization for Your Streaming Life.**
 
+![Dashboard Overview](frontend/public/screenshots/overview.png)
+
 Stop wasting money on unused subscriptions. Subscription Manager helps you track your spending, discover what to watch on the services you already own, and uses AI to optimize your streaming portfolio.
 
 ## ✨ Key Features
 
 - 🧠 **AI Intelligence (Powered by Gemini)**
+  ![AI Curated Picks](frontend/public/screenshots/AI_center_curator_picks.png)
   - **Quality Recommendations**: Discover hidden gems tailored to your watchlist and personal profile.
   - **Smart Strategy**: Get personalized advice on which services to keep, cancel, or rotate based on your viewing habits.
   - **Gap Analysis**: Find out what you're missing based on your interests.
 
 - 📊 **Smart Dashboard**
+  ![Subscriptions Breakdown](frontend/public/screenshots/subscriptions.png)
   - **Visual Spending**: Beautiful breakdown of your monthly and yearly streaming costs.
   - **Usage Tracking**: Identify "Zombie Subscriptions" you haven't used in months.
 
 - 📺 **Unified Watchlist**
+  ![Watchlist Grid](frontend/public/screenshots/watchlist.png)
   - **One List, All Services**: Track movies and TV shows across Netflix, Hulu, Prime, and more.
   - **Availability Badges**: Instantly see which of your *active* subscriptions has the content.
 
