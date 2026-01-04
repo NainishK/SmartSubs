@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Search, Bot, Wallet, Sparkles } from 'lucide-react';
 import styles from './page.module.css';
 
@@ -41,36 +42,14 @@ export default function Home() {
       <section className={styles.visualSection}>
         <div className={styles.dashboardPreview}>
           <div className={styles.mockDashboard}>
-            <div className={styles.mockSidebar}>
-              <div className={styles.mockSidebarLine} />
-              <div className={styles.mockSidebarItem} />
-              <div className={styles.mockSidebarItem} />
-              <div className={styles.mockSidebarItem} />
-              <div className={styles.mockSidebarItem} style={{ marginTop: 'auto' }} />
-            </div>
-            <div className={styles.mockContent}>
-              <div className={styles.mockHeader}>
-                <div className={styles.mockTitle} />
-                <div className={styles.mockUser} />
-              </div>
-              <div className={styles.mockGrid}>
-                <div className={styles.mockCard}>
-                  <div className={styles.mockCardLine} />
-                </div>
-                <div className={styles.mockCard}>
-                  <div className={styles.mockCardLine} />
-                </div>
-                <div className={styles.mockCard}>
-                  <div className={styles.mockCardLine} />
-                </div>
-              </div>
-              <div style={{
-                marginTop: '2rem',
-                height: '100px',
-                background: 'rgba(255,255,255,0.03)',
-                borderRadius: '12px'
-              }} />
-            </div>
+            <Image
+              src="/screenshots/overview.png"
+              alt="SmartSubs Dashboard Overview"
+              width={1200}
+              height={800}
+              className={styles.heroImage}
+              priority
+            />
           </div>
         </div>
       </section>
@@ -88,6 +67,15 @@ export default function Home() {
               Instantly find which service has the movie you want.
               Never pay for a rental when you already subscribe to the platform.
             </p>
+            <div className={styles.featureImageContainer}>
+              <Image
+                src="/screenshots/watchlist.png"
+                alt="Smart Discovery"
+                width={400}
+                height={250}
+                className={styles.featureImage}
+              />
+            </div>
           </div>
 
           {/* Feature 2 */}
@@ -100,6 +88,15 @@ export default function Home() {
               "You watch a lot of Sci-Fi." Our AI suggests hidden gems
               tailored to your unique taste profile and subscription stack.
             </p>
+            <div className={styles.featureImageContainer}>
+              <Image
+                src="/screenshots/AI_center_curator_picks.png"
+                alt="AI Insights"
+                width={400}
+                height={250}
+                className={styles.featureImage}
+              />
+            </div>
           </div>
 
           {/* Feature 3 */}
@@ -112,6 +109,15 @@ export default function Home() {
               Identify unused subscriptions and ghost charges.
               Visualize your monthly spend and optimize your budget.
             </p>
+            <div className={styles.featureImageContainer}>
+              <Image
+                src="/screenshots/subscriptions.png"
+                alt="Waste Killer"
+                width={400}
+                height={250}
+                className={styles.featureImage}
+              />
+            </div>
           </div>
         </div>
       </section>
