@@ -182,102 +182,220 @@
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* --- Features Grid --- */
+/* --- Features Zig-Zag --- */
 .features {
-  padding: 6rem 2rem;
+  padding: 8rem 2rem;
   max-width: 1200px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8rem;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
+.featureRow {
+  display: flex;
+  align-items: center;
+  gap: 4rem;
 }
 
-.featureCard {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 2.5rem;
-  border-radius: 24px;
-  transition: all 0.3s ease;
+.featureRow.reversed {
+  flex-direction: row-reverse;
+}
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes scrollReverse {
+  0% {
+    transform: translateX(-50%);
+  }
+
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.featureContent {
+  flex: 1;
+  /* Standard text width */
+  min-width: 0;
+}
+
+/* ... */
+.featureVisual {
+  flex: 2.5;
+  /* Ultra-wide visual (2.5x text width) */
   position: relative;
-  overflow: hidden;
+  min-width: 0;
 }
 
-.featureCard:hover {
-  background: rgba(255, 255, 255, 0.06);
-  transform: translateY(-5px);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 40px -20px black;
-}
-
-.featureIcon {
-  font-size: 2rem;
-  margin-bottom: 1.5rem;
-  display: inline-block;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
+/* High Fidelity Screenshots in Features */
+.featureImageHighRes {
+  width: 100%;
+  height: auto;
   border-radius: 16px;
-}
-
-.featureCard h3 {
-  margin-bottom: 0.75rem;
-  font-size: 1.5rem;
-}
-
-.featureCard p {
-  color: #94a3b8;
-  line-height: 1.6;
-}
-
-/* --- Visual Showcase --- */
-.visualSection {
-  padding: 4rem 2rem;
-  text-align: center;
-  perspective: 1000px;
-}
-
-.dashboardPreview {
-  max-width: 1000px;
-  margin: 0 auto;
-  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.1),
-    0 40px 80px -20px rgba(0, 0, 0, 0.5);
-  transform: rotateX(10deg) scale(0.95);
-  opacity: 0.8;
-  transition: all 0.5s ease;
-  animation: float 6s ease-in-out infinite;
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  /* Subtle inner ring */
+  transition: transform 0.5s ease;
 }
 
-.dashboardPreview:hover {
-  transform: rotateX(0deg) scale(1);
-  opacity: 1;
+.featureRow:hover .featureImageHighRes {
+  transform: scale(1.02);
 }
 
-/* --- Mobile --- */
-@media (max-width: 768px) {
-  .title {
-    font-size: 2.5rem;
+/* Mobile Responsiveness */
+@media (max-width: 900px) {
+
+  .featureRow,
+  .featureRow.reversed {
+    flex-direction: column-reverse;
+    /* Text on top? No, usually image on top or bottom. Let's do Text First on mobile */
+    flex-direction: column;
+    gap: 3rem;
+    text-align: center;
+  }
+
+  .featureTitle {
+    font-size: 2rem;
   }
 
   .nav {
     padding: 1.5rem;
   }
-
-  .hero {
-    padding-top: 6rem;
-  }
 }
 
-/* --- Images --- */
+/* --- Browser Window Hero --- */
+.browserWindow {
+  max-width: 900px;
+  margin: 0 auto;
+  position: relative;
+  transition: transform 0.5s ease;
+  transform: perspective(1000px) rotateX(2deg) translateY(0);
+  /* overflow needed to be removed to allow badge overlap */
+}
+
+.windowInner {
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.8);
+  /* Dark Slate Frame */
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 50px 100px -20px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.browserWindow:hover {
+  transform: perspective(1000px) rotateX(0deg) translateY(-10px);
+}
+
+.windowHeader {
+  background: #1e293b;
+  /* Slate 800 */
+  padding: 0.8rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.windowDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.red {
+  background: #ef4444;
+}
+
+.yellow {
+  background: #f59e0b;
+}
+
+.green {
+  background: #10b981;
+}
+
+.addressBar {
+  margin-left: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.2rem 1rem;
+  border-radius: 6px;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-family: monospace;
+  flex: 1;
+  text-align: center;
+}
+
 .heroImage {
   width: 100%;
   height: auto;
-  border-radius: 12px;
-  box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.5);
   display: block;
+}
+
+/* --- Floating Accent Badge --- */
+.floatingBadge {
+  position: absolute;
+  bottom: 40px;
+  right: -30px;
+  /* Slight overlap for depth, but grounded */
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.8rem 1.2rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+  transition: transform 0.3s ease;
+}
+
+.browserWindow:hover .floatingBadge {
+  transform: translateY(-5px);
+}
+
+.badgeIconWrapper {
+  background: rgba(16, 185, 129, 0.2);
+  padding: 0.6rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+
+.badgeText {
+  display: flex;
+  flex-direction: column;
+}
+
+.badgeLabel {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.badgeValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: white;
+  /* Clean white for contrast */
 }
 
 .featureImageContainer {

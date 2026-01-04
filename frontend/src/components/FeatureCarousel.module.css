@@ -1,0 +1,99 @@
+/* --- Carousel --- */
+.carouselWrapper {
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    background: rgba(15, 23, 42, 0.5);
+    /* Semi-transparent backing */
+}
+
+/* Gradient Masks for Fade Edge Effect */
+.carouselWrapper::before,
+.carouselWrapper::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100px;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.carouselWrapper::before {
+    left: 0;
+    background: linear-gradient(to right, #0f172a, transparent);
+}
+
+.carouselWrapper::after {
+    right: 0;
+    background: linear-gradient(to left, #0f172a, transparent);
+}
+
+.track {
+    display: flex;
+    width: max-content;
+    /* animation-name handled by modifier classes */
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+.trackNormal {
+    animation-name: scroll;
+}
+
+.trackReverse {
+    animation-name: scrollReverse;
+}
+
+.carouselWrapper:hover .track {
+    animation-play-state: paused;
+}
+
+.slide {
+    flex-shrink: 0;
+    padding: 0 1rem;
+    /* Spacing between images */
+    width: 500px;
+    /* Fixed width for uniformity */
+    display: flex;
+    align-items: center;
+}
+
+.carouselImage {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.slide:hover .carouselImage {
+    transform: scale(1.02);
+    border-color: rgba(99, 102, 241, 0.5);
+    /* Indigo highlight on hover */
+}
+
+@keyframes scroll {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+        /* Move half the total width (since items are duplicated) */
+    }
+}
+
+@keyframes scrollReverse {
+    0% {
+        transform: translateX(-50%);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
