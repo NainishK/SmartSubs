@@ -7,6 +7,7 @@ Stop wasting money on unused subscriptions. Subscription Manager helps you track
 ## ✨ Key Features
 
 - 🧠 **AI Intelligence (Powered by Gemini)**
+  - **Quality Recommendations**: Discover hidden gems tailored to your watchlist and personal profile.
   - **Smart Strategy**: Get personalized advice on which services to keep, cancel, or rotate based on your viewing habits.
   - **Gap Analysis**: Find out what you're missing based on your interests.
 
