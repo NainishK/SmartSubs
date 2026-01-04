@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
+import { Loader2 } from 'lucide-react';
 import styles from '../login/login.module.css'; // Reuse login styles
 
 export default function SignupPage() {
@@ -30,9 +31,25 @@ export default function SignupPage() {
         }
 
         setLoading(true);
+
+        // Step 1: Create User
         try {
             await api.post('/users/', { email, password, country });
-            // Auto login after signup
+        } catch (err: any) {
+            setLoading(false);
+            if (err.response?.status === 400) {
+                // Expected business error (duplicate), don't spam console.error
+                console.warn('Signup duplicate prevented:', email);
+                setError('Email already registered. Please sign in.');
+            } else {
+                console.error('Signup creation error:', err);
+                setError('Failed to create account. Please try again.');
+            }
+            return; // Stop here if creation failed
+        }
+
+        // Step 2: Auto Login
+        try {
             const params = new URLSearchParams();
             params.append('username', email);
             params.append('password', password);
@@ -42,10 +59,15 @@ export default function SignupPage() {
             });
             localStorage.setItem('token', response.data.access_token);
             router.push('/dashboard');
-        } catch (err) {
-            console.error(err);
-            setLoading(false);
-            setError('Signup failed. Email may be taken.');
+        } catch (loginErr) {
+            console.error('Auto-login failed:', loginErr);
+            // User created but login failed. Redirect to login page with message.
+            router.push('/login?registered=true');
+        } finally {
+            // Note: If successful router.push happens, this might run on unmounted component 
+            // but harmless. If redirected, loading state doesn't matter.
+            // If failed, we turned off loading in Step 1 catch. 
+            // If Step 2 failed, we redirect, so no need to setLoading(false).
         }
     };
 
@@ -106,7 +128,12 @@ export default function SignupPage() {
                     </div>
 
                     <button type="submit" className={styles.button} disabled={loading}>
-                        {loading ? 'Creating Account...' : 'Create Account'}
+                        {loading ? (
+                            <>
+                                <Loader2 className="animate-spin" size={20} style={{ marginRight: 8, display: 'inline' }} />
+                                Creating Account...
+                            </>
+                        ) : 'Create Account'}
                     </button>
 
                     <div className={styles.registerLink}>

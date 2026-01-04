@@ -145,11 +145,20 @@ def validate_ai_access(db: Session, user: models.User):
         period = "day" if user.ai_quota_policy == "daily" else "period"
         raise HTTPException(status_code=429, detail=f"AI limit reached ({limit}/{limit} per {period}). Upgrade for more.")
 
+@app.on_event("startup")
+async def startup_event():
+    import os
+    url = os.getenv("DATABASE_URL", "sqlite:///./sql_app.db")
+    print(f"🚀 API STARTUP - DB URL: {url}")
+
 @app.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    print(f"👉 Signup Request for: {user.email}")
     db_user = crud.get_user_by_email(db, email=user.email)
     if db_user:
+        print(f"❌ Duplicate Email Found: {user.email} (ID: {db_user.id})")
         raise HTTPException(status_code=400, detail="Email already registered")
+    print(f"✅ Creating New User: {user.email}")
     return crud.create_user(db=db, user=user)
 
 @app.post("/token")

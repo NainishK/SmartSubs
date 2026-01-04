@@ -1,21 +1,32 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
 import styles from './login.module.css';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+
+    useEffect(() => {
+        // Check for registration success param
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('registered') === 'true') {
+            setSuccess('Account created successfully! Please sign in.');
+        }
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setSuccess('');
         setLoading(true);
         try {
             const params = new URLSearchParams();
@@ -30,11 +41,12 @@ export default function LoginPage() {
             // Optional: Add a small delay for the user to see success state if we added one
             window.location.href = '/dashboard';
         } catch (err: any) {
-            console.error('Login error:', err);
             setLoading(false);
             if (err.response?.status === 401) {
+                console.warn('Login auth failed (Invalid credentials)');
                 setError('Invalid email or password');
             } else {
+                console.error('Login error:', err);
                 setError('Login failed. Please check if the server is running.');
             }
         }
@@ -50,6 +62,7 @@ export default function LoginPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className={styles.form}>
+                    {success && <div className={styles.successMessage} style={{ color: '#10b981', background: 'rgba(16, 185, 129, 0.1)', padding: '10px', borderRadius: '8px', marginBottom: '1rem', textAlign: 'center', fontSize: '0.9rem' }}>{success}</div>}
                     {error && <div className={styles.error}>{error}</div>}
 
                     <div className={styles.inputGroup}>
@@ -85,7 +98,12 @@ export default function LoginPage() {
                     </div>
 
                     <button type="submit" className={styles.button} disabled={loading}>
-                        {loading ? 'Signing in...' : 'Sign In'}
+                        {loading ? (
+                            <>
+                                <Loader2 className="animate-spin" size={20} style={{ marginRight: 8, display: 'inline' }} />
+                                Signing in...
+                            </>
+                        ) : 'Sign In'}
                     </button>
 
                     <div className={styles.registerLink}>
