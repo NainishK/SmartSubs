@@ -7,10 +7,36 @@ from datetime import datetime, timedelta
 import models, schemas, crud, security, dependencies
 from database import SessionLocal, engine
 import traceback
+import time
+from logger import logger # [NEW]
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+# [NEW] Logging Middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+    
+    response = await call_next(request)
+    
+    process_time = (time.time() - start_time) * 1000
+    formatted_process_time = "{0:.2f}".format(process_time)
+    
+    # Log: Method URL Status Time IP
+    client_host = request.client.host if request.client else "unknown"
+    
+    log_msg = f"{request.method} {request.url.path} - {response.status_code} - {formatted_process_time}ms - {client_host}"
+    
+    if response.status_code >= 500:
+        logger.error(log_msg)
+    elif response.status_code >= 400:
+        logger.warning(log_msg)
+    else:
+        logger.info(log_msg)
+        
+    return response
 
 # --- Admin Panel Setup ---
 from sqladmin import Admin, ModelView
@@ -66,7 +92,7 @@ admin.add_view(WatchlistAdmin)
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     error_msg = "".join(traceback.format_exception(None, exc, exc.__traceback__))
-    print(f"Global Exception: {error_msg}")
+    logger.error(f"Global Exception: {error_msg}") # [MODIFIED]
     return JSONResponse(
         status_code=500,
         content={"message": "Internal Server Error", "details": str(exc)},
@@ -149,16 +175,16 @@ def validate_ai_access(db: Session, user: models.User):
 async def startup_event():
     import os
     url = os.getenv("DATABASE_URL", "sqlite:///./sql_app.db")
-    print(f"🚀 API STARTUP - DB URL: {url}")
+    logger.info(f"🚀 API STARTUP - DB URL: {url}") # [MODIFIED]
 
 @app.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    print(f"👉 Signup Request for: {user.email}")
+    logger.info(f"👉 Signup Request for: {user.email}") # [MODIFIED]
     db_user = crud.get_user_by_email(db, email=user.email)
     if db_user:
-        print(f"❌ Duplicate Email Found: {user.email} (ID: {db_user.id})")
+        logger.warning(f"❌ Duplicate Email Found: {user.email} (ID: {db_user.id})") # [MODIFIED]
         raise HTTPException(status_code=400, detail="Email already registered")
-    print(f"✅ Creating New User: {user.email}")
+    logger.info(f"✅ Creating New User: {user.email}") # [MODIFIED]
     return crud.create_user(db=db, user=user)
 
 @app.post("/token")
