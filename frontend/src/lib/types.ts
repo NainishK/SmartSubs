@@ -37,6 +37,7 @@ export interface Recommendation {
     poster_path?: string;
     vote_average?: number;
     overview?: string;
+    billing_cycle?: string;
 }
 
 export interface Service {

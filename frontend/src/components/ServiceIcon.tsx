@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 
 const SERVICE_DOMAINS: Record<string, string> = {

@@ -62,6 +62,11 @@
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
 }
 
+.unusedGrid {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    /* Wider cards for Unused Subs */
+}
+
 @media (max-width: 768px) {
     .grid {
         grid-template-columns: repeat(2, 1fr);
@@ -442,4 +447,66 @@
     .aiBannerTitle {
         font-size: 1.5rem;
     }
+}
+
+/* --- Scoped Updates for Unused Subscriptions (Waste Killer Style) --- */
+
+.unusedItem {
+    background: #ffffff !important;
+    /* White background */
+    border: 1.5px solid #dc2626 !important;
+    /* Strong Red Border */
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.unusedItem:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px -4px rgba(220, 38, 38, 0.15);
+    border-color: #ef4444 !important;
+}
+
+.unusedServiceInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-direction: row;
+}
+
+/* Scoped Green Badge - Compact */
+.unusedItem .badgeRed {
+    background: #10b981 !important;
+    /* Solid Green */
+    color: white !important;
+    border: none !important;
+    font-weight: 700;
+    font-size: 0.75rem !important;
+    /* Compact Font */
+    padding: 4px 10px !important;
+    /* Compact Padding */
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+    white-space: nowrap;
+    margin-left: auto;
+    /* Push to right */
+    display: inline-block;
+}
+
+.unusedItem .serviceName {
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: #1a1a1a !important;
+    /* Dark Text */
+    margin: 0;
+}
+
+/* Fix text color for reason in white card */
+.unusedItem .cardReason {
+    color: #4b5563 !important;
+    font-size: 0.9rem;
 }

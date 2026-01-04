@@ -1,0 +1,127 @@
+.container {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    perspective: 1000px;
+}
+
+.alertCard {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    /* Red border for alert */
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow:
+        0 20px 40px -10px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(220, 38, 38, 0.1);
+    transform: rotateX(5deg);
+    transition: transform 0.3s ease;
+    animation: float 6s ease-in-out infinite;
+}
+
+.container:hover .alertCard {
+    transform: rotateX(0deg) translateY(-5px);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.iconWrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(220, 38, 38, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ef4444;
+}
+
+.title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #ef4444;
+}
+
+.content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.serviceInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.serviceName {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+}
+
+.lastUsed {
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+.savingsTag {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn {
+    flex: 1;
+    padding: 0.8rem;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: default;
+    /* It's a visual demo */
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.btnKeep {
+    background: rgba(255, 255, 255, 0.05);
+    color: #94a3b8;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btnCancel {
+    background: #ef4444;
+    color: white;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: rotateX(5deg) translateY(0);
+    }
+
+    50% {
+        transform: rotateX(5deg) translateY(-10px);
+    }
+}

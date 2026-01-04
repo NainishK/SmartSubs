@@ -9,6 +9,7 @@ import { useRecommendations } from '@/context/RecommendationsContext';
 import { PlayCircle, Lightbulb, TrendingUp, Sparkles, RefreshCw, XCircle, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ServiceIcon } from '@/components/ServiceIcon';
 import AIInsightsModal from '@/components/AIInsightsModal';
+import { formatCurrency } from '@/lib/currency';
 
 const TRENDING_VISIBLE = 4;
 
@@ -17,6 +18,7 @@ import ConfirmationModal from '@/components/ConfirmationModal';
 // ... (imports)
 
 export default function RecommendationsPage() {
+    // ... existing hooks
     const {
         dashboardRecs,
         similarRecs,
@@ -26,17 +28,30 @@ export default function RecommendationsPage() {
         fetchSimilarData: fetchSimilarRecs
     } = useRecommendations();
 
-    const [watchlist, setWatchlist] = useState<Array<{ id: number; tmdb_id: number; status: string; user_rating?: number; title?: string }>>([]); // Added title for consistency
+    const [watchlist, setWatchlist] = useState<Array<{ id: number; tmdb_id: number; status: string; user_rating?: number; title?: string }>>([]);
     const [refreshing, setRefreshing] = useState(false);
     const [showAIModal, setShowAIModal] = useState(false);
     const [trendingIndex, setTrendingIndex] = useState(0);
+    const [userCountry, setUserCountry] = useState('US'); // Default to US to prevent hydration mismatch, or better yet, wait for load?
 
     // Deletion State
     const [itemToRemove, setItemToRemove] = useState<{ id: number; title: string } | null>(null);
 
     useEffect(() => {
         fetchWatchlist();
+        fetchUserProfile();
     }, []);
+
+    const fetchUserProfile = async () => {
+        try {
+            const response = await api.get('/users/me/'); // Added trailing slash to match backend
+            if (response.data && response.data.country) {
+                setUserCountry(response.data.country);
+            }
+        } catch (error) {
+            console.error('Failed to fetch user profile', error);
+        }
+    };
 
     const fetchWatchlist = async () => {
         try {
@@ -187,12 +202,26 @@ export default function RecommendationsPage() {
                             <AlertTriangle className={styles.sectionIcon} /> Unused Subscriptions
                         </h2>
                     </div>
-                    <div className={styles.grid}>
+                    <div className={`${styles.grid} ${styles.unusedGrid}`}>
                         {cancelRecs.map((rec, index) => (
-                            <div key={index} className={styles.recommendationItem} style={{ cursor: 'default' }}>
+                            <div key={index} className={`${styles.recommendationItem} ${styles.unusedItem}`} style={{ cursor: 'default' }}>
                                 <div className={styles.cardHeader}>
-                                    <span className={styles.serviceName}>{rec.service_name}</span>
-                                    <span className={`${styles.badge} ${styles.badgeRed}`}>Save ${rec.savings}</span>
+                                    <div className={styles.unusedServiceInfo}>
+                                        <ServiceIcon
+                                            name={rec.service_name}
+                                            className={styles.serviceLogo}
+                                            fallbackClassName={styles.serviceLogoFallback}
+                                        />
+                                        <span className={styles.serviceName}>{rec.service_name}</span>
+                                    </div>
+
+
+                                    <span className={`${styles.badge} ${styles.badgeRed}`}>
+                                        Save {formatCurrency(rec.savings, userCountry)}
+                                        <span style={{ fontSize: '0.8em', opacity: 0.9, fontWeight: 500 }}>
+                                            {rec.billing_cycle?.toLowerCase() === 'yearly' ? '/yr' : '/mo'}
+                                        </span>
+                                    </span>
                                 </div>
                                 <p className={styles.cardReason} style={{ marginBottom: 0 }}>{rec.reason}</p>
                             </div>

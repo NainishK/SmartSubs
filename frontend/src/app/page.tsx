@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Search, Bot, Wallet, Sparkles, TrendingUp } from 'lucide-react';
 import FeatureCarousel from '@/components/FeatureCarousel';
+import WasteKiller from '@/components/WasteKiller';
 import styles from './page.module.css';
 
 export default function Home() {
@@ -139,13 +140,7 @@ export default function Home() {
             </p>
           </div>
           <div className={styles.featureVisual}>
-            <Image
-              src="/screenshots/subscriptions.png"
-              alt="Spending Analytics"
-              width={800}
-              height={500}
-              className={styles.featureImageHighRes}
-            />
+            <WasteKiller />
           </div>
         </div>
 

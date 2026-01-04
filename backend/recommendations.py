@@ -233,7 +233,8 @@ def calculate_dashboard_recommendations(db: Session, user_id: int):
                 "logo_url": get_service_logo(sub.service_name, country),
                 "items": [],
                 "reason": "No watchlist items found",
-                "cost": 0, "savings": sub.cost, "score": 50 + sub.cost
+                "cost": 0, "savings": sub.cost, "score": 50 + sub.cost,
+                "billing_cycle": sub.billing_cycle
             })
 
     # C. "Trending" (Provider Specific OR Global)
