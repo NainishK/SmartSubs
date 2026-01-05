@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Search, Bot, Wallet, Sparkles, TrendingUp } from 'lucide-react';
 import FeatureCarousel from '@/components/FeatureCarousel';
-import WasteKiller from '@/components/WasteKiller';
+import AppShowcaseStack from '@/components/landing/AppShowcaseStack';
 import styles from './page.module.css';
 
 export default function Home() {
@@ -140,7 +140,7 @@ export default function Home() {
             </p>
           </div>
           <div className={styles.featureVisual}>
-            <WasteKiller />
+            <AppShowcaseStack />
           </div>
         </div>
 

@@ -274,6 +274,89 @@
   }
 }
 
+/* Phone Specific Optimizations */
+@media (max-width: 640px) {
+  .nav {
+    padding: 1rem 1.5rem;
+  }
+
+  .navLinks {
+    gap: 0.75rem;
+  }
+
+  .loginBtn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  .hero {
+    padding: 6rem 1rem 3rem;
+  }
+
+  .title {
+    font-size: 2.5rem;
+    /* Reduced from 4rem */
+    line-height: 1.2;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+    /* Reduced from 1.25rem */
+    padding: 0 1rem;
+  }
+
+  .ctaGroup {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.75rem;
+  }
+
+  .primaryBtn,
+  .secondaryBtn {
+    width: 100%;
+    text-align: center;
+    padding: 0.875rem 1.5rem;
+    /* Reduced padding */
+    font-size: 1rem;
+  }
+
+  /* Adjust Floating Badge size */
+  .floatingBadge {
+    /* Reset positioning for mobile */
+    left: 0;
+    /* Move to Left Border */
+    right: auto;
+    bottom: 0;
+    transform: scale(0.65);
+    transform-origin: bottom left;
+    /* Scale from left */
+    padding: 0.5rem 0.8rem;
+    width: max-content;
+    max-width: unset;
+    margin: 0;
+    pointer-events: none;
+    /* Disable interaction entirely on mobile if text selection isn't needed */
+  }
+
+  /* Disable hover movement strictly */
+  .browserWindow:hover .floatingBadge {
+    transform: scale(0.65) !important;
+    /* Force static state */
+  }
+
+  .badgeLabel {
+    font-size: 0.6rem;
+    /* Smaller label text */
+    white-space: nowrap;
+    /* Prevent "Projected" from wrapping/cropping weirdly */
+  }
+
+  .badgeValue {
+    font-size: 0.9rem;
+  }
+}
+
 /* --- Browser Window Hero --- */
 .browserWindow {
   max-width: 900px;

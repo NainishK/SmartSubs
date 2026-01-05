@@ -1,0 +1,187 @@
+.stackContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* gap: 12px; Removed for overlap */
+    width: 100%;
+    max-width: 900px;
+    /* Wide enough for side-by-side */
+    height: 320px;
+    /* Fixed height */
+    margin: 3rem auto;
+    padding: 0 1rem;
+}
+
+.layer {
+    position: relative;
+    /* height: 100%; Keep height to define bounds */
+    height: 100%;
+    display: flex;
+    /* Centers the image vertically */
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 20px;
+    /* Stronger rounding */
+    overflow: visible;
+    /* Allow shadow to bleed */
+    cursor: pointer;
+    background: transparent;
+    /* No box background */
+    border: none;
+    box-shadow: none;
+    /* Removed box shadow */
+
+    /* Animation: include margin transition for smooth hover expansion */
+    transition: flex 0.5s cubic-bezier(0.25, 1, 0.5, 1), margin 0.5s ease, filter 0.4s ease, transform 0.4s ease;
+
+    /* Default State */
+    flex: 1;
+    filter: grayscale(100%) brightness(0.6) drop-shadow(0 0 0 rgba(0, 0, 0, 0));
+    /* Shadow moved to image */
+    z-index: 1;
+}
+
+/* Overlap Logic */
+.layer:first-child {
+    margin-right: -100px;
+    /* Tuck behind middle */
+    transform: perspective(1000px) rotateY(15deg) scale(0.9);
+    /* Subtle inward tilt */
+}
+
+.layer:last-child {
+    margin-left: -100px;
+    /* Tuck behind middle */
+    transform: perspective(1000px) rotateY(-15deg) scale(0.9);
+    /* Subtle inward tilt */
+}
+
+/* Middle Card (Hero Priority) */
+.layer:nth-child(2) {
+    flex: 2;
+    margin: 0;
+    /* Center stands ground */
+    z-index: 10;
+    transform: perspective(1000px) translateZ(50px);
+    filter: grayscale(0%) brightness(1);
+}
+
+/* Images */
+.imageHost {
+    width: 100%;
+    /* Tight fit to allow border-radius to clip content */
+    height: auto;
+    max-height: 100%;
+
+    object-fit: contain;
+    object-position: center;
+    display: block;
+    border-radius: 20px;
+
+    /* Premium Glass Border */
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.4),
+        0 20px 50px rgba(0, 0, 0, 0.6);
+    background: #0f172a;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Hover effect for the image border itself */
+.layer:hover .imageHost {
+    border-color: rgba(255, 255, 255, 0.6);
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.5),
+        0 30px 60px rgba(0, 0, 0, 0.8),
+        0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+/* --- Interaction Logic --- */
+
+/* When hovering the container, reset the default bias */
+.stackContainer:hover .layer {
+    flex: 1;
+    margin: 0;
+    /* Reset overlap on hover to spread them out? Or keep overlap? User wants overlap. let's keep overlap tight but expand active */
+    filter: grayscale(100%) brightness(0.4);
+    transform: scale(0.9);
+}
+
+/* The specific hovered card expands */
+.layer:hover {
+    flex: 4 !important;
+    margin: 0 !important;
+    /* Push others away */
+    filter: grayscale(0%) brightness(1.1) !important;
+    transform: scale(1.1) z-index(50) !important;
+    z-index: 50;
+}
+
+/* Fix z-index stacking context for hover */
+.layer:hover .imageHost {
+    filter: drop-shadow(0 40px 80px rgba(0, 0, 0, 0.7));
+}
+
+/* Mobile Vertical Stack */
+@media (max-width: 768px) {
+    .stackContainer {
+        flex-direction: column;
+        height: auto;
+        gap: 2rem;
+        padding: 2rem 0;
+        /* Full Bleed width */
+        width: 100%;
+    }
+
+    .layer {
+        width: 100%;
+        max-width: none;
+        flex: none !important;
+        margin: 0 !important;
+
+        /* ALWAYS ACTIVE on Mobile: No clicking required */
+        filter: grayscale(0%) brightness(1);
+        transform: scale(1);
+        padding: 0 1rem;
+        transition: none;
+        /* No animation needed */
+    }
+
+    /* Reset Overlap specifics */
+    .layer:first-child,
+    .layer:last-child {
+        margin: 0;
+        transform: none;
+    }
+
+    /* Hero Card (Middle) */
+    .layer:nth-child(2) {
+        margin: 0;
+        transform: none;
+        filter: grayscale(0%) brightness(1);
+        z-index: 10;
+        height: auto;
+    }
+
+    /* Disable interaction effects on mobile to avoid confusion */
+    .layer:hover {
+        transform: none !important;
+        filter: grayscale(0%) brightness(1) !important;
+    }
+
+    /* When hovering container on mobile, don't dim the active one necessarily, 
+       but let individual hover take precedence.
+       The base CSS has .stackContainer:hover .layer rule that might conflict.
+       Let's override it.
+    */
+    .stackContainer:hover .layer {
+        filter: grayscale(0%) brightness(1);
+        transform: none;
+    }
+
+    .stackContainer:hover .layer:hover {
+        filter: grayscale(0%) brightness(1);
+        transform: none;
+    }
+}
