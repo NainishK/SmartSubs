@@ -12,7 +12,7 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [showLongWait, setShowLongWait] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -28,6 +28,11 @@ export default function LoginPage() {
         setError('');
         setSuccess('');
         setLoading(true);
+        setShowLongWait(false);
+
+        // Show "Waking up server" message if it takes longer than 2s (Cold Start)
+        const waitTimer = setTimeout(() => setShowLongWait(true), 2000);
+
         try {
             const params = new URLSearchParams();
             params.append('username', email);
@@ -41,14 +46,17 @@ export default function LoginPage() {
             // Optional: Add a small delay for the user to see success state if we added one
             window.location.href = '/dashboard';
         } catch (err: any) {
-            setLoading(false);
             if (err.response?.status === 401) {
                 console.warn('Login auth failed (Invalid credentials)');
                 setError('Invalid email or password');
             } else {
                 console.error('Login error:', err);
-                setError('Login failed. Please check if the server is running.');
+                setError('Login failed. Server might be sleeping or unreachable.');
             }
+        } finally {
+            clearTimeout(waitTimer);
+            setLoading(false);
+            setShowLongWait(false);
         }
     };
 
@@ -96,6 +104,24 @@ export default function LoginPage() {
                             Forgot Password?
                         </a>
                     </div>
+
+                    {showLongWait && loading && (
+                        <div style={{
+                            marginBottom: '1rem',
+                            padding: '0.75rem',
+                            background: 'rgba(59, 130, 246, 0.1)',
+                            border: '1px solid rgba(59, 130, 246, 0.3)',
+                            borderRadius: '8px',
+                            color: '#93c5fd',
+                            fontSize: '0.85rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                        }}>
+                            <Loader2 className="animate-spin" size={16} />
+                            <span>Waking up server... (This usually takes ~50s for the first login)</span>
+                        </div>
+                    )}
 
                     <button type="submit" className={styles.button} disabled={loading}>
                         {loading ? (
