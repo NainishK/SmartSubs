@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
-import models, schemas, security
+import models, schemas, security, tmdb_client
+import json
 
 def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
@@ -94,9 +95,32 @@ def create_watchlist_item(db: Session, item: schemas.WatchlistItemCreate, user_i
     item_data = item.dict()
     genre_ids_list = item_data.pop('genre_ids', [])
     
-    # If genres not provided, try to fetch them? 
-    # For now assume frontend sends them or we verify later.
-    # Store as string
+    # ROBUSTNESS CHECK: If any key fields are missing, fetch from TMDB
+    needs_fetch = False
+    if not genre_ids_list: needs_fetch = True
+    if not item_data.get('overview'): needs_fetch = True
+    if not item_data.get('poster_path'): needs_fetch = True
+    
+    # We prioritize fetching if data is thin (e.g. from minimal search results)
+    if needs_fetch:
+        print(f"[create_watchlist_item] Missing metadata for {item.tmdb_id}, enriching from TMDB...")
+        try:
+            details = tmdb_client.get_details(item.media_type, item.tmdb_id)
+            if details:
+                # Enrich fields if missing in payload
+                if not item_data.get('title'): item_data['title'] = details.get('title') or details.get('name')
+                if not item_data.get('overview'): item_data['overview'] = details.get('overview') or ""
+                if not item_data.get('poster_path'): item_data['poster_path'] = details.get('poster_path')
+                if not item_data.get('vote_average'): item_data['vote_average'] = details.get('vote_average')
+                if not item_data.get('available_on'): pass # handled by separate logic usually
+                
+                # Fetch Genres if missing
+                if not genre_ids_list and details.get('genres'):
+                    genre_ids_list = [g['id'] for g in details['genres']]
+        except Exception as e:
+            print(f"[create_watchlist_item] Enrichment failed: {e}")
+
+    # Store genres as JSON string
     genre_ids_str = json.dumps(genre_ids_list) if genre_ids_list else None
     
     db_item = models.WatchlistItem(**item_data, genre_ids=genre_ids_str, user_id=user_id)

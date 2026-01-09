@@ -8,6 +8,7 @@ import ConfirmationModal from '@/components/ConfirmationModal';
 import AddMediaModal from '@/components/AddMediaModal';
 import { Plus, Search, Clapperboard, CalendarClock, CheckCircle, LayoutGrid, List, Layers, ArrowUp, ArrowDown } from 'lucide-react';
 import styles from './watchlist.module.css';
+import GenreFilter from './GenreFilter';
 
 export default function WatchlistPage() {
     const router = useRouter();
@@ -20,6 +21,7 @@ export default function WatchlistPage() {
     // New Filter State
     const [searchQuery, setSearchQuery] = useState('');
     const [typeFilter, setTypeFilter] = useState<'all' | 'movie' | 'tv'>('all');
+    const [selectedGenres, setSelectedGenres] = useState<number[]>([]); // New Genre State
     const [sortField, setSortField] = useState<'date_added' | 'rating' | 'title'>('date_added');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
@@ -71,24 +73,37 @@ export default function WatchlistPage() {
                 overview: item.overview,
                 user_rating: item.user_rating,
                 status: item.status,
-                available_on: undefined // Start clear
+                // Parse Genre IDs (handles JSON string like "[16,35,18]" or comma-separated)
+                genre_ids: (() => {
+                    if (!item.genre_ids) return [];
+                    if (Array.isArray(item.genre_ids)) return item.genre_ids;
+                    if (typeof item.genre_ids === 'string') {
+                        try {
+                            const parsed = JSON.parse(item.genre_ids);
+                            if (Array.isArray(parsed)) return parsed.map(Number);
+                        } catch {
+                            // fallback: remove brackets and split
+                        }
+                        return item.genre_ids
+                            .replace(/[\[\]]/g, '')
+                            .split(',')
+                            .map(s => Number(s.trim()))
+                            .filter(n => !isNaN(n));
+                    }
+                    return [];
+                })(),
+                added_at: item.added_at, // Pass creation date
+                available_on: item.available_on // Use DB value if present
             }));
 
             setItems(transformed);
             if (!isBackground) setLoading(false); // Only toggle if we touched it
 
-            // 2. Fetch badges in background
-            const ids = transformed.map((i: any) => i.id);
-            if (ids.length > 0) {
-                api.post('/watchlist/availability', ids).then(res => {
-                    const map = res.data;
-                    console.log("DEBUG: Availability Map Recv:", map);
-                    setItems(prev => prev.map(p => ({
-                        ...p,
-                        available_on: map[p.id] || map[String(p.id)] || undefined
-                    })));
-                }).catch(err => console.error("Badge fetch error:", err));
-            }
+            setItems(transformed);
+            if (!isBackground) setLoading(false); // Only toggle if we touched it
+
+            // Secondary fetch removed: relying on robust DB data from backfill
+            // to avoid overwriting valid badges with incomplete availability checks.
 
         } catch (error) {
             console.error('Failed to fetch watchlist', error);
@@ -136,7 +151,15 @@ export default function WatchlistPage() {
         // 2. Type Filter
         if (typeFilter !== 'all' && item.media_type !== typeFilter) return false;
 
-        // 3. Search Query
+        // 3. Genre Filter (AND Logic)
+        if (selectedGenres.length > 0) {
+            if (!item.genre_ids || item.genre_ids.length === 0) return false; // No genres = exclude
+            // Must have ALL selected genres
+            const hasAll = selectedGenres.every(id => item.genre_ids!.includes(id));
+            if (!hasAll) return false;
+        }
+
+        // 4. Search Query
         const trimmedQuery = searchQuery.trim().toLowerCase();
         if (trimmedQuery) {
             return (item.title || item.name || '').toLowerCase().includes(trimmedQuery);
@@ -250,6 +273,11 @@ export default function WatchlistPage() {
                         <option value="movie">Movies</option>
                         <option value="tv">TV Shows</option>
                     </select>
+
+                    <GenreFilter
+                        selectedIds={selectedGenres}
+                        onChange={setSelectedGenres}
+                    />
 
                     <div className={styles.sortGroup}>
                         <select

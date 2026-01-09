@@ -137,3 +137,20 @@ If you forgot to backup before a schema change:
 | `recreate_db.py` | Drop and recreate all tables | Major schema overhaul |
 | `patch_db_v*.py` | Incremental schema update | Simple column additions |
 | `verify_db.py` | Check database integrity | After any migration |
+
+## 🚀 Deployment Checklist (Neon DB)
+
+When deploying to production (Neon DB):
+
+1.  **Set Environment Variable**:
+    Ensure `DATABASE_URL` is set to your Neon Postgres connection string (e.g., `postgres://user:pass@host/db`).
+
+2.  **Run Migrations**:
+    Execute any schema changes (e.g., `python recreate_db.py` if fresh, or patch scripts).
+
+3.  **Backfill Data (Important for v1.x upgrades)**:
+    Run the metadata backfill script to correct old data (Genres, Synopsis, Ratings):
+    ```bash
+    python scripts/backfill_metadata.py
+    ```
+    *Note: This script automatically detects `DATABASE_URL` and works for both SQLite and Postgres.*

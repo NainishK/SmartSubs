@@ -16,6 +16,7 @@ interface MediaDetailsModalProps {
         overview: string;
         vote_average?: number;
     };
+    addedAt?: string; // Optional: Show when added to watchlist
 }
 
 interface Provider {
@@ -41,7 +42,7 @@ interface MediaDetails {
     tagline?: string;
 }
 
-export default function MediaDetailsModal({ visible, onClose, mediaType, tmdbId, initialData }: MediaDetailsModalProps) {
+export default function MediaDetailsModal({ visible, onClose, mediaType, tmdbId, initialData, addedAt }: MediaDetailsModalProps) {
     const [details, setDetails] = useState<MediaDetails | null>(null);
     const [providers, setProviders] = useState<ProvidersData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -82,6 +83,14 @@ export default function MediaDetailsModal({ visible, onClose, mediaType, tmdbId,
         const minutes = time % 60;
         return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
     };
+
+    const formattedAddedDate = addedAt
+        ? new Date(addedAt).toLocaleDateString(undefined, {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        })
+        : null;
 
     // Combine all providers for simple display, or use just flatrate (streaming)
     const streamProviders = providers?.flatrate || [];
@@ -124,6 +133,17 @@ export default function MediaDetailsModal({ visible, onClose, mediaType, tmdbId,
                             <span className={styles.rating}>
                                 <Star size={14} fill="currentColor" /> {initialData?.vote_average?.toFixed(1) || 'N/A'}
                             </span>
+
+                            {/* Added Date (Watchlist Context) */}
+                            {formattedAddedDate && (
+                                <>
+                                    <span className={styles.dot}></span>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#6b7280', fontSize: '0.85rem' }}>
+                                        <Calendar size={14} /> Added {formattedAddedDate}
+                                    </span>
+                                </>
+                            )}
+
                             {getRuntime() && (
                                 <>
                                     <span className={styles.dot}></span>

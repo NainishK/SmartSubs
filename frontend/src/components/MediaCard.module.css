@@ -341,8 +341,48 @@
     line-clamp: 2;
     -webkit-line-clamp: 2;
     margin-bottom: 0.5rem;
+    display: -webkit-box;
+    /* Show 2 lines of synopsis */
+}
+
+/* Metadata Row */
+.metaRow {
     display: none;
-    /* Hide overview on list view by default for compactness, or maybe show strictly 2 lines on desktop only? Let's hide on mobile via media query if needed, but flex row usually has space. */
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+}
+
+.cardList .metaRow {
+    display: flex;
+}
+
+.metaGenre {
+    font-weight: 500;
+    color: #475569;
+}
+
+.metaDate {
+    display: flex;
+    align-items: center;
+    color: #94a3b8;
+}
+
+.metaDivider {
+    color: #cbd5e1;
+}
+
+.metaProvider {
+    display: flex;
+    align-items: center;
+    color: #374151;
+    font-weight: 600;
+    background: #f3f4f6;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
 }
 
 /* On mobile list view, definitely hide overview to save vertical space */

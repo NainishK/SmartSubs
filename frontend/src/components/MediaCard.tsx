@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import styles from './MediaCard.module.css';
-import { Trash2, Plus, Check, Star, Tv, Film, Sparkles, ChevronDown } from 'lucide-react';
+import { Trash2, Plus, Check, Star, Tv, Film, Sparkles, ChevronDown, Calendar } from 'lucide-react';
 import StarRating from './StarRating';
 import MediaDetailsModal from './MediaDetailsModal';
+import { GENRES } from '@/lib/genres';
 
 export interface MediaItem {
     id: number; // TMDB ID (usually)
@@ -20,6 +21,7 @@ export interface MediaItem {
     user_rating?: number; // From DB (Watchlist)
     status?: string; // Watchlist status
     available_on?: string; // Enriched provider badge
+    added_at?: string; // Creation date
 }
 
 interface MediaCardProps {
@@ -144,6 +146,21 @@ export default function MediaCard({
 
     const isList = layout === 'list';
 
+    // Metadata Logic
+    const genreNames = item.genre_ids
+        ?.map(id => GENRES[id])
+        .filter(Boolean)
+        .slice(0, 3) // Show max 3 genres
+        .join(', ');
+
+    const formattedDate = item.added_at
+        ? new Date(item.added_at).toLocaleDateString(undefined, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        })
+        : null;
+
     return (
         <>
             <div className={`${styles.card} ${isList ? styles.cardList : ''}`}>
@@ -198,12 +215,32 @@ export default function MediaCard({
                             {item.title || item.name}
                         </h3>
 
-                        {/* Rating UI - Only show if in watchlist (existingStatus is set) AND not plan_to_watch */}
-                        {(existingStatus && status !== 'plan_to_watch') && (
+                        {/* Rating UI */}
+                        {(existingStatus && status !== 'plan_to_watch' && !isList) && (
                             <div style={{ marginBottom: '0.75rem' }}>
                                 <StarRating rating={userRating} onRatingChange={handleRate} />
                             </div>
                         )}
+
+                        {/* NEW: Metadata Row (Visible in List View) */}
+                        <div className={styles.metaRow}>
+                            {genreNames && <span className={styles.metaGenre}>{genreNames}</span>}
+                            {genreNames && formattedDate && <span className={styles.metaDivider}>•</span>}
+                            {formattedDate && (
+                                <span className={styles.metaDate}>
+                                    <Calendar size={12} style={{ marginRight: 4 }} />
+                                    Added {formattedDate}
+                                </span>
+                            )}
+                            {(showServiceBadge && isList) && (
+                                <>
+                                    <span className={styles.metaDivider}>•</span>
+                                    <span className={styles.metaProvider}>
+                                        <Tv size={12} style={{ marginRight: 4 }} /> {showServiceBadge}
+                                    </span>
+                                </>
+                            )}
+                        </div>
 
                         {!hideOverview && (
                             <>
@@ -275,6 +312,7 @@ export default function MediaCard({
                     overview: item.overview,
                     vote_average: item.vote_average
                 }}
+                addedAt={item.added_at}
             />
         </>
     );
