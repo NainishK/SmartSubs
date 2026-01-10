@@ -93,11 +93,10 @@ export default function WatchlistPage() {
                     return [];
                 })(),
                 added_at: item.added_at, // Pass creation date
-                available_on: item.available_on // Use DB value if present
+                available_on: item.available_on, // Use DB value if present
+                current_season: item.current_season,
+                current_episode: item.current_episode
             }));
-
-            setItems(transformed);
-            if (!isBackground) setLoading(false); // Only toggle if we touched it
 
             setItems(transformed);
             if (!isBackground) setLoading(false); // Only toggle if we touched it

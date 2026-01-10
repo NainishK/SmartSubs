@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, Star, Calendar, Clock, Film, Tv } from 'lucide-react';
+import { X, Star, Calendar, Clock, Film, Tv, Plus, Minus } from 'lucide-react';
 import api from '@/lib/api';
 import StarRating from './StarRating';
 import styles from './MediaDetailsModal.module.css';
@@ -20,6 +20,11 @@ interface MediaDetailsModalProps {
     addedAt?: string;
     userRating?: number;
     onRate?: (rating: number) => void;
+    // Progress Tracking
+    dbId?: number;
+    currentSeason?: number;
+    currentEpisode?: number;
+    onProgressChange?: (season: number, episode: number) => void;
 }
 
 interface Provider {
@@ -43,9 +48,17 @@ interface MediaDetails {
     episode_run_time?: number[];
     number_of_seasons?: number;
     tagline?: string;
+    seasons?: {
+        season_number: number;
+        episode_count: number;
+        name: string;
+    }[];
 }
 
-export default function MediaDetailsModal({ visible, onClose, mediaType, tmdbId, initialData, addedAt, userRating, onRate }: MediaDetailsModalProps) {
+export default function MediaDetailsModal({
+    visible, onClose, mediaType, tmdbId, initialData, addedAt, userRating, onRate,
+    dbId, currentSeason = 0, currentEpisode = 0, onProgressChange
+}: MediaDetailsModalProps) {
     const [details, setDetails] = useState<MediaDetails | null>(null);
     const [providers, setProviders] = useState<ProvidersData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -102,6 +115,13 @@ export default function MediaDetailsModal({ visible, onClose, mediaType, tmdbId,
         if (e.target === e.currentTarget) {
             onClose();
         }
+    };
+
+    const updateProgress = (seasonDelta: number, episodeDelta: number) => {
+        if (!onProgressChange) return;
+        const newSeason = Math.max(0, currentSeason + seasonDelta);
+        const newEpisode = Math.max(0, currentEpisode + episodeDelta);
+        onProgressChange(newSeason, newEpisode);
     };
 
     return (
@@ -161,18 +181,98 @@ export default function MediaDetailsModal({ visible, onClose, mediaType, tmdbId,
                             </span>
                         </div>
 
-                        {/* User Rating Section */}
-                        {onRate && (
-                            <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#374151' }}>Your Rating:</span>
-                                <StarRating rating={userRating || 0} onRatingChange={onRate} />
-                            </div>
-                        )}
-
                         <div className={styles.genres} style={{ marginBottom: '1.5rem' }}>
                             {details?.genres?.map(g => (
                                 <span key={g.id} className={styles.genreTag}>{g.name}</span>
                             ))}
+                        </div>
+
+                        {/* Rating & Progress Section */}
+                        <div style={{
+                            display: 'flex',
+                            gap: '32px',
+                            flexWrap: 'wrap',
+                            alignItems: 'center',
+                            marginBottom: '2rem',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '12px',
+                            padding: '16px',
+                            background: '#f9fafb'
+                        }}>
+                            {/* User Rating */}
+                            {onRate && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#9ca3af', letterSpacing: '0.05em' }}>YOUR RATING</span>
+                                    <StarRating rating={userRating || 0} onRatingChange={onRate} maxStars={10} />
+                                </div>
+                            )}
+
+                            {/* Separator */}
+                            {(onRate && mediaType === 'tv' && onProgressChange) && (
+                                <div style={{ width: '1px', alignSelf: 'stretch', backgroundColor: '#e5e7eb', margin: '4px 0' }}></div>
+                            )}
+
+                            {/* Progress Tracking (TV Only) */}
+                            {(mediaType === 'tv' && onProgressChange) && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#9ca3af', letterSpacing: '0.05em' }}>MY PROGRESS</span>
+                                    <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+
+                                        {/* Season Control */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', marginRight: 4 }}>S</span>
+                                            <button className={styles.incButton} onClick={() => updateProgress(-1, 0)}><Minus size={14} /></button>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={currentSeason}
+                                                onChange={(e) => onProgressChange(parseInt(e.target.value) || 0, currentEpisode)}
+                                                className={styles.noSpinner}
+                                                style={{
+                                                    width: '40px', padding: '4px', borderRadius: '4px', border: '1px solid #d1d5db',
+                                                    background: '#ffffff', color: '#111827', textAlign: 'center', fontSize: '0.9rem',
+                                                    fontWeight: 600
+                                                }}
+                                            />
+                                            <button className={styles.incButton} onClick={() => updateProgress(1, 0)}><Plus size={14} /></button>
+                                        </div>
+
+                                        {/* Episode Control */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', marginRight: 4 }}>E</span>
+                                            <button className={styles.incButton} onClick={() => updateProgress(0, -1)}><Minus size={14} /></button>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={currentEpisode}
+                                                onChange={(e) => onProgressChange(currentSeason, parseInt(e.target.value) || 0)}
+                                                className={styles.noSpinner}
+                                                style={{
+                                                    width: '40px', padding: '4px', borderRadius: '4px', border: '1px solid #d1d5db',
+                                                    background: '#ffffff', color: '#111827', textAlign: 'center', fontSize: '0.9rem',
+                                                    fontWeight: 600
+                                                }}
+                                            />
+                                            <button className={styles.incButton} onClick={() => updateProgress(0, 1)}><Plus size={14} /></button>
+
+                                            {(() => {
+                                                const currentSeasonData = details?.seasons?.find(s => s.season_number === currentSeason);
+                                                if (currentSeasonData) {
+                                                    return (
+                                                        <span style={{ fontSize: '0.85rem', color: '#6b7280', whiteSpace: 'nowrap', marginLeft: 6 }}>
+                                                            / {currentSeasonData.episode_count}
+                                                        </span>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
+                                        </div>
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
+                                        Total: {details?.number_of_seasons || 0} Seasons
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className={styles.sectionTitle}>SYNOPSIS</div>

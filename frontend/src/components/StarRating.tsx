@@ -7,13 +7,14 @@ interface StarRatingProps {
     onRatingChange?: (rating: number) => void;
     readonly?: boolean;
     size?: number;
+    maxStars?: 5 | 10;
 }
 
-export default function StarRating({ rating, onRatingChange, readonly = false, size = 16 }: StarRatingProps) {
+export default function StarRating({ rating, onRatingChange, readonly = false, size = 16, maxStars = 5 }: StarRatingProps) {
     const [hoverRating, setHoverRating] = useState<number | null>(null);
 
-    // Convert 1-10 scale to 1-5 stars for display
-    const displayRating = Math.round(rating / 2);
+    // If maxStars is 5, scale down (0-10 -> 0-5). If 10, usage is 1:1.
+    const displayRating = maxStars === 5 ? Math.round(rating / 2) : rating;
 
     const handleMouseEnter = (index: number) => {
         if (!readonly) {
@@ -27,13 +28,15 @@ export default function StarRating({ rating, onRatingChange, readonly = false, s
 
     const handleClick = (index: number) => {
         if (!readonly && onRatingChange) {
-            onRatingChange(index * 2);
+            // Index is 1-based. If maxStars=5, index 1 = rating 2. If maxStars=10, index 1 = rating 1.
+            const newRating = maxStars === 5 ? index * 2 : index;
+            onRatingChange(newRating);
         }
     };
 
     return (
-        <div className={styles.starContainer} onMouseLeave={handleMouseLeave}>
-            {[1, 2, 3, 4, 5].map((index) => {
+        <div className={`${styles.starContainer} ${maxStars === 10 ? styles.tenStars : ''}`} onMouseLeave={handleMouseLeave}>
+            {Array.from({ length: maxStars }, (_, i) => i + 1).map((index) => {
                 const isFilled = (hoverRating !== null ? hoverRating : displayRating) >= index;
 
                 return (

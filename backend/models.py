@@ -57,6 +57,13 @@ class WatchlistItem(Base):
     available_on = Column(String, nullable=True) # Badge cache
     genre_ids = Column(String, nullable=True) # JSON string or comma-separated list of genre IDs
     status = Column(String, default="plan_to_watch") # plan_to_watch, watching, watched
+    
+    # Progress Tracking
+    current_season = Column(Integer, default=0)
+    current_episode = Column(Integer, default=0)
+    total_seasons = Column(Integer, default=0)
+    total_episodes = Column(Integer, default=0)
+
     added_at = Column(DateTime(timezone=True), server_default=func.now())
 
     owner = relationship("User", back_populates="watchlist")

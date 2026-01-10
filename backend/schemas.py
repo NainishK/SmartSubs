@@ -47,8 +47,14 @@ class WatchlistItemBase(BaseModel):
 class WatchlistRatingUpdate(BaseModel):
     rating: int
 
+class WatchlistProgressUpdate(BaseModel):
+    current_season: int
+    current_episode: int
+
 class WatchlistItemCreate(WatchlistItemBase):
     genre_ids: Optional[List[int]] = None
+    total_seasons: Optional[int] = 0
+    total_episodes: Optional[int] = 0
 
 class WatchlistItem(WatchlistItemBase):
     id: int
@@ -56,6 +62,11 @@ class WatchlistItem(WatchlistItemBase):
     status: str
     added_at: datetime
     genre_ids: Optional[str] = None # Stored as string
+    
+    current_season: Optional[int] = 0
+    current_episode: Optional[int] = 0
+    total_seasons: Optional[int] = 0
+    total_episodes: Optional[int] = 0
 
     class Config:
         from_attributes = True

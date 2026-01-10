@@ -256,6 +256,30 @@ export default function AddMediaModal({ isOpen, onClose, onAddSuccess, existingI
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                             />
+                            {query && (
+                                <button
+                                    className={styles.clearButton}
+                                    onClick={() => {
+                                        setQuery('');
+                                        inputRef.current?.focus();
+                                    }}
+                                    style={{
+                                        position: 'absolute',
+                                        right: '12px',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        color: '#9ca3af',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: 4
+                                    }}
+                                >
+                                    <X size={16} />
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -321,7 +345,7 @@ export default function AddMediaModal({ isOpen, onClose, onAddSuccess, existingI
                                                     <>
                                                         <statusConfig.icon size={16} />
                                                         {statusConfig.label}
-                                                        {existing.user_rating ? ` • ★ ${existing.user_rating / 2}` : ''}
+                                                        {existing.user_rating ? ` • ★ ${existing.user_rating}` : ''}
                                                     </>
                                                 ) : (
                                                     <>
@@ -340,6 +364,7 @@ export default function AddMediaModal({ isOpen, onClose, onAddSuccess, existingI
                                                                 rating={0}
                                                                 onRatingChange={(r) => handleRatingSelect(item, r)}
                                                                 size={24}
+                                                                maxStars={10}
                                                             />
                                                             <button
                                                                 className={styles.dropdownItem}

@@ -22,6 +22,8 @@ export interface MediaItem {
     status?: string; // Watchlist status
     available_on?: string; // Enriched provider badge
     added_at?: string; // Creation date
+    current_season?: number;
+    current_episode?: number;
 }
 
 interface MediaCardProps {
@@ -61,7 +63,26 @@ export default function MediaCard({
         setStatus(existingStatus || 'plan_to_watch');
         setUserRating(item.user_rating || 0);
         setDbId(item.dbId);
-    }, [existingStatus, item.user_rating, item.dbId]);
+        setProgress({ season: item.current_season || 0, episode: item.current_episode || 0 });
+    }, [existingStatus, item.user_rating, item.dbId, item.current_season, item.current_episode]);
+
+    const [progress, setProgress] = useState({
+        season: item.current_season || 0,
+        episode: item.current_episode || 0
+    });
+
+    const handleProgressChange = async (season: number, episode: number) => {
+        if (!dbId) return;
+        setProgress({ season, episode }); // Optimistic
+        try {
+            await api.put(`/watchlist/${dbId}/progress`, {
+                current_season: season,
+                current_episode: episode
+            });
+        } catch (e) {
+            console.error("Progress update failed", e);
+        }
+    };
 
     const addToWatchlist = async (statusOverride?: string) => {
         setAdding(true);
@@ -216,9 +237,13 @@ export default function MediaCard({
                         </h3>
 
                         {/* Rating UI - Now visible in List View too */}
+                        {/* Rating UI - Numeric for 10-star scale */}
                         {(existingStatus && status !== 'plan_to_watch') && (
-                            <div style={{ marginBottom: '0.75rem' }}>
-                                <StarRating rating={userRating} onRatingChange={handleRate} />
+                            <div style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <Star size={16} fill={userRating > 0 ? "#fbbf24" : "none"} color={userRating > 0 ? "#fbbf24" : "#9ca3af"} />
+                                <span style={{ fontWeight: 600, color: userRating > 0 ? '#374151' : '#9ca3af' }}>
+                                    {userRating > 0 ? userRating : 'Rate'}
+                                </span>
                             </div>
                         )}
 
@@ -232,6 +257,16 @@ export default function MediaCard({
                                     Added {formattedDate}
                                 </span>
                             )}
+
+                            {(item.media_type === 'tv' && isList && (progress.season > 0 || progress.episode > 0)) && (
+                                <>
+                                    <span className={styles.metaDivider}>•</span>
+                                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', background: '#f3f4f6', padding: '2px 6px', borderRadius: '4px' }}>
+                                        S{progress.season} E{progress.episode}
+                                    </span>
+                                </>
+                            )}
+
                             {(showServiceBadge && isList) && (
                                 <>
                                     <span className={styles.metaDivider}>•</span>
@@ -301,7 +336,7 @@ export default function MediaCard({
                     </div>
                     {error && <p className={styles.errorText}>{error}</p>}
                 </div>
-            </div>
+            </div >
 
             <MediaDetailsModal
                 visible={showModal}
@@ -317,6 +352,11 @@ export default function MediaCard({
                 addedAt={item.added_at}
                 userRating={userRating}
                 onRate={handleRate}
+                // Progress
+                dbId={dbId}
+                currentSeason={progress.season}
+                currentEpisode={progress.episode}
+                onProgressChange={handleProgressChange}
             />
         </>
     );

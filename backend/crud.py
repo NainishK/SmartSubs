@@ -112,13 +112,52 @@ def create_watchlist_item(db: Session, item: schemas.WatchlistItemCreate, user_i
                 if not item_data.get('overview'): item_data['overview'] = details.get('overview') or ""
                 if not item_data.get('poster_path'): item_data['poster_path'] = details.get('poster_path')
                 if not item_data.get('vote_average'): item_data['vote_average'] = details.get('vote_average')
-                if not item_data.get('available_on'): pass # handled by separate logic usually
+                if not item_data.get('vote_average'): item_data['vote_average'] = details.get('vote_average')
                 
                 # Fetch Genres if missing
                 if not genre_ids_list and details.get('genres'):
                     genre_ids_list = [g['id'] for g in details['genres']]
+
+                # Populate total seasons/episodes for TV
+                if item_data["media_type"] == "tv":
+                    item_data["total_seasons"] = details.get("number_of_seasons", 0)
+                    item_data["total_episodes"] = details.get("number_of_episodes", 0)
         except Exception as e:
             print(f"[create_watchlist_item] Enrichment failed: {e}")
+    # Auto-Detect Streaming Availability (Strict Mode: Only matches User Subscriptions)
+    # MOVED OUTSIDE: Runs even if frontend provided basic metadata
+    if not item_data.get('available_on'):
+        try:
+            # 1. Get User's Country & Subscriptions
+            user = get_user(db, user_id)
+            country = user.country if user and user.country else "US" # Default to US if missing
+            user_subs = get_user_subscriptions(db, user_id)
+            active_services = {sub.service_name.lower() for sub in user_subs}
+            
+            # 2. Fetch Providers from TMDB
+            providers = tmdb_client.get_watch_providers(item.media_type, item.tmdb_id, region=country)
+            flatrate = providers.get("flatrate", [])
+            
+            # 3. Find Intersection (Provider must be in User's Active Subs)
+            matched_provider = None
+            for p in flatrate:
+                p_name = p.get("provider_name", "")
+                # Normalize for flexible matching (e.g., "Disney+ Hotstar" vs "Hotstar")
+                p_lower = p_name.lower()
+                
+                # Check strict match or containment
+                for sub_name in active_services:
+                    if sub_name in p_lower or p_lower in sub_name:
+                        matched_provider = p_name
+                        break
+                if matched_provider:
+                    break
+            
+            if matched_provider:
+                print(f"[create_watchlist_item] Found active subscription match: {matched_provider} for {item.tmdb_id}")
+                item_data['available_on'] = matched_provider
+        except Exception as e:
+            print(f"[create_watchlist_item] Provider fetch failed: {e}")
 
     # Store genres as JSON string
     genre_ids_str = json.dumps(genre_ids_list) if genre_ids_list else None
@@ -197,6 +236,18 @@ def get_plans(db: Session, service_id: int, country: str = "US"):
         models.Plan.service_id == service_id,
         models.Plan.country == country
     ).all()
+
+def update_watchlist_item_progress(db: Session, item_id: int, user_id: int, current_season: int, current_episode: int):
+    db_item = db.query(models.WatchlistItem).filter(
+        models.WatchlistItem.id == item_id,
+        models.WatchlistItem.user_id == user_id
+    ).first()
+    if db_item:
+        db_item.current_season = current_season
+        db_item.current_episode = current_episode
+        db.commit()
+        db.refresh(db_item)
+    return db_item
 
 def update_user_profile(db: Session, user_id: int, country: str):
     user = db.query(models.User).filter(models.User.id == user_id).first()

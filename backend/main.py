@@ -535,6 +535,24 @@ def update_watchlist_rating(
         raise HTTPException(status_code=404, detail="Item not found")
     return db_item
 
+@app.put("/watchlist/{item_id}/progress", response_model=schemas.WatchlistItem)
+def update_watchlist_progress(
+    item_id: int, 
+    update: schemas.WatchlistProgressUpdate, 
+    db: Session = Depends(get_db), 
+    current_user: models.User = Depends(dependencies.get_current_user)
+):
+    db_item = crud.update_watchlist_item_progress(
+        db, 
+        item_id=item_id, 
+        user_id=current_user.id, 
+        current_season=update.current_season, 
+        current_episode=update.current_episode
+    )
+    if db_item is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return db_item
+
 @app.get("/recommendations")
 def get_recommendations(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
     """Legacy endpoint - returns fast recommendations only to avoid breaking changes"""

@@ -335,3 +335,37 @@
         height: 40px;
     }
 }
+
+/* Utilities */
+.noSpinner::-webkit-outer-spin-button,
+.noSpinner::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.noSpinner {
+    -moz-appearance: textfield;
+}
+
+.incButton {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #4b5563;
+    transition: all 0.2s;
+}
+
+.incButton:hover {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+.incButton:active {
+    background: #d1d5db;
+}
