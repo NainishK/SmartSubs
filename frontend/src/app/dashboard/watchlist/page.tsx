@@ -21,6 +21,7 @@ export default function WatchlistPage() {
     // New Filter State
     const [searchQuery, setSearchQuery] = useState('');
     const [typeFilter, setTypeFilter] = useState<'all' | 'movie' | 'tv'>('all');
+    const [providerFilter, setProviderFilter] = useState<string>('all'); // New Provider Filter
     const [selectedGenres, setSelectedGenres] = useState<number[]>([]); // New Genre State
     const [sortField, setSortField] = useState<'date_added' | 'rating' | 'title'>('date_added');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -158,7 +159,19 @@ export default function WatchlistPage() {
             if (!hasAll) return false;
         }
 
-        // 4. Search Query
+        // 4. Provider Filter
+        if (providerFilter !== 'all') {
+            if (providerFilter === 'available') {
+                if (!item.available_on) return false; // Must have SOME provider
+            } else if (providerFilter === 'unavailable') {
+                if (item.available_on) return false; // Must NOT have a provider
+            } else {
+                // Specific provider map
+                if (item.available_on !== providerFilter) return false;
+            }
+        }
+
+        // 5. Search Query
         const trimmedQuery = searchQuery.trim().toLowerCase();
         if (trimmedQuery) {
             return (item.title || item.name || '').toLowerCase().includes(trimmedQuery);
@@ -273,6 +286,20 @@ export default function WatchlistPage() {
                         <option value="all">All Types</option>
                         <option value="movie">Movies</option>
                         <option value="tv">TV Shows</option>
+                    </select>
+
+                    <select
+                        value={providerFilter}
+                        onChange={(e) => setProviderFilter(e.target.value)}
+                        className={styles.controlSelect}
+                        style={{ minWidth: '140px' }}
+                    >
+                        <option value="all">All Availability</option>
+                        <option value="available">Available Now (Any)</option>
+                        <option value="unavailable">Not on My Services</option>
+                        {Array.from(new Set(items.map(i => i.available_on).filter(Boolean))).sort().map(p => (
+                            <option key={p} value={p!}>{p}</option>
+                        ))}
                     </select>
 
                     <GenreFilter
