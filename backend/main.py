@@ -175,8 +175,17 @@ def validate_ai_access(db: Session, user: models.User):
 @app.on_event("startup")
 async def startup_event():
     import os
+    import migration # [NEW] Auto-migration
+    
     url = os.getenv("DATABASE_URL", "sqlite:///./sql_app.db")
-    logger.info(f"🚀 API STARTUP - DB URL: {url}") # [MODIFIED]
+    logger.info(f"🚀 API STARTUP - DB URL: {url}")
+    
+    # Run Schema Migration (Add missing columns)
+    try:
+        migration.run_migration()
+        logger.info("✅ Schema Migration Completed")
+    except Exception as e:
+        logger.error(f"❌ Schema Migration Failed: {e}")
 
 @app.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
