@@ -1,28 +1,15 @@
-from sqlalchemy import desc # [NEW] Import
-
-# ... (inside read_user_stats)
-    def get_monthly_cost(sub):
-        cost = sub.cost or 0.0
-        if sub.billing_cycle and sub.billing_cycle.lower() == 'yearly':
-            return cost / 12
-        return cost
-
-# ... (inside read_user_spending)
-    def get_monthly_cost(sub):
-        cost = sub.cost or 0.0
-        if sub.billing_cycle and sub.billing_cycle.lower() == 'yearly':
-            return cost / 12
-        return cost
-
-# ... (inside read_subscriptions)
-    for sub in subs:
-        # Use desc() to prioritize True (Match) over False
-        service = db.query(models.Service).filter(
-            models.Service.name == sub.service_name,
-            (models.Service.country == current_user.country) | (models.Service.country == "US")
-        ).order_by(desc(models.Service.country == current_user.country)).first()
-        if service:
-            sub.logo_url = service.logo_url
+from fastapi import FastAPI, Depends, HTTPException, status, Request, BackgroundTasks
+from fastapi.responses import JSONResponse
+from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+from sqlalchemy import desc
+from datetime import datetime, timedelta
+import models, schemas, crud, security, dependencies
+from database import SessionLocal, engine
+import traceback
+import time
+from logger import logger # [NEW]
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -257,9 +244,10 @@ def read_user_stats(db: Session = Depends(get_db), current_user: models.User = D
     ).all()
     
     def get_monthly_cost(sub):
+        cost = sub.cost or 0.0
         if sub.billing_cycle and sub.billing_cycle.lower() == 'yearly':
-            return sub.cost / 12
-        return sub.cost
+            return cost / 12
+        return cost
 
     total_cost = sum(get_monthly_cost(sub) for sub in subs) 
     yearly_projection = total_cost * 12
@@ -285,9 +273,10 @@ def read_user_spending(db: Session = Depends(get_db), current_user: models.User 
     ).all()
     
     def get_monthly_cost(sub):
+        cost = sub.cost or 0.0
         if sub.billing_cycle and sub.billing_cycle.lower() == 'yearly':
-            return sub.cost / 12
-        return sub.cost
+            return cost / 12
+        return cost
 
     # Sort by cost descending (monthly)
     sorted_subs = sorted(subs, key=lambda s: get_monthly_cost(s), reverse=True)
@@ -344,10 +333,11 @@ def read_subscriptions(skip: int = 0, limit: int = 100, db: Session = Depends(ge
     subs = db.query(models.Subscription).filter(models.Subscription.user_id == current_user.id).offset(skip).limit(limit).all()
     # Attach logos
     for sub in subs:
+        # Use desc() to prioritize True (Match) over False
         service = db.query(models.Service).filter(
             models.Service.name == sub.service_name,
             (models.Service.country == current_user.country) | (models.Service.country == "US")
-        ).order_by(models.Service.country == current_user.country).first()
+        ).order_by(desc(models.Service.country == current_user.country)).first()
         if service:
             sub.logo_url = service.logo_url
     return subs
