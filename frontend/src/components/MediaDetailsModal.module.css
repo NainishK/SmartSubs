@@ -532,13 +532,14 @@
 /* Mobile Layout for Rating Box */
 @media (max-width: 768px) {
     .ratingProgressBox {
-        display: grid;
-        grid-template-columns: 1fr 1.3fr;
-        gap: 0.5rem;
-        align-items: start;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        align-items: flex-start;
+        /* Left align everything */
         background: #f9fafb;
         border: 1px solid #e5e7eb;
-        padding: 1rem;
+        padding: 1.25rem;
     }
 
     .ratingSeparator {
@@ -547,20 +548,21 @@
 
     .ratingBlock {
         align-items: flex-start;
+        width: 100%;
     }
 
     .progressBlock {
         align-items: flex-start;
         width: 100%;
-        /* Ensure it fits in the grid cell */
-        min-width: 0;
     }
 
     .progressControls {
         display: flex;
         flex-direction: row;
-        flex-wrap: wrap;
-        gap: 0.5rem;
+        flex-wrap: nowrap;
+        /* Force single line now that we have space */
+        gap: 1.5rem;
+        /* More generous gap between S and E */
         align-items: center;
         width: 100%;
     }
