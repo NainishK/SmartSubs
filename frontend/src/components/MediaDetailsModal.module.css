@@ -412,14 +412,14 @@
 }
 
 /* Utilities */
-/* Universal Spinner Hide - High Specificity */
-.noSpinner,
-.noSpinner::-webkit-outer-spin-button,
-.noSpinner::-webkit-inner-spin-button,
-input[type=number].noSpinner {
-    -webkit-appearance: none !important;
+.noSpinner {
     -moz-appearance: textfield !important;
     appearance: none !important;
+}
+
+.noSpinner::-webkit-outer-spin-button,
+.noSpinner::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
     margin: 0 !important;
 }
 
@@ -450,7 +450,8 @@ input[type=number].noSpinner {
 .ratingProgressBox {
     display: flex;
     gap: 32px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    /* Force side-by-side on desktop */
     align-items: center;
     margin-bottom: 2rem;
     border: 1px solid #e5e7eb;
@@ -533,10 +534,11 @@ input[type=number].noSpinner {
 @media (max-width: 768px) {
     .ratingProgressBox {
         display: grid;
-        grid-template-columns: 1fr 1.3fr;
-        gap: 0.75rem;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
         align-items: start;
         background: #f9fafb;
+        /* Restore Box */
         border: 1px solid #e5e7eb;
         padding: 1rem;
     }
@@ -552,23 +554,21 @@ input[type=number].noSpinner {
     .progressBlock {
         align-items: flex-start;
         width: 100%;
-        min-width: 0;
     }
 
     .progressControls {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        /* Allow wrapping if tight */
-        gap: 0.5rem;
-        align-items: center;
+        flex-direction: column;
+        /* Stack S and E vertically */
+        gap: 0.75rem;
+        align-items: flex-start;
         width: 100%;
     }
 
     .controlGroup {
-        width: auto;
+        width: 100%;
     }
 
+    /* Keep buttons touch-friendly but compact */
     .incButton {
         width: 32px;
         height: 32px;
@@ -576,6 +576,6 @@ input[type=number].noSpinner {
 
     .numberInput {
         height: 32px;
-        width: 36px;
+        width: 40px;
     }
 }
