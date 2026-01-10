@@ -20,7 +20,8 @@ const SERVICE_DOMAINS: Record<string, string> = {
     'Apple TV+': 'apple.com',
     'YouTube Premium': 'youtube.com',
     'Peacock': 'peacocktv.com',
-    'Paramount+': 'paramountplus.com'
+    'Paramount+': 'paramountplus.com',
+    'FanCode': 'fancode.com'
 };
 
 const getServiceLogo = (name: string) => {

@@ -265,6 +265,17 @@ def seed_data():
                     {"name": "Apple One (Bundle)", "cost": 195, "currency": "INR", "country": "IN", "billing_cycle": "monthly"},
                     {"name": "Apple One Family", "cost": 365, "currency": "INR", "country": "IN", "billing_cycle": "monthly"}
                 ]
+            },
+            {
+                "name": "FanCode",
+                "country": "IN",
+                "domain": "fancode.com",
+                "category": "OTHER",
+                "plans": [
+                    {"name": "Monthly Pass", "cost": 199, "currency": "INR", "country": "IN", "billing_cycle": "monthly"},
+                    {"name": "Yearly Pass", "cost": 999, "currency": "INR", "country": "IN", "billing_cycle": "yearly"},
+                    {"name": "Tour Pass (Match)", "cost": 99, "currency": "INR", "country": "IN", "billing_cycle": "monthly"}
+                ]
             }
         ]
 

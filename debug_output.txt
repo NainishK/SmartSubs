@@ -1,0 +1,62 @@
+Traceback (most recent call last):
+  File "C:\Personal\Projects\Subscription-manager\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "C:\Personal\Projects\Subscription-manager\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 951, in do_execute
+    cursor.execute(statement, parameters)
+sqlite3.OperationalError: no such table: services
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Personal\Projects\Subscription-manager\backend\scripts\add_fancode.py", line 17, in add_fancode
+    existing = db.query(models.Service).filter(models.Service.name == "FanCode", models.Service.country == "IN").first()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Personal\Projects\Subscription-manager\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2759, in first
+    return self.limit(1)._iter().first()  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Personal\Projects\Subscription-manager\backend\venv\Lib\site-packages\sqlalchemy\orm\query.py", line 2857, in _iter
+    result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+                                                  ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Personal\Projects\Subscription-manager\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2351, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Personal\Projects\Subscription-manager\backend\venv\Lib\site-packages\sqlalchemy\orm\session.py", line 2249, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Personal\Projects\Subscription-manager\backend\venv\Lib\site-packages\sqlalchemy\orm\context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "C:\Personal\Projects\Subscription-manager\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1419, in execute
+    return meth(
+           ^^^^^
+  File "C:\Personal\Projects\Subscription-manager\backend\venv\Lib\site-packages\sqlalchemy\sql\elements.py", line 526, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Personal\Projects\Subscription-manager\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1641, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Personal\Projects\Subscription-manager\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Personal\Projects\Subscription-manager\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "C:\Personal\Projects\Subscription-manager\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2355, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Personal\Projects\Subscription-manager\backend\venv\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "C:\Personal\Projects\Subscription-manager\backend\venv\Lib\site-packages\sqlalchemy\engine\default.py", line 951, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such table: services
+[SQL: SELECT services.id AS services_id, services.name AS services_name, services.base_cost AS services_base_cost, services.logo_url AS services_logo_url, services.country AS services_country, services.category AS services_category 
+FROM services 
+WHERE services.name = ? AND services.country = ?
+ LIMIT ? OFFSET ?]
+[parameters: ('FanCode', 'IN', 1, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Error adding FanCode: (sqlite3.OperationalError) no such table: services
+[SQL: SELECT services.id AS services_id, services.name AS services_name, services.base_cost AS services_base_cost, services.logo_url AS services_logo_url, services.country AS services_country, services.category AS services_category 
+FROM services 
+WHERE services.name = ? AND services.country = ?
+ LIMIT ? OFFSET ?]
+[parameters: ('FanCode', 'IN', 1, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
