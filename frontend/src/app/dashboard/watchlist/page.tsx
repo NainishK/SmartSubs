@@ -107,7 +107,7 @@ export default function WatchlistPage() {
                             .replace(/[\[\]]/g, '')
                             .split(',')
                             .map((s: string) => Number(s.trim()))
-                            .filter(n => !isNaN(n));
+                            .filter((n: number) => !isNaN(n));
                     }
                     return [];
                 })(),
