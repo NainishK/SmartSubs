@@ -19,7 +19,7 @@
 
 .pageTitle {
     font-size: 1.5rem;
-    /* Smaller Title */
+    /* Mobile First Default (Prevents Huge Flash) */
     font-weight: 700;
     margin: 0;
     background: linear-gradient(135deg, #1a1a1a 0%, #4a4a4a 100%);
@@ -28,6 +28,13 @@
     display: inline-block;
     -webkit-text-fill-color: transparent;
     letter-spacing: -0.5px;
+}
+
+@media (min-width: 769px) {
+    .pageTitle {
+        font-size: 2rem;
+        /* Desktop Upgrade */
+    }
 }
 
 .subtitle {
@@ -570,14 +577,21 @@
     .header {
         flex-direction: column;
         align-items: flex-start;
-        gap: 0.5rem;
+        gap: 0.25rem;
+        /* Reduced */
+        margin-bottom: 0.5rem;
+        /* Drastically reduced from 1.5rem */
     }
 
     .navBar {
         flex-direction: column;
         align-items: stretch;
-        gap: 1rem;
-        padding-bottom: 0.5rem;
+        gap: 0.5rem;
+        /* Reduced */
+        padding-bottom: 0.25rem;
+        /* Reduced */
+        margin-bottom: 0.75rem;
+        /* Reduced from default */
     }
 
     .tabs {
@@ -622,8 +636,12 @@
         gap: 0.5rem;
     }
 
-    .pageTitle {
-        font-size: 1.25rem;
+
+
+    .subtitle {
+        font-size: 0.8rem;
+        /* Smaller subheader */
+        margin-top: 0.25rem;
     }
 
     .tab {
@@ -901,4 +919,14 @@
     50% {
         opacity: 0.6;
     }
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 50vh;
+    font-size: 1.2rem;
+    color: #666;
+    font-weight: 500;
 }

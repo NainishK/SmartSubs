@@ -231,29 +231,15 @@ export default function WatchlistPage() {
         { id: 'dropped', label: 'Dropped', icon: <XCircle size={16} /> }
     ];
 
-    if (loading) {
-        return (
-            <div className={styles.container}>
-                <div className={styles.header}>
-                    <div>
-                        <h1 className={styles.title}>My Watchlist</h1>
-                        <div className={styles.skeletonText} style={{ width: 300, height: 20, marginTop: 8 }}></div>
-                    </div>
-                </div>
-                <div className={styles.grid}>
-                    {[1, 2, 3, 4].map(i => (
-                        <div key={i} className={styles.skeletonCard}></div>
-                    ))}
-                </div>
-            </div>
-        );
-    }
+
+
+    if (loading) return <div className={styles.loading}>Loading your watchlist...</div>;
 
     return (
         <div className={styles.container}>
             <div className={styles.header}>
                 <div>
-                    <h1 className={styles.title}>My Watchlist</h1>
+                    <h1 className={styles.pageTitle}>My Watchlist</h1>
                     <p className={styles.subtitle}>Track what you're watching and discover new favorites.</p>
                 </div>
                 <button
