@@ -6,7 +6,7 @@ import api from '@/lib/api';
 import MediaCard, { MediaItem } from '@/components/MediaCard';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import AddMediaModal from '@/components/AddMediaModal';
-import { Plus, Search, Clapperboard, CalendarClock, CheckCircle, LayoutGrid, List, Layers, ArrowUp, ArrowDown, PauseCircle, XCircle, SlidersHorizontal } from 'lucide-react';
+import { Plus, Search, Clapperboard, CalendarClock, CheckCircle, LayoutGrid, List, Layers, ArrowUp, ArrowDown, PauseCircle, XCircle, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import styles from './watchlist.module.css';
 import GenreFilter from './GenreFilter';
 
@@ -26,6 +26,8 @@ export default function WatchlistPage() {
     const [sortField, setSortField] = useState<'date_added' | 'rating' | 'title'>('date_added');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [showMobileFilters, setShowMobileFilters] = useState(false); // Mobile Filter Toggle
+    const [showBackToTop, setShowBackToTop] = useState(false); // Scroll to top visibility
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Mobile Custom Dropdown Toggle
 
     // Modal State
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -50,8 +52,23 @@ export default function WatchlistPage() {
         };
 
         checkMobile();
+        checkMobile();
         window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
+
+        // Scroll Listener
+        const handleScroll = () => {
+            if (window.scrollY > 300) {
+                setShowBackToTop(true);
+            } else {
+                setShowBackToTop(false);
+            }
+        };
+        window.addEventListener('scroll', handleScroll);
+
+        return () => {
+            window.removeEventListener('resize', checkMobile);
+            window.removeEventListener('scroll', handleScroll);
+        }
     }, []);
 
     const handleViewChange = (mode: 'grid' | 'list') => {
@@ -250,19 +267,40 @@ export default function WatchlistPage() {
             {/* Navigation Tabs */}
             {/* Navigation Tabs (Desktop) & Dropdown (Mobile) */}
             <div className={styles.navBar}>
-                {/* Mobile Dropdown */}
+                {/* Mobile Custom Dropdown - REPLACES <select> */}
                 {isMobile ? (
-                    <select
-                        className={styles.mobileTabsDropdown}
-                        value={activeTab}
-                        onChange={(e) => setActiveTab(e.target.value)}
-                    >
-                        {tabs.map(tab => (
-                            <option key={tab.id} value={tab.id}>
-                                {tab.label} ({getTabCount(tab.id)})
-                            </option>
-                        ))}
-                    </select>
+                    <div className={styles.customDropdownContainer}>
+                        <button
+                            className={`${styles.dropdownTrigger} ${isDropdownOpen ? styles.dropdownTriggerOpen : ''}`}
+                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                        >
+                            <span className={styles.triggerContent}>
+                                {tabs.find(t => t.id === activeTab)?.icon}
+                                {tabs.find(t => t.id === activeTab)?.label}
+                                <span className={styles.triggerCount}>({getTabCount(activeTab)})</span>
+                            </span>
+                            <ChevronDown size={18} className={styles.triggerChevron} />
+                        </button>
+
+                        {isDropdownOpen && (
+                            <div className={styles.dropdownMenu}>
+                                {tabs.map(tab => (
+                                    <button
+                                        key={tab.id}
+                                        className={`${styles.dropdownItem} ${activeTab === tab.id ? styles.dropdownItemActive : ''}`}
+                                        onClick={() => {
+                                            setActiveTab(tab.id);
+                                            setIsDropdownOpen(false);
+                                        }}
+                                    >
+                                        <span className={styles.tabIcon}>{tab.icon}</span>
+                                        <span className={styles.itemLabel}>{tab.label}</span>
+                                        <span className={styles.itemCount}>{getTabCount(tab.id)}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 ) : (
                     /* Desktop Tabs */
                     <div className={styles.tabs}>
@@ -438,10 +476,20 @@ export default function WatchlistPage() {
                 existingIds={new Set(items.map(item => item.id))}
             />
 
-            {/* Mobile FAB */}
-            <button className={styles.fabButton} onClick={() => setIsAddModalOpen(true)}>
-                <Plus size={24} />
-            </button>
+            {/* Mobile FABs */}
+            <div className={styles.fabContainer}>
+                {showBackToTop && (
+                    <button
+                        className={`${styles.fabButton} ${styles.fabSecondary}`}
+                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    >
+                        <ArrowUp size={20} />
+                    </button>
+                )}
+                <button className={styles.fabButton} onClick={() => setIsAddModalOpen(true)}>
+                    <Plus size={24} />
+                </button>
+            </div>
         </div>
     );
 }

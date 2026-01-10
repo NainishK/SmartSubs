@@ -481,13 +481,21 @@
 }
 
 
-/* Floating Action Button (Mobile Only) */
-.fabButton {
+/* Floating Action Button Container */
+.fabContainer {
     display: none;
     /* Hidden on desktop */
     position: fixed;
     bottom: 2rem;
     right: 2rem;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+    z-index: 100;
+}
+
+/* Base FAB */
+.fabButton {
     width: 3.5rem;
     height: 3.5rem;
     background: linear-gradient(135deg, #0070f3 0%, #0051cc 100%);
@@ -495,15 +503,29 @@
     border-radius: 50%;
     border: none;
     box-shadow: 0 4px 15px rgba(0, 112, 243, 0.4);
+    display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    z-index: 100;
     transition: transform 0.2s ease;
 }
 
 .fabButton:active {
     transform: scale(0.95);
+}
+
+/* Secondary FAB (Back to Top) */
+.fabSecondary {
+    width: 2.75rem;
+    height: 2.75rem;
+    background: white;
+    color: #64748b;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+}
+
+.fabSecondary:hover {
+    color: #0070f3;
 }
 
 /* Filter Toggle Button */
@@ -619,9 +641,9 @@
         /* Hide Desktop Add Button */
     }
 
-    .fabButton {
+    .fabContainer {
         display: flex;
-        /* Show FAB */
+        /* Show FAB Container */
     }
 
     .toolbar {
@@ -664,21 +686,132 @@
         justify-content: space-between;
     }
 
-    /* Mobile Tabs Dropdown */
-    .mobileTabsDropdown {
-        display: block;
+    /* Mobile Tabs Dropdown (Custom) */
+    .customDropdownContainer {
+        position: relative;
         width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    .dropdownTrigger {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         padding: 0.75rem 1rem;
         background: white;
         border: 1px solid #e2e8f0;
         border-radius: 8px;
-        font-weight: 600;
+        font-family: inherit;
+        font-size: 0.85rem;
+        /* Reduced from 0.95rem */
         color: #0f172a;
-        margin-bottom: 1rem;
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-        background-position: right 1rem center;
-        background-repeat: no-repeat;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .dropdownTrigger:hover {
+        background-color: #f8fafc;
+    }
+
+    .dropdownTriggerOpen {
+        border-color: #0070f3;
+        box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
+    }
+
+    .triggerContent {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .triggerCount {
+        color: #64748b;
+        font-weight: 500;
+        margin-left: 0.25rem;
+    }
+
+    .triggerChevron {
+        color: #64748b;
+    }
+
+    .dropdownMenu {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        width: 100%;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        z-index: 50;
+        padding: 0.25rem;
+        animation: slideDown 0.15s ease-out;
+    }
+
+    .dropdownItem {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border: none;
+        background: transparent;
+        color: #334155;
+        font-family: inherit;
+        font-size: 0.85rem;
+        /* Reduced from 0.95rem */
+        text-align: left;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.1s;
+    }
+
+    .dropdownItem:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+
+    .dropdownItemActive {
+        background: #f0f7ff;
+        color: #0070f3;
+        font-weight: 500;
+    }
+
+    .itemLabel {
+        flex: 1;
+    }
+
+    .itemCount {
+        background: #f1f5f9;
+        font-size: 0.8rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: 12px;
+        color: #64748b;
+    }
+
+    .dropdownItemActive .itemCount {
+        background: rgba(0, 112, 243, 0.1);
+        color: #0070f3;
+    }
+
+    /* Override Desktop tabIcon logic only for inside dropdown */
+    .dropdownItem .tabIcon {
+        display: flex;
+        width: 20px;
+        justify-content: center;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-4px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     .tabs {
