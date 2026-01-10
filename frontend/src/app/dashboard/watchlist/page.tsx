@@ -6,7 +6,7 @@ import api from '@/lib/api';
 import MediaCard, { MediaItem } from '@/components/MediaCard';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import AddMediaModal from '@/components/AddMediaModal';
-import { Plus, Search, Clapperboard, CalendarClock, CheckCircle, LayoutGrid, List, Layers, ArrowUp, ArrowDown, PauseCircle, XCircle } from 'lucide-react';
+import { Plus, Search, Clapperboard, CalendarClock, CheckCircle, LayoutGrid, List, Layers, ArrowUp, ArrowDown, PauseCircle, XCircle, SlidersHorizontal } from 'lucide-react';
 import styles from './watchlist.module.css';
 import GenreFilter from './GenreFilter';
 
@@ -25,6 +25,7 @@ export default function WatchlistPage() {
     const [selectedGenres, setSelectedGenres] = useState<number[]>([]); // New Genre State
     const [sortField, setSortField] = useState<'date_added' | 'rating' | 'title'>('date_added');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [showMobileFilters, setShowMobileFilters] = useState(false); // Mobile Filter Toggle
 
     // Modal State
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -247,20 +248,37 @@ export default function WatchlistPage() {
             </div>
 
             {/* Navigation Tabs */}
+            {/* Navigation Tabs (Desktop) & Dropdown (Mobile) */}
             <div className={styles.navBar}>
-                <div className={styles.tabs}>
-                    {tabs.map(tab => (
-                        <button
-                            key={tab.id}
-                            className={`${styles.tab} ${activeTab === tab.id ? styles.tabActive : ''}`}
-                            onClick={() => setActiveTab(tab.id)}
-                        >
-                            <span className={styles.tabIcon}>{tab.icon}</span>
-                            {tab.label}
-                            <span className={styles.tabCount}>{getTabCount(tab.id)}</span>
-                        </button>
-                    ))}
-                </div>
+                {/* Mobile Dropdown */}
+                {isMobile ? (
+                    <select
+                        className={styles.mobileTabsDropdown}
+                        value={activeTab}
+                        onChange={(e) => setActiveTab(e.target.value)}
+                    >
+                        {tabs.map(tab => (
+                            <option key={tab.id} value={tab.id}>
+                                {tab.label} ({getTabCount(tab.id)})
+                            </option>
+                        ))}
+                    </select>
+                ) : (
+                    /* Desktop Tabs */
+                    <div className={styles.tabs}>
+                        {tabs.map(tab => (
+                            <button
+                                key={tab.id}
+                                className={`${styles.tab} ${activeTab === tab.id ? styles.tabActive : ''}`}
+                                onClick={() => setActiveTab(tab.id)}
+                            >
+                                <span className={styles.tabIcon}>{tab.icon}</span>
+                                {tab.label}
+                                <span className={styles.tabCount}>{getTabCount(tab.id)}</span>
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Command Center Toolbar */}
@@ -276,7 +294,16 @@ export default function WatchlistPage() {
                     />
                 </div>
 
-                <div className={styles.controls}>
+                {isMobile && (
+                    <button
+                        className={`${styles.filterToggleBtn} ${showMobileFilters ? styles.filterToggleBtnActive : ''}`}
+                        onClick={() => setShowMobileFilters(!showMobileFilters)}
+                    >
+                        <SlidersHorizontal size={18} />
+                    </button>
+                )}
+
+                <div className={`${styles.controls} ${isMobile && !showMobileFilters ? styles.controlsHidden : (isMobile ? styles.controlsExpanded : '')}`}>
                     <select
                         value={typeFilter}
                         onChange={(e) => setTypeFilter(e.target.value as any)}
@@ -410,6 +437,11 @@ export default function WatchlistPage() {
                 onAddSuccess={() => fetchWatchlist(true)} // Background refresh
                 existingIds={new Set(items.map(item => item.id))}
             />
+
+            {/* Mobile FAB */}
+            <button className={styles.fabButton} onClick={() => setIsAddModalOpen(true)}>
+                <Plus size={24} />
+            </button>
         </div>
     );
 }
