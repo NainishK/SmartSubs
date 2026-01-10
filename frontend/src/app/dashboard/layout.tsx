@@ -6,6 +6,7 @@ import Sidebar from '@/components/Sidebar';
 import styles from './layout.module.css';
 import { RecommendationsProvider } from '@/context/RecommendationsContext';
 import { Menu } from 'lucide-react';
+import ScrollToTop from '@/components/ScrollToTop';
 
 export default function DashboardLayout({
     children,
@@ -83,6 +84,7 @@ export default function DashboardLayout({
 
                 <RecommendationsProvider>
                     {children}
+                    <ScrollToTop />
                 </RecommendationsProvider>
             </main>
         </div>

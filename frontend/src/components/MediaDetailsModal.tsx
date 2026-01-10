@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { X, Star, Calendar, Clock, Film, Tv } from 'lucide-react';
 import api from '@/lib/api';
+import StarRating from './StarRating';
 import styles from './MediaDetailsModal.module.css';
 
 interface MediaDetailsModalProps {
@@ -16,7 +17,9 @@ interface MediaDetailsModalProps {
         overview: string;
         vote_average?: number;
     };
-    addedAt?: string; // Optional: Show when added to watchlist
+    addedAt?: string;
+    userRating?: number;
+    onRate?: (rating: number) => void;
 }
 
 interface Provider {
@@ -42,7 +45,7 @@ interface MediaDetails {
     tagline?: string;
 }
 
-export default function MediaDetailsModal({ visible, onClose, mediaType, tmdbId, initialData, addedAt }: MediaDetailsModalProps) {
+export default function MediaDetailsModal({ visible, onClose, mediaType, tmdbId, initialData, addedAt, userRating, onRate }: MediaDetailsModalProps) {
     const [details, setDetails] = useState<MediaDetails | null>(null);
     const [providers, setProviders] = useState<ProvidersData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -157,6 +160,14 @@ export default function MediaDetailsModal({ visible, onClose, mediaType, tmdbId,
                                 {mediaType === 'tv' ? 'TV Series' : 'Movie'}
                             </span>
                         </div>
+
+                        {/* User Rating Section */}
+                        {onRate && (
+                            <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#374151' }}>Your Rating:</span>
+                                <StarRating rating={userRating || 0} onRatingChange={onRate} />
+                            </div>
+                        )}
 
                         <div className={styles.genres} style={{ marginBottom: '1.5rem' }}>
                             {details?.genres?.map(g => (

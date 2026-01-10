@@ -6,7 +6,7 @@ import api from '@/lib/api';
 import MediaCard, { MediaItem } from '@/components/MediaCard';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import AddMediaModal from '@/components/AddMediaModal';
-import { Plus, Search, Clapperboard, CalendarClock, CheckCircle, LayoutGrid, List, Layers, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Search, Clapperboard, CalendarClock, CheckCircle, LayoutGrid, List, Layers, ArrowUp, ArrowDown, PauseCircle, XCircle } from 'lucide-react';
 import styles from './watchlist.module.css';
 import GenreFilter from './GenreFilter';
 
@@ -196,7 +196,9 @@ export default function WatchlistPage() {
         { id: 'all', label: 'All', icon: <Layers size={16} /> },
         { id: 'watching', label: 'Watching', icon: <Clapperboard size={16} /> },
         { id: 'plan_to_watch', label: 'Plan to Watch', icon: <CalendarClock size={16} /> },
-        { id: 'watched', label: 'Watched', icon: <CheckCircle size={16} /> }
+        { id: 'watched', label: 'Watched', icon: <CheckCircle size={16} /> },
+        { id: 'paused', label: 'Paused', icon: <PauseCircle size={16} /> },
+        { id: 'dropped', label: 'Dropped', icon: <XCircle size={16} /> }
     ];
 
     if (loading) {

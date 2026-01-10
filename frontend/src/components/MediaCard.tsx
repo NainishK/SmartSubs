@@ -215,8 +215,8 @@ export default function MediaCard({
                             {item.title || item.name}
                         </h3>
 
-                        {/* Rating UI */}
-                        {(existingStatus && status !== 'plan_to_watch' && !isList) && (
+                        {/* Rating UI - Now visible in List View too */}
+                        {(existingStatus && status !== 'plan_to_watch') && (
                             <div style={{ marginBottom: '0.75rem' }}>
                                 <StarRating rating={userRating} onRatingChange={handleRate} />
                             </div>
@@ -273,6 +273,8 @@ export default function MediaCard({
                             >
                                 <option value="plan_to_watch">Plan to Watch</option>
                                 <option value="watching">Watching</option>
+                                <option value="paused">Paused</option>
+                                <option value="dropped">Dropped</option>
                                 <option value="watched">Watched</option>
                             </select>
                             <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#6b7280' }} />
@@ -313,6 +315,8 @@ export default function MediaCard({
                     vote_average: item.vote_average
                 }}
                 addedAt={item.added_at}
+                userRating={userRating}
+                onRate={handleRate}
             />
         </>
     );

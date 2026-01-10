@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Search, Plus, Check, Clapperboard, CalendarClock, CheckCircle, ChevronDown, Trash2, Star } from 'lucide-react';
+import { X, Search, Plus, Check, Clapperboard, CalendarClock, CheckCircle, ChevronDown, Trash2, Star, PauseCircle, XCircle } from 'lucide-react';
 import api from '@/lib/api';
 import styles from './AddMediaModal.module.css';
 import StarRating from './StarRating';
@@ -226,6 +226,8 @@ export default function AddMediaModal({ isOpen, onClose, onAddSuccess, existingI
             case 'watching': return { label: 'Watching', color: '#3b82f6', icon: Clapperboard };
             case 'watched': return { label: 'Watched', color: '#10b981', icon: CheckCircle };
             case 'plan_to_watch': return { label: 'Plan to Watch', color: '#f59e0b', icon: CalendarClock };
+            case 'paused': return { label: 'Paused', color: '#6b7280', icon: PauseCircle };
+            case 'dropped': return { label: 'Dropped', color: '#ef4444', icon: XCircle };
             default: return { label: 'Add', color: '#2563eb', icon: Plus };
         }
     };
@@ -369,6 +371,20 @@ export default function AddMediaModal({ isOpen, onClose, onAddSuccess, existingI
                                                             >
                                                                 <CheckCircle size={16} className="text-green-500" />
                                                                 <span className={styles.dropdownLabel}>Watched</span>
+                                                            </button>
+                                                            <button
+                                                                className={styles.dropdownItem}
+                                                                onClick={() => handleStatusSelect(item, 'paused')}
+                                                            >
+                                                                <PauseCircle size={16} className="text-gray-500" />
+                                                                <span className={styles.dropdownLabel}>Paused</span>
+                                                            </button>
+                                                            <button
+                                                                className={styles.dropdownItem}
+                                                                onClick={() => handleStatusSelect(item, 'dropped')}
+                                                            >
+                                                                <XCircle size={16} className="text-red-500" />
+                                                                <span className={styles.dropdownLabel}>Dropped</span>
                                                             </button>
 
                                                             {existing && (
