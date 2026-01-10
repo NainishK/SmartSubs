@@ -106,7 +106,7 @@ export default function WatchlistPage() {
                         return item.genre_ids
                             .replace(/[\[\]]/g, '')
                             .split(',')
-                            .map(s => Number(s.trim()))
+                            .map((s: string) => Number(s.trim()))
                             .filter(n => !isNaN(n));
                     }
                     return [];
