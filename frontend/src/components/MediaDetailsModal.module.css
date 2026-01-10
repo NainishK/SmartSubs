@@ -412,11 +412,12 @@
 }
 
 /* Utilities */
+/* Firefox Specific - MUST be separate from other rules to work reliably */
 .noSpinner {
     -moz-appearance: textfield !important;
-    appearance: none !important;
 }
 
+/* Chrome, Safari, Edge, Opera */
 .noSpinner::-webkit-outer-spin-button,
 .noSpinner::-webkit-inner-spin-button {
     -webkit-appearance: none !important;
@@ -486,7 +487,8 @@
     display: flex;
     gap: 16px;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    /* Force side-by-side */
 }
 
 .controlGroup {
