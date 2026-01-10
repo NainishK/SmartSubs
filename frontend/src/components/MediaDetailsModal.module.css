@@ -412,15 +412,15 @@
 }
 
 /* Utilities */
+/* Universal Spinner Hide - High Specificity */
+.noSpinner,
 .noSpinner::-webkit-outer-spin-button,
-.noSpinner::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-.noSpinner {
-    -moz-appearance: textfield;
-    appearance: none;
+.noSpinner::-webkit-inner-spin-button,
+input[type=number].noSpinner {
+    -webkit-appearance: none !important;
+    -moz-appearance: textfield !important;
+    appearance: none !important;
+    margin: 0 !important;
 }
 
 .incButton {
@@ -533,11 +533,10 @@
 @media (max-width: 768px) {
     .ratingProgressBox {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
+        grid-template-columns: 1fr 1.3fr;
+        gap: 0.75rem;
         align-items: start;
         background: #f9fafb;
-        /* Restore Box */
         border: 1px solid #e5e7eb;
         padding: 1rem;
     }
@@ -553,21 +552,23 @@
     .progressBlock {
         align-items: flex-start;
         width: 100%;
+        min-width: 0;
     }
 
     .progressControls {
-        flex-direction: column;
-        /* Stack S and E vertically */
-        gap: 0.75rem;
-        align-items: flex-start;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        /* Allow wrapping if tight */
+        gap: 0.5rem;
+        align-items: center;
         width: 100%;
     }
 
     .controlGroup {
-        width: 100%;
+        width: auto;
     }
 
-    /* Keep buttons touch-friendly but compact */
     .incButton {
         width: 32px;
         height: 32px;
@@ -575,6 +576,6 @@
 
     .numberInput {
         height: 32px;
-        width: 40px;
+        width: 36px;
     }
 }
