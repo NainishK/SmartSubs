@@ -32,10 +32,22 @@ export default function WatchlistPage() {
     // Modal State
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [itemToRemove, setItemToRemove] = useState<MediaItem | null>(null);
+    const [userServices, setUserServices] = useState<Set<string>>(new Set()); // Store active subscription names
 
     useEffect(() => {
         fetchWatchlist();
+        fetchSubscriptions();
     }, []);
+
+    const fetchSubscriptions = async () => {
+        try {
+            const response = await api.get('/subscriptions/');
+            const serviceNames = new Set<string>(response.data.map((sub: any) => sub.service_name));
+            setUserServices(serviceNames);
+        } catch (error) {
+            console.error('Failed to fetch subscriptions', error);
+        }
+    };
 
     useEffect(() => {
         const checkMobile = () => {
@@ -409,7 +421,11 @@ export default function WatchlistPage() {
                             key={item.dbId}
                             item={item}
                             existingStatus={item.status}
-                            showServiceBadge={item.available_on}
+                            showServiceBadge={
+                                item.available_on && userServices.has(item.available_on)
+                                    ? item.available_on
+                                    : undefined
+                            }
                             layout={viewMode}
                             onRemove={() => confirmRemove(item)}
                             onStatusChange={(s, r) => handleStatusUpdate(item.dbId!, s, r)}

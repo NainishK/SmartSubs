@@ -8,8 +8,8 @@ load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    print("❌ Error: DATABASE_URL is not set.")
-    exit(1)
+    print("⚠️  DATABASE_URL not set. Defaulting to local SQLite.")
+    DATABASE_URL = "sqlite:///./sql_app.db"
 
 # Fix Postgres URL if needed
 if DATABASE_URL.startswith("postgres://"):
@@ -42,8 +42,11 @@ def run_migration():
                 conn.commit()
                 print(f"   ✅ Added {col}")
             except Exception as e:
+                # IMPORTANT: Postgres requires rollback after error to reset transaction state
+                conn.rollback()
+                
                 # Check for "Duplicate column" error
-                if "already exists" in str(e):
+                if "already exists" in str(e) or "duplicate column name" in str(e):
                     print(f"   ⚠️  Column {col} already exists (Skipping)")
                 else:
                     print(f"   ❌ Error adding {col}: {e}")
