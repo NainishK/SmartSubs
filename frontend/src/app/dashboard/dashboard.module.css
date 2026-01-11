@@ -20,6 +20,8 @@
     margin: 0;
     background: linear-gradient(135deg, #1a1a1a 0%, #4a4a4a 100%);
     -webkit-background-clip: text;
+    -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -0.5px;
 }
@@ -289,18 +291,21 @@
 /* Mobile Optimizations */
 @media (max-width: 768px) {
     .container {
-        padding: 1.5rem 1rem;
+        padding: 1rem;
+        /* Reduced padding */
     }
 
     .header {
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
+        /* Reduced from 2rem */
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 0.25rem;
     }
 
     .pageTitle {
-        font-size: 1.4rem;
-        /* Reduced from 2rem */
+        font-size: 1.5rem;
+        /* Increased to 1.5rem per user request */
+        margin-bottom: 0.5rem;
     }
 
     .dateLabel {
@@ -315,19 +320,34 @@
     .statsGrid {
         grid-template-columns: 1fr;
         /* Stack vertically */
-        gap: 1rem;
-        margin-bottom: 2rem;
+        gap: 0.75rem;
+        /* Reduced gap */
+        margin-bottom: 1.5rem;
+        /* Reduced margin */
     }
 
     .statCard {
         height: auto;
-        padding: 1.25rem;
-        min-height: 110px;
+        padding: 1rem;
+        /* Reduced from 1.25rem */
+        min-height: 90px;
+        /* Reduced min-height */
     }
 
     .statValue {
-        font-size: 1.5rem;
-        /* Significant reduction for large numbers */
+        font-size: 1.25rem;
+        /* Reduced from 1.5rem */
+    }
+
+    .statLabel {
+        font-size: 0.75rem;
+        /* Smaller label */
+        margin-bottom: 0.25rem;
+    }
+
+    .statSubtext {
+        font-size: 0.75rem;
+        /* Smaller subtext */
     }
 
     .spendingSection {
@@ -336,5 +356,44 @@
 
     .legendItem {
         font-size: 0.8rem;
+    }
+
+    /* Quick Watch Mobile Optimizations */
+    .recCard {
+        padding: 1rem;
+        /* Reduced from 1.5rem */
+    }
+
+    .recHeader {
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.75rem;
+    }
+
+    .serviceLogo,
+    .fallbackLogo {
+        width: 32px;
+        /* Reduced from 36px */
+        height: 32px;
+    }
+
+    .serviceName {
+        font-size: 1rem;
+        /* Reduced from 1.1rem */
+    }
+
+    .badge {
+        font-size: 0.65rem;
+        padding: 4px 8px;
+    }
+
+    .recReason {
+        font-size: 0.85rem;
+        /* Reduced from 0.95rem */
+        margin-bottom: 1rem;
+    }
+
+    .tag {
+        font-size: 0.75rem;
+        padding: 4px 10px;
     }
 }

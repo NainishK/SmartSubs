@@ -209,7 +209,7 @@ export default function MediaDetailsModal({
                             {/* Progress Tracking (TV Only) */}
                             {(mediaType === 'tv' && onProgressChange) && (
                                 <div className={styles.progressBlock}>
-                                    <span className={styles.label}>MY PROGRESS</span>
+                                    <span className={styles.label}>PROGRESS</span>
                                     <div className={styles.progressControls}>
 
                                         {/* Season Control */}

@@ -513,7 +513,8 @@
     color: #111827;
     text-align: center;
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 500;
+    /* Reduced from 600/700 to look normal but legible */
 }
 
 .totalEpisodes {

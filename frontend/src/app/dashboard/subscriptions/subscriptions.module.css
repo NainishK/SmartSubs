@@ -802,25 +802,46 @@ select.input {
 /* Mobile Typography & Layout Overrides */
 @media (max-width: 768px) {
     .container {
-        padding: 1.5rem 1rem;
+        padding: 1rem;
+        /* Tighter padding */
     }
 
     .pageTitle {
         font-size: 1.5rem;
-        /* Reduced from 2rem */
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
+        /* Increased back to 1rem per user request */
+    }
+
+    .header {
+        margin-bottom: 0.5rem;
+        /* Reduced */
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    /* Reduce Whitespace between sections */
+    .mobileTabs {
+        margin-bottom: 0.5rem;
+        /* Reduced from 1rem */
+        padding: 2px;
+    }
+
+    .filterContainer {
+        margin-bottom: 1rem;
+        /* Reduced from 1.5rem */
+    }
+
+    .categorySection {
+        margin-bottom: 2rem;
+        /* Reduced from 3rem */
     }
 
     .categoryTitle {
-        font-size: 0.95rem;
-        /* Reduced from 1.1rem */
-        margin-bottom: 1rem;
+        font-size: 0.85rem;
+        margin-bottom: 0.75rem;
     }
 
-    .subGrid {
-        gap: 1rem;
-    }
-
+    /* Compact Cards */
     .subCard {
         padding: 1.25rem;
     }

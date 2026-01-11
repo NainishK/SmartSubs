@@ -238,17 +238,21 @@ export default function MediaCard({
 
                         {/* Rating UI - Now visible in List View too */}
                         {/* Rating UI - Numeric for 10-star scale */}
-                        {(existingStatus && status !== 'plan_to_watch') && (
-                            <div style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <Star size={16} fill={userRating > 0 ? "#fbbf24" : "none"} color={userRating > 0 ? "#fbbf24" : "#9ca3af"} />
-                                <span style={{ fontWeight: 600, color: userRating > 0 ? '#374151' : '#9ca3af' }}>
-                                    {userRating > 0 ? userRating : 'Rate'}
-                                </span>
-                            </div>
-                        )}
-
                         {/* NEW: Metadata Row (Visible in List View) */}
                         <div className={styles.metaRow}>
+                            {/* User Rating - Now inside Meta Row for sorting/layout */}
+                            {(existingStatus && status !== 'plan_to_watch') && (
+                                <>
+                                    <div className={styles.metaRating}>
+                                        <Star size={14} fill={userRating > 0 ? "#fbbf24" : "none"} color={userRating > 0 ? "#fbbf24" : "#9ca3af"} />
+                                        <span className={styles.metaRatingText}>
+                                            {userRating > 0 ? userRating : 'Rate'}
+                                        </span>
+                                    </div>
+                                    <span className={styles.metaDivider}>•</span>
+                                </>
+                            )}
+
                             {genreNames && <span className={styles.metaGenre}>{genreNames}</span>}
                             {genreNames && formattedDate && <span className={styles.metaDivider}>•</span>}
                             {formattedDate && (
@@ -261,7 +265,7 @@ export default function MediaCard({
                             {(item.media_type === 'tv' && isList && (progress.season > 0 || progress.episode > 0)) && (
                                 <>
                                     <span className={styles.metaDivider}>•</span>
-                                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', background: '#f3f4f6', padding: '2px 6px', borderRadius: '4px' }}>
+                                    <span className={styles.metaProgress}>
                                         S{progress.season} E{progress.episode}
                                     </span>
                                 </>

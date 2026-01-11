@@ -347,25 +347,63 @@
 
 /* Metadata Row */
 .metaRow {
-    display: none;
+    display: flex;
+    /* Changed from none to flex to support Rating in Grid View */
     align-items: center;
     gap: 0.5rem;
     font-size: 0.8rem;
     color: #64748b;
     margin-bottom: 0.5rem;
+    flex-wrap: wrap;
 }
 
-.cardList .metaRow {
+/* Default State (Grid View): Hide these, only show Rating */
+.metaGenre,
+.metaDivider,
+.metaDate,
+.metaProvider,
+.metaProgress {
+    display: none;
+}
+
+.metaRating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #fffbeb;
+    /* Amber-50 */
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.metaRatingText {
+    font-weight: 700;
+    color: #b45309;
+    /* Amber-700 */
+    font-size: 0.8rem;
+}
+
+/* List View: Show metadata */
+.cardList .metaGenre,
+.cardList .metaDate,
+.cardList .metaProvider,
+.cardList .metaProgress {
     display: flex;
 }
 
+/* Fix Dividers: Only show dividers in List View */
+.cardList .metaDivider {
+    display: block;
+}
+
+/* Specific Child Styles */
 .metaGenre {
     font-weight: 500;
     color: #475569;
 }
 
 .metaDate {
-    display: flex;
+    /* display: flex; REMOVED to allow Grid View override */
     align-items: center;
     color: #94a3b8;
 }
@@ -375,7 +413,7 @@
 }
 
 .metaProvider {
-    display: flex;
+    /* display: flex; REMOVED */
     align-items: center;
     color: #374151;
     font-weight: 600;
@@ -385,40 +423,66 @@
     font-size: 0.75rem;
 }
 
+.metaProgress {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #4b5563;
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
 /* On mobile list view, definitely hide overview to save vertical space */
 @media (max-width: 768px) {
+    .cardList {
+        min-height: 100px;
+        /* Reduced to be more compact */
+    }
+
     .cardList .overview {
         display: none;
     }
 
     .cardList .posterContainer {
-        width: 80px;
+        width: 70px;
+        /* Reduced from 80px */
     }
 
     .cardList .content {
-        padding: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        /* Tighter padding */
     }
 
     .cardList .topBadges {
-        top: 6px;
-        left: 6px;
-        transform: scale(0.8);
+        top: 4px;
+        left: 4px;
+        transform: scale(0.75);
         transform-origin: top left;
     }
 
     .cardList .ratingBadge {
-        top: auto;
-        bottom: 6px;
-        left: 6px;
-        right: auto;
-        transform: scale(0.8);
-        transform-origin: bottom left;
-        padding: 2px 6px;
+        /* Hide poster badge on mobile list view since we have inline rating now */
+        display: none;
     }
 
     .cardList .serviceBadge {
         display: none;
-        /* Too cluttered */
+    }
+
+    /* Declutter: Hide Genres, Date, and Progress on mobile list view */
+    .cardList .metaGenre,
+    .cardList .metaGenre+.metaDivider,
+    .cardList .metaDate,
+    .cardList .metaDate+.metaDivider,
+    .cardList .metaProgress,
+    .cardList .metaProgress+.metaDivider {
+        display: none;
+    }
+
+    /* Ensure Rating and Provider are visible side-by-side */
+    .cardList .metaRating,
+    .cardList .metaProvider {
+        display: flex;
     }
 }
 

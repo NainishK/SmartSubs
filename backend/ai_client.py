@@ -45,15 +45,8 @@ def generate_ai_recommendations(user_history: list, user_ratings: list, active_s
 
     # Construct Context
     history_text = "\n".join([f"- {h['title']} ({h['status']})" for h in user_history[-20:]]) 
-    ratings_text = "\n".join([f"- {r['title']}: {round(r['rating']/2, 1)}/5 Stars" for r in user_ratings])
+    ratings_text = "\n".join([f"- {r['title']}: {r['rating']}/10 Stars" for r in user_ratings])
     subs_text = ", ".join(active_subs)
-    
-    prompt = f"""
-    Act as an elite movie critic and personal curator based in {country}. 
-    ... [PROMPT TRUNCATED FOR BREVITY, SAME AS BEFORE] ...
-    Output strictly in JSON format.
-    """ 
-    # (Restoring full prompt in implementation below)
     
     prompt = f"""
     Act as an elite movie critic and personal curator based in {country}. 
@@ -74,7 +67,7 @@ def generate_ai_recommendations(user_history: list, user_ratings: list, active_s
     
     IMPORTANT RULES:
     1. Use CANONICAL TITLES only (e.g. "Severance", NOT "Severance Season 2").
-    2. Ratings mentioned in "reason" must be on a 5-star scale (e.g. 5/5, not 10/5).
+    2. Ratings mentioned in "reason" must be on a 10-star scale (e.g. 9/10, not 4.5/5).
     3. Prioritize movies/shows available on their active subscriptions in {country} (User's Subs: {subs_text}).
     4. If a show is not on their subs but is a PERFECT match and available in {country}, you can include it but mention the service.
     5. REGIONAL CONTEXT (India): "JioCinema" and "Disney+ Hotstar" are merging into "JioHotstar". Treat them as a consolidated entity where applicable. Do not suggest adding one if they have the other, unless for specific content exclusivity.
@@ -132,7 +125,7 @@ def generate_unified_insights(user_history: list, user_ratings: list, active_sub
 
     # Context
     history_text = "\n".join([f"- {h['title']} ({h['status']})" for h in user_history[-20:]])
-    ratings_text = "\n".join([f"- {r['title']}: {round(r['rating']/2, 1)}/5" for r in user_ratings])
+    ratings_text = "\n".join([f"- {r['title']}: {r['rating']}/10" for r in user_ratings])
     subs_text = ", ".join(active_subs)
     pref_text = json.dumps(preferences, indent=2)
     
