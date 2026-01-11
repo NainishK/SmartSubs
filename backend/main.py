@@ -589,47 +589,10 @@ def refresh_recommendations_endpoint(type: str = None, db: Session = Depends(get
     recommendations.refresh_recommendations(db, user_id=current_user.id, force=True, category=type)
     return {"message": "Recommendations refreshed"}
 
-@app.get("/recommendations/ai", response_model=list[schemas.AIRecommendation])
-def get_cached_ai_recommendations(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
-    """Retrieve cached AI recommendations if available"""
-    import recommendations
-    cached = recommendations.get_cached_data(db, user_id=current_user.id, category="ai_picks")
-    return cached if cached else []
 
 
-@app.post("/recommendations/ai", response_model=list[schemas.AIRecommendation])
-def get_ai_recommendations(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
-    """Generate AI-powered recommendations on demand"""
-    # 1. Check Permissions
-    validate_ai_access(db, current_user)
 
-    import ai_client
-    import crud
-    
-    # Gather Context
-    watchlist = crud.get_watchlist(db, user_id=current_user.id, limit=100)
-    subs = db.query(models.Subscription).filter(
-        models.Subscription.user_id == current_user.id,
-        models.Subscription.is_active == True,
-        models.Subscription.category == 'OTT'
-    ).all()
-    
-    # Format for AI
-    history = [{"title": w.title, "status": w.status} for w in watchlist]
-    ratings = [{"title": w.title, "rating": w.user_rating} for w in watchlist if w.user_rating]
-    active_subs = [s.service_name for s in subs]
-    
-    recommendations_list = ai_client.generate_ai_recommendations(history, ratings, active_subs, country=current_user.country)
-    
-    # Cache the result if valid
-    if recommendations_list:
-        import recommendations as rec_engine
-        rec_engine.set_cached_data(db, user_id=current_user.id, category="ai_picks", data=recommendations_list)
-        
-        # 2. Update Usage Timestamp
-        crud.update_user_ai_usage(db, current_user.id)
-        
-    return recommendations_list
+
 
 @app.post("/recommendations/insights", response_model=schemas.AIUnifiedResponse)
 
@@ -715,6 +678,61 @@ def get_unified_insights(
         } for s in subs
     ]
     
+    # 2. Extract Negative Context
+    dropped_history = [
+        {"title": w.title} for w in watchlist 
+        if w.status == 'dropped' or (w.user_rating and w.user_rating <= 4)
+    ]
+    deal_breakers = preferences.get("deal_breakers", [])
+    
+    # 3. Extract Watchlist IDs for Hard Filtering & Skip Tracking
+    watchlist_ids = {w.tmdb_id for w in watchlist}
+    
+    # 4. Handle "ignored/repetitive" recommendations Logic
+    # We load old cache -> see if user ignored them -> increment count
+    import recommendations
+    old_cache = recommendations.get_cached_data(db, user_id=current_user.id, category="unified_insights")
+    
+    ignored_counts = preferences.get("ai_skip_counts", {})
+    dirty_pref = False
+    
+    # DEBUG SKIP removed to keep logs clean
+    print(f"DEBUG: Processing {len(old_cache.get('picks', [])) if old_cache else 0} cached items for skips.")
+    
+    
+    
+    if old_cache and old_cache.get("picks"):
+        for pick in old_cache["picks"]:
+            pid = str(pick.get("tmdb_id")) # JSON keys are strings
+            if not pid or pid == "None": continue
+            
+            # If item was shown but NOT added to watchlist (i.e. skipped)
+            if int(pid) not in watchlist_ids:
+                curr_count = ignored_counts.get(pid, 0)
+                ignored_counts[pid] = curr_count + 1
+                dirty_pref = True
+            else:
+                # If they added it, reset count (it's no longer ignored)
+                if pid in ignored_counts:
+                    del ignored_counts[pid]
+                    dirty_pref = True
+                    
+    if dirty_pref:
+        # Update in-memory for the AI prompt, but DO NOT save to DB yet.
+        # We only save if AI generation succeeds to avoid inflation during errors.
+        preferences["ai_skip_counts"] = ignored_counts 
+
+        
+    # Determine which titles are "Soft Banned" (Ignored > 2 times)
+    ignored_titles = []
+    if old_cache and old_cache.get("picks"): # Only ban if we have history
+         for pick in old_cache["picks"]:
+             pid = str(pick.get("tmdb_id"))
+             if pid in ignored_counts and ignored_counts[pid] >= 2:
+                  ignored_titles.append(pick.get("title"))
+
+
+    
     # Determine Currency
     currency = "INR" if current_user.country == "IN" else "USD"
     
@@ -726,20 +744,26 @@ def get_unified_insights(
             user_ratings=ratings,
             active_subs=active_subs,
             preferences=preferences,
+            dropped_history=dropped_history,
+            deal_breakers=deal_breakers,
+            ignored_titles=ignored_titles,
+            watchlist_ids=watchlist_ids,
             country=current_user.country,
             currency=currency
         )
+
     except Exception as e:
          error_str = str(e)
-         is_quota = "429" in error_str or "quota" in error_str.lower() or "ResourceExhausted" in error_str
+         # Catch Quota limits AND General Failure (All models used)
+         is_quota = "429" in error_str or "quota" in error_str.lower() or "ResourceExhausted" in error_str or "AI Generation Failed" in error_str
          
          if is_quota:
-             print(f"DEBUG: Gemini Quota Exceeded: {e}")
+             print(f"DEBUG: AI Service Unavailable (Quota/Error): {e}")
              
              # 1. Try Cache
              fallback = recommendations.get_cached_data(db, user_id=current_user.id, category="unified_insights")
              if fallback and (fallback.get('picks') or fallback.get('strategy')):
-                 fallback['warning'] = "Daily AI limit reached. Viewing cached results."
+                 fallback['warning'] = "AI is currently experiencing high demand. Viewing cached results from previous session."
                  return fallback
                  
              # 2. Return Unavailable State (Frontend will handle this)
@@ -760,6 +784,12 @@ def get_unified_insights(
         
     # Cache
     recommendations.set_cached_data(db, user_id=current_user.id, category="unified_insights", data=insights)
+    
+    # SUCCESS: Now we save the skip counts (if any)
+    if dirty_pref:
+        current_user.preferences = json.dumps(preferences)
+        db.merge(current_user)
+        db.commit()
     
     # Update Usage (Admin Control)
     crud.update_user_ai_usage(db, current_user.id)

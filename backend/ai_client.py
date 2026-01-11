@@ -8,115 +8,78 @@ import logging
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# Direct REST implementation to bypass SDK versioning issues
-
-def _call_gemini_rest(prompt: str, model_name: str = "gemini-flash-latest"):
+# Direct REST implementation to bypass SDK versioning issues and support fallback
+def _call_gemini_rest(prompt: str, model_name: str = "gemini-1.5-flash"):
     if not settings.GEMINI_API_KEY:
         return None
         
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={settings.GEMINI_API_KEY}"
-    headers = {'Content-Type': 'application/json'}
-    data = {
-        "contents": [{"parts": [{"text": prompt}]}]
-        # "generationConfig": {"response_mime_type": "application/json"} # Removed for compatibility
-    }
-    
-    try:
-        response = requests.post(url, headers=headers, json=data)
-        if response.status_code == 200:
-            return response.json()
-        elif response.status_code == 429:
-            # Raise exception so main.py can trigger Quota UI
-            logger.error(f"Gemini Quota Exceeded (429): {response.text}")
-            raise Exception("Gemini 429: Resource Exhausted")
-        else:
-            logger.error(f"Gemini REST Error {response.status_code}: {response.text}")
-            return None
-    except Exception as e:
-        # Re-raise 429 exceptions
-        if "429" in str(e):
-             raise e
-        logger.error(f"Gemini REST Request Failed: {e}")
-        return None
-
-def generate_ai_recommendations(user_history: list, user_ratings: list, active_subs: list, country: str = "US"):
-    if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY == "YOUR_GEMINI_API_KEY_HERE":
-        return []
-
-    # Construct Context
-    history_text = "\n".join([f"- {h['title']} ({h['status']})" for h in user_history[-20:]]) 
-    ratings_text = "\n".join([f"- {r['title']}: {r['rating']}/10 Stars" for r in user_ratings])
-    subs_text = ", ".join(active_subs)
-    
-    prompt = f"""
-    Act as an elite movie critic and personal curator based in {country}. 
-    Analyze the user's taste based on their history and ratings, but ONLY recommend titles 
-    that are currently available in the {country} region.
-
-    User's Watch History:
-    {history_text}
-    
-    User's Ratings:
-    {ratings_text}
-    
-    User's Active Subscriptions: {subs_text}
-    User's Region: {country}
-    
-    Task:
-    Recommend 8 "Hidden Gems" or "Perfect Matches" available in {country} that are distinct from what they have watched.
-    
-    IMPORTANT RULES:
-    1. Use CANONICAL TITLES only (e.g. "Severance", NOT "Severance Season 2").
-    2. Ratings mentioned in "reason" must be on a 10-star scale (e.g. 9/10, not 4.5/5).
-    3. Prioritize movies/shows available on their active subscriptions in {country} (User's Subs: {subs_text}).
-    4. If a show is not on their subs but is a PERFECT match and available in {country}, you can include it but mention the service.
-    5. REGIONAL CONTEXT (India): "JioCinema" and "Disney+ Hotstar" are merging into "JioHotstar". Treat them as a consolidated entity where applicable. Do not suggest adding one if they have the other, unless for specific content exclusivity.
-    
-    Output strictly in JSON format containing a list of objects with keys: title, reason, service.
-    """
-    
-    data = _call_gemini_rest(prompt)
-    if not data: return []
-    
-    text_recs = []
-    try:
-        # Extract text from Gemini response structure
-        raw_text = data['candidates'][0]['content']['parts'][0]['text']
-
-        text_recs = json.loads(raw_text)
-    except Exception as e:
-        logger.error(f"Failed to parse REST response: {e}")
-        return []
-
-    # Enrichment Loop
-    enriched_recs = []
-    for rec in text_recs:
-        if not isinstance(rec, dict): continue
-        enrichment = {}
-        try:
-            search_results = tmdb_client.search_multi(rec['title'])
-            if search_results.get('results'):
-                best_match = search_results['results'][0]
-                enrichment = {
-                    "tmdb_id": best_match.get('id'),
-                    "media_type": best_match.get('media_type', 'movie'),
-                    "poster_path": best_match.get('poster_path'),
-                    "vote_average": best_match.get('vote_average'),
-                    "overview": best_match.get('overview')
-                }
-        except: pass
-        enriched_recs.append({**rec, **enrichment})
-
-    # Validated Enrichment: Only keep items that successfully found a match and poster
-    validated_recs = [
-        r for r in enriched_recs 
-        if r.get("tmdb_id") and r.get("poster_path")
+    # Fallback Chain: Try efficient models first, then older/stable ones
+    # Note: user provided 'model_name' is preferred first if valid
+    candidates = [
+        model_name,
+        "gemini-1.5-flash", 
+        "gemini-1.5-flash-latest",
+        "gemini-flash-latest", # Legacy / Stable alias
+        "gemini-1.0-pro",
+        "gemini-pro"
     ]
+    
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_candidates = []
+    for m in candidates:
+        if m not in seen:
+            unique_candidates.append(m)
+            seen.add(m)
+            
+    last_error = None
+    
+    for model in unique_candidates:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={settings.GEMINI_API_KEY}"
+        headers = {'Content-Type': 'application/json'}
+        data = {
+            "contents": [{"parts": [{"text": prompt}]}]
+        }
+        
+        try:
+            logger.info(f"Attempting AI Generation with model: {model}...")
+            # Add Timeout to prevent infinite hangs (Client side limit)
+            response = requests.post(url, headers=headers, json=data, timeout=30)
+            
+            if response.status_code == 200:
+                logger.info(f"Success with model: {model}")
+                return response.json()
+            elif response.status_code == 429:
+                logger.warning(f"Quota Exceeded (429) on {model}. Trying next...")
+                last_error = f"429 Quota Exceeded on {model}"
+            elif response.status_code == 404:
+                logger.warning(f"Model Not Found (404): {model}. Trying next...")
+                last_error = f"404 Not Found: {model}"
+            else:
+                logger.error(f"Error {response.status_code} on {model}: {response.text}")
+                last_error = f"Error {response.status_code}: {response.text}"
+                
+        except requests.exceptions.Timeout:
+            logger.warning(f"Timeout (30s) on {model}. Trying next...")
+            last_error = f"Timeout on {model}"
+            
+        except Exception as e:
+            logger.error(f"Request Failed on {model}: {e}")
+            last_error = str(e)
+            
+    # If all fail, raise exception to trigger frontend error handling
+    if last_error:
+        # If it was a quota issue effectively (all models exhausted)
+        if "429" in str(last_error) or "Quota" in str(last_error):
+             raise Exception("Gemini 429: Resource Exhausted (All Models)")
+        raise Exception(f"AI Generation Failed (All Models used). Last Error: {last_error}")
+        
+    return None
 
-    return validated_recs
 
 
-def generate_unified_insights(user_history: list, user_ratings: list, active_subs: list, preferences: dict, country: str = "US", currency: str = "USD"):
+
+def generate_unified_insights(user_history: list, user_ratings: list, active_subs: list, preferences: dict, dropped_history: list = [], deal_breakers: list = [], ignored_titles: list = [], watchlist_ids: set = set(), country: str = "US", currency: str = "USD"):
     if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY == "YOUR_GEMINI_API_KEY_HERE":
         return None
 
@@ -132,6 +95,10 @@ def generate_unified_insights(user_history: list, user_ratings: list, active_sub
     else:
         subs_text = ", ".join(active_subs)
     pref_text = json.dumps(preferences, indent=2)
+    dropped_text = "\n".join([f"- {d['title']}" for d in dropped_history])
+    deal_breakers_text = ", ".join(deal_breakers)
+    ignored_text = ", ".join(ignored_titles)
+    deal_breakers_text = ", ".join(deal_breakers)
     
     prompt = f"""
     Act as an elite streaming consultant and financial optimizer for a user in {country}.
@@ -145,12 +112,30 @@ def generate_unified_insights(user_history: list, user_ratings: list, active_sub
     - Ratings:
     {ratings_text}
     - Preferences:
+    - Preferences:
     {pref_text}
+    - Dropped/Disliked Content:
+    {dropped_text}
+    - Explicit Deal Breakers (BANNED Topics/Genres): {deal_breakers_text}
+    - Repetitive/Ignored Content (Avoid these, user has skipped them multiple times): {ignored_text}
     
     Task: Provide a 3-part comprehensive report in STRICT JSON format:
     1. "picks": 12 Hidden Gems/Matches. Priority to active subs. (We will filter best 6).
     2. "strategy": 1-3 Financial Actions (Cancel/Add). ALL monetary values must be in {currency}.
+    1. "picks": 12 Hidden Gems/Matches. Priority to active subs. (We will filter best 6).
+    2. "strategy": 1-3 Financial Actions (Cancel/Add). ALL monetary values must be in {currency}.
     3. "gaps": 8 specific titles they are missing out on. (We will filter best 4).
+    
+    IMPORTANT RULES:
+    1. Use CANONICAL TITLES only (e.g. "Severance", NOT "Severance Season 2").
+    2. Ratings mentioned in "reason" must be on a 10-star scale.
+    3. REGIONAL CONTEXT (India): "JioCinema" and "Disney+ Hotstar" are merging into "JioHotstar". Treat them as a consolidated entity.
+    4. NO DUPLICATES: Do NOT recommend any title that is already listed in "User's Watch History" (even if status is 'plan_to_watch'). The user wants NEW discoveries, not reminders.
+    
+    IMPORTANT ON NEGATIVE FILTERING:
+    - Analyzie "Dropped/Disliked" content to understand specific dislikes (e.g. "Too slow", "Bad acting"). 
+    - DO NOT ban entire genres just because of one dropped show (e.g. Dropping "Big Bang Theory" does NOT mean they hate all Sitcoms, unless "Sitcoms" is listed in "Deal Breakers").
+    - ONLY strictly exclude content if it falls under "Explicit Deal Breakers".
     
     Output JSON Structure:
     {{
@@ -181,16 +166,36 @@ def generate_unified_insights(user_history: list, user_ratings: list, active_sub
         
     # Enrich Picks and Filter Bad Ones
     if "picks" in data:
-        valid_picks = []
-        seen_ids = set()
+        # First, enrich all picks
+        enriched_recs = []
         for rec in data["picks"]:
             _enrich_item(rec)
-            tmdb_id = rec.get("tmdb_id")
-            if tmdb_id and rec.get("poster_path"):
-                if tmdb_id not in seen_ids:
-                    valid_picks.append(rec)
-                    seen_ids.add(tmdb_id)
-        data["picks"] = valid_picks[:6]
+            enriched_recs.append(rec)
+
+        # Validated Enrichment: Only keep items that successfully found a match and poster
+        # AND are not already in the user's watchlist (Hard Filter)
+        validated_recs = []
+        seen_ids = set() # To prevent duplicates within the picks list itself
+        
+        for r in enriched_recs:
+            # Check 1: Must have ID and Poster
+            if not r.get("tmdb_id") or not r.get("poster_path"):
+                 continue
+                 
+            # Check 2: Must NOT be in Watchlist (Plan to Watch, Watching, etc.)
+            if r.get("tmdb_id") in watchlist_ids:
+                 logger.info(f"Skipping Duplicate Recommendation: {r.get('title')} (ID: {r.get('tmdb_id')}) because it's in watchlist.")
+                 continue
+            
+            # Check 3: Must not be a duplicate within the current list of picks
+            if r.get("tmdb_id") in seen_ids:
+                logger.info(f"Skipping Duplicate Recommendation: {r.get('title')} (ID: {r.get('tmdb_id')}) because it's already picked.")
+                continue
+
+            validated_recs.append(r)
+            seen_ids.add(r.get("tmdb_id"))
+            
+        data["picks"] = validated_recs[:6]
             
     # Enrich Gaps and Filter Bad Ones
     if "gaps" in data:

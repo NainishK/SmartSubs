@@ -163,6 +163,8 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                 msg = e.response.data.detail;
             } else if (e.message === "Network Error") {
                 msg = "Network Error: Please check if the backend is running.";
+            } else if (e.message && e.message.includes("timeout")) {
+                msg = "AI Timeout: The engine is taking too long. Please try again in 1 minute.";
             }
 
             setError(msg);
