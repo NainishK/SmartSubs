@@ -126,7 +126,11 @@ def generate_unified_insights(user_history: list, user_ratings: list, active_sub
     # Context
     history_text = "\n".join([f"- {h['title']} ({h['status']})" for h in user_history[-20:]])
     ratings_text = "\n".join([f"- {r['title']}: {r['rating']}/10" for r in user_ratings])
-    subs_text = ", ".join(active_subs)
+    # Parse active_subs (Handle both string list and rich object list)
+    if active_subs and isinstance(active_subs[0], dict):
+        subs_text = ", ".join([f"{s['name']} ({s.get('cost')} {s.get('currency')}/{s.get('billing')})" for s in active_subs])
+    else:
+        subs_text = ", ".join(active_subs)
     pref_text = json.dumps(preferences, indent=2)
     
     prompt = f"""

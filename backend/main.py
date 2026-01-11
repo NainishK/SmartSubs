@@ -706,7 +706,14 @@ def get_unified_insights(
     # Format Data
     history = [{"title": w.title, "status": w.status} for w in watchlist]
     ratings = [{"title": w.title, "rating": w.user_rating} for w in watchlist if w.user_rating]
-    active_subs = [s.service_name for s in subs]
+    active_subs = [
+        {
+            "name": s.service_name,
+            "cost": s.cost,
+            "billing": s.billing_cycle,
+             "currency": s.currency
+        } for s in subs
+    ]
     
     # Determine Currency
     currency = "INR" if current_user.country == "IN" else "USD"
