@@ -2,6 +2,23 @@
 
 All notable changes to the Smart Subscription Manager project.
 
+## [1.3.0] - 2026-01-22
+
+### 🧠 AI Intelligence Center
+-   **Metadata Integrity**: Fixed a schema issue where ratings and synopsis were stripped from "Missing Out" items. Now displays rich metadata for all recommendations.
+-   **Strict Deduplication**: AI now cross-references your Watchlist to completely eliminate "Missing Out" suggestions you've already added or watched (e.g. "Severance").
+-   **Aggressive Text Cleaning**: Improved regex engines to strip phantom "0" and "0.0" artifacts from AI text generation in Smart Strategy cards.
+-   **UX Polish**:
+    -   **Unified Loading**: "Analyzing..." overlay now visible across all tabs.
+    -   **Smart Refresh**: Button now shows "Refreshing..." state, spins, and prevents double-clicks.
+
+### 🐛 Bug Fixes
+-   **Deployment**: Fixed a build-breaking TypeScript error in `MediaDetailsModal.tsx` by updating the `MediaDetails` interface.
+-   **Validation**: Enhanced `ai_client.py` validation to perform "deep fetches" if initial TMDB search results lack critical data.
+
+### 🧹 Maintenance
+-   **Quota Reset**: Cleared stale cache and reset user AI quotas to ensure fresh data generation after fixes.
+
 ## [1.2.0] - 2026-01-10
 
 ### 🚀 New Features
