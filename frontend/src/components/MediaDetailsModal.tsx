@@ -53,6 +53,8 @@ interface MediaDetails {
         episode_count: number;
         name: string;
     }[];
+    vote_average?: number;
+    overview?: string;
 }
 
 export default function MediaDetailsModal({
