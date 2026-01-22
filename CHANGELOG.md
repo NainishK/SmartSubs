@@ -39,7 +39,14 @@ All notable changes to the Smart Subscription Manager project.
 
 ## [1.1.0] - 2025-12-28
 
-### 🚀 New Features
--   **Advanced Watchlist Filtering**: Added "More Filters" options to sort by Genre, Release Year, and Rating.
--   **List Search**: Implemented real-time search within the Watchlist to quickly find titles by name.
--   **Compact View**: Introduced the togglable "List View" alongside the grid view for better density on desktop.
+### 🚀 Major Features
+-   **Progress Tracking**: Introduced granular tracking for TV Shows. Users can now increment Season (S) and Episode (E) counts directly from the card view.
+-   **Advanced Watchlist**: Overhauled the watchlist with powerful tools:
+    -   **Real-time Search**: Instantly find titles by name.
+    -   **Smart Filters**: Sort content by Genre, Release Year, and Rating.
+    -   **View Toggles**: Switch between the immersive "Grid View" and the data-dense "List View".
+-   **Media Details Modal**: Added a comprehensive details view showing Synopsis, Cast, Provider info, and precise release dates.
+
+### ✨ Improvements
+-   **Rating System**: Added 10-star rating capability with visual star/half-star feedback.
+-   **Card Badges**: Dynamic status badges (Watching, Plan to Watch, Completed) now update in real-time.
