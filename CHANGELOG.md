@@ -13,6 +13,7 @@ All notable changes to the Smart Subscription Manager project.
     -   **Smart Refresh**: Button now shows "Refreshing..." state, spins, and prevents double-clicks.
 
 ### 🐛 Bug Fixes
+-   **Mobile UI**: Resolved layout overflow issues in the navigation bar and fixed loading glitches on the Watchlist screen.
 -   **Deployment**: Fixed a build-breaking TypeScript error in `MediaDetailsModal.tsx` by updating the `MediaDetails` interface.
 -   **Validation**: Enhanced `ai_client.py` validation to perform "deep fetches" if initial TMDB search results lack critical data.
 
