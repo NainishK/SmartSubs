@@ -40,13 +40,15 @@ All notable changes to the Smart Subscription Manager project.
 ## [1.1.0] - 2025-12-28
 
 ### 🚀 Major Features
--   **Progress Tracking**: Introduced granular tracking for TV Shows. Users can now increment Season (S) and Episode (E) counts directly from the card view.
--   **Advanced Watchlist**: Overhauled the watchlist with powerful tools:
-    -   **Real-time Search**: Instantly find titles by name.
-    -   **Smart Filters**: Sort content by Genre, Release Year, and Rating.
-    -   **View Toggles**: Switch between the immersive "Grid View" and the data-dense "List View".
--   **Media Details Modal**: Added a comprehensive details view showing Synopsis, Cast, Provider info, and precise release dates.
+-   **Media Lifecycle**: Added **"Paused"** and **"Dropped"** statuses to better track your viewing habits (beyond just Watching/Plan to Watch).
+-   **Power Filters**:
+    -   **By Type**: Filter specifically for *Movies* or *TV Shows*.
+    -   **By Service**: "Not on My Services" filter to quickly find content you need to rent/buy or subscribe for.
+    -   **By Provider**: Filter by specific streaming platforms (e.g., Netflix, Prime).
+-   **Progress Tracking**: Integrated Season/Episode counters for TV shows.
+-   **Layout Options**: Toggle between **Grid View** (Visual) and **List View** (Compact).
 
 ### ✨ Improvements
--   **Rating System**: Added 10-star rating capability with visual star/half-star feedback.
--   **Card Badges**: Dynamic status badges (Watching, Plan to Watch, Completed) now update in real-time.
+-   **Real-Time Search**: Instant filtering by title.
+-   **Media Details Modal**: Comprehensive details view for Synopsis, Cast, and Provider info.
+-   **Rating System**: 10-star rating capability with visual star/half-star feedback.
