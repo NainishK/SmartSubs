@@ -246,11 +246,13 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                             </button>
                             <button
                                 className={`${styles.tabBtn} ${styles.refreshTab}`}
-                                onClick={() => hasData && handleGenerate(true)}
-                                disabled={!hasData}
-                                title="Refresh Intelligence"
+                                onClick={() => hasData && !loading && handleGenerate(true)}
+                                disabled={!hasData || loading}
+                                title={loading ? "Analyzing Library..." : "Refresh Intelligence"}
+                                style={{ opacity: loading ? 0.7 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
                             >
-                                <RefreshCw size={18} />
+                                <RefreshCw size={18} className={loading ? styles.spin : ''} />
+                                {loading && <span style={{ marginLeft: '6px', fontSize: '0.9rem' }}>Refreshing...</span>}
                             </button>
                         </div>
                     )}
@@ -398,8 +400,8 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                                                 )}
 
                                                 {loading && (
-                                                    <div className={styles.loadingWrapper}>
-                                                        <RefreshCw className="animate-spin" size={48} color="#7c3aed" />
+                                                    <div className={styles.loadingWrapper} style={{ gridColumn: '1 / -1', minHeight: '300px' }}>
+                                                        <RefreshCw className={styles.spin} size={48} color="#7c3aed" />
                                                         <p>Analyzing 28,000+ titles and your watchlist...</p>
                                                     </div>
                                                 )}
@@ -476,25 +478,10 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
 
                                         {activeTab === 'strategy' && (
                                             <>
-                                                {!data && !loading && (
-                                                    <div className={styles.loadingWrapper}>
-                                                        <Sparkles size={48} color={hasData ? "#ddd" : "#e5e7eb"} />
-                                                        {!hasData ? (
-                                                            <>
-                                                                <h3 style={{ margin: '1rem 0 0.5rem 0', color: '#374151' }}>Build Your Profile</h3>
-                                                                <p style={{ maxWidth: 300 }}>
-                                                                    The AI needs data to work with. Please add active subscriptions or add movies/shows to your watchlist first.
-                                                                </p>
-
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <p>Generate insights to see financial strategy.</p>
-                                                                <button className={styles.saveBtn} style={{ maxWidth: 200 }} onClick={() => handleGenerate(false)}>
-                                                                    Generate
-                                                                </button>
-                                                            </>
-                                                        )}
+                                                {loading && (
+                                                    <div className={styles.loadingWrapper} style={{ minHeight: '300px' }}>
+                                                        <RefreshCw className={styles.spin} size={48} color="#7c3aed" />
+                                                        <p>Analyzing financial strategy & finding gaps...</p>
                                                     </div>
                                                 )}
                                                 {data && (
@@ -544,7 +531,7 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                                                                                         title: gap.title,
                                                                                         overview: gap.overview || '',
                                                                                         poster_path: gap.poster_path || '',
-                                                                                        vote_average: 0,
+                                                                                        vote_average: gap.vote_average || 0,
                                                                                         media_type: gap.media_type || 'movie',
                                                                                         status: existingItem?.status,
                                                                                         user_rating: existingItem?.user_rating || 0

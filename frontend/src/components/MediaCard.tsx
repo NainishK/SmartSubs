@@ -211,7 +211,7 @@ export default function MediaCard({
                         </span>
                     </div>
 
-                    {item.vote_average && (
+                    {(item.vote_average !== undefined && item.vote_average !== null) && (
                         <span className={styles.ratingBadge}>
                             <Star size={12} fill="currentColor" />
                             {item.vote_average.toFixed(1)}

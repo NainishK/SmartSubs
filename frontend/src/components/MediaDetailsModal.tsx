@@ -158,7 +158,7 @@ export default function MediaDetailsModal({
                             <span className={styles.year}>{year}</span>
                             <span className={styles.dot}></span>
                             <span className={styles.rating}>
-                                <Star size={14} fill="currentColor" /> {initialData?.vote_average?.toFixed(1) || 'N/A'}
+                                <Star size={14} fill="currentColor" /> {((initialData?.vote_average || details?.vote_average || 0).toFixed(1))}
                             </span>
 
                             {/* Added Date (Watchlist Context) */}
@@ -261,7 +261,7 @@ export default function MediaDetailsModal({
 
                         <div className={styles.sectionTitle}>SYNOPSIS</div>
                         <p className={styles.synopsis}>
-                            {initialData?.overview || "No synopsis available."}
+                            {initialData?.overview || details?.overview || "No synopsis available."}
                         </p>
 
                         <div className={styles.providersSection}>

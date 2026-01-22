@@ -747,6 +747,7 @@ def get_unified_insights(
             dropped_history=dropped_history,
             deal_breakers=deal_breakers,
             ignored_titles=ignored_titles,
+            ignored_ids={pid for pid, count in ignored_counts.items() if count >= 2},
             watchlist_ids=watchlist_ids,
             country=current_user.country,
             currency=currency

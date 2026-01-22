@@ -13,15 +13,13 @@ def _call_gemini_rest(prompt: str, model_name: str = "gemini-1.5-flash"):
     if not settings.GEMINI_API_KEY:
         return None
         
-    # Fallback Chain: Try efficient models first, then older/stable ones
-    # Note: user provided 'model_name' is preferred first if valid
+    # Fallback Chain: Use validated models from user's environment (2.0/2.5)
     candidates = [
-        model_name,
-        "gemini-1.5-flash", 
-        "gemini-1.5-flash-latest",
-        "gemini-flash-latest", # Legacy / Stable alias
-        "gemini-1.0-pro",
-        "gemini-pro"
+        "gemini-2.5-flash",       # Primary: Matches User's Quota (5/20 used)
+        "gemini-2.0-flash",       # Secondary
+        "gemini-2.0-flash-lite",  # Tertiary
+        "gemini-flash-latest",    # Backup
+        "gemini-pro-latest"       # Last Resort
     ]
     
     # Remove duplicates while preserving order
@@ -43,8 +41,8 @@ def _call_gemini_rest(prompt: str, model_name: str = "gemini-1.5-flash"):
         
         try:
             logger.info(f"Attempting AI Generation with model: {model}...")
-            # Add Timeout to prevent infinite hangs (Client side limit)
-            response = requests.post(url, headers=headers, json=data, timeout=30)
+            # Add Timeout to prevent infinite hangs (Increased to 60s for 2.x models)
+            response = requests.post(url, headers=headers, json=data, timeout=60)
             
             if response.status_code == 200:
                 logger.info(f"Success with model: {model}")
@@ -60,7 +58,7 @@ def _call_gemini_rest(prompt: str, model_name: str = "gemini-1.5-flash"):
                 last_error = f"Error {response.status_code}: {response.text}"
                 
         except requests.exceptions.Timeout:
-            logger.warning(f"Timeout (30s) on {model}. Trying next...")
+            logger.warning(f"Timeout (60s) on {model}. Trying next...")
             last_error = f"Timeout on {model}"
             
         except Exception as e:
@@ -79,7 +77,7 @@ def _call_gemini_rest(prompt: str, model_name: str = "gemini-1.5-flash"):
 
 
 
-def generate_unified_insights(user_history: list, user_ratings: list, active_subs: list, preferences: dict, dropped_history: list = [], deal_breakers: list = [], ignored_titles: list = [], watchlist_ids: set = set(), country: str = "US", currency: str = "USD"):
+def generate_unified_insights(user_history: list, user_ratings: list, active_subs: list, preferences: dict, dropped_history: list = [], deal_breakers: list = [], ignored_titles: list = [], ignored_ids: set = set(), watchlist_ids: set = set(), country: str = "US", currency: str = "USD"):
     if not settings.GEMINI_API_KEY or settings.GEMINI_API_KEY == "YOUR_GEMINI_API_KEY_HERE":
         return None
 
@@ -120,9 +118,7 @@ def generate_unified_insights(user_history: list, user_ratings: list, active_sub
     - Repetitive/Ignored Content (Avoid these, user has skipped them multiple times): {ignored_text}
     
     Task: Provide a 3-part comprehensive report in STRICT JSON format:
-    1. "picks": 12 Hidden Gems/Matches. Priority to active subs. (We will filter best 6).
-    2. "strategy": 1-3 Financial Actions (Cancel/Add). ALL monetary values must be in {currency}.
-    1. "picks": 12 Hidden Gems/Matches. Priority to active subs. (We will filter best 6).
+    1. "picks": 20 Hidden Gems/Matches. Priority to active subs. (We will filter best 6).
     2. "strategy": 1-3 Financial Actions (Cancel/Add). ALL monetary values must be in {currency}.
     3. "gaps": 8 specific titles they are missing out on. (We will filter best 4).
     
@@ -131,6 +127,8 @@ def generate_unified_insights(user_history: list, user_ratings: list, active_sub
     2. Ratings mentioned in "reason" must be on a 10-star scale.
     3. REGIONAL CONTEXT (India): "JioCinema" and "Disney+ Hotstar" are merging into "JioHotstar". Treat them as a consolidated entity.
     4. NO DUPLICATES: Do NOT recommend any title that is already listed in "User's Watch History" (even if status is 'plan_to_watch'). The user wants NEW discoveries, not reminders.
+    5. STRATEGY CONSISTENCY: Do not provide conflicting advice for the same service (e.g. do NOT suggest Cancelling AND Upgrading/Keeping the same service). Cancellation advice overrides optimization.
+    6. FORMATTING: Output "reason" as a single clean paragraph. Do NOT include trailing numbers, bullet points, or list indexes inside the text fields.
     
     IMPORTANT ON NEGATIVE FILTERING:
     - Analyzie "Dropped/Disliked" content to understand specific dislikes (e.g. "Too slow", "Bad acting"). 
@@ -164,6 +162,27 @@ def generate_unified_insights(user_history: list, user_ratings: list, active_sub
         logger.error(f"Unified Parsing Failed: {e}")
         return None
         
+    def _clean_text(txt):
+        if not txt: return ""
+        # Remove trailing single digits, zeros, or "0.0" on new lines or at end of strings
+        # Case 1: Newline followed by digit(s)
+        txt = re.sub(r'[\r\n]+\s*\d+(\.0)?\s*$', '', txt)
+        # Case 2: Space followed by digit(s) at very end (e.g. "text 0")
+        txt = re.sub(r'\s+\d+(\.0)?\s*$', '', txt)
+        return txt.strip()
+
+    if "strategy" in data:
+        for s in data["strategy"]:
+            s["reason"] = _clean_text(s.get("reason", ""))
+            
+    if "picks" in data:
+        for p in data["picks"]:
+            p["reason"] = _clean_text(p.get("reason", ""))
+
+    if "gaps" in data:
+        for g in data["gaps"]:
+            g["reason"] = _clean_text(g.get("reason", ""))
+
     # Enrich Picks and Filter Bad Ones
     if "picks" in data:
         # First, enrich all picks
@@ -187,7 +206,12 @@ def generate_unified_insights(user_history: list, user_ratings: list, active_sub
                  logger.info(f"Skipping Duplicate Recommendation: {r.get('title')} (ID: {r.get('tmdb_id')}) because it's in watchlist.")
                  continue
             
-            # Check 3: Must not be a duplicate within the current list of picks
+            # Check 3: Check for Hard Banned (Ignored) items
+            if str(r.get("tmdb_id")) in ignored_ids:
+                 logger.info(f"Skipping Ignored Item (Hard Filter): {r.get('title')} (ID: {r.get('tmdb_id')}).")
+                 continue
+
+            # Check 4: Must not be a duplicate within the current list of picks
             if r.get("tmdb_id") in seen_ids:
                 logger.info(f"Skipping Duplicate Recommendation: {r.get('title')} (ID: {r.get('tmdb_id')}) because it's already picked.")
                 continue
@@ -205,6 +229,14 @@ def generate_unified_insights(user_history: list, user_ratings: list, active_sub
             _enrich_item(gap)
             tmdb_id = gap.get("tmdb_id")
             if tmdb_id and gap.get("poster_path"):
+                 # Filter Out Watchlist/Ignored items for GAPS too
+                 if tmdb_id in watchlist_ids:
+                     logger.info(f"Skipping Gap Item {gap.get('title')} (ID: {tmdb_id}) - Already in Watchlist")
+                     continue
+                 if str(tmdb_id) in ignored_ids:
+                      logger.info(f"Skipping Gap Item {gap.get('title')} (ID: {tmdb_id}) - Ignored")
+                      continue
+
                  if tmdb_id not in seen_ids:
                     valid_gaps.append(gap)
                     seen_ids.add(tmdb_id)
@@ -233,6 +265,19 @@ def _enrich_item(item):
             item['poster_path'] = best.get('poster_path')
             item['vote_average'] = best.get('vote_average')
             item['overview'] = best.get('overview')
+
+            # Quality Check: If rating or overview is missing/incomplete, try fetching full details
+            if not item['vote_average'] or not item['overview']:
+                try:
+                    full_details = tmdb_client.get_details(item['media_type'], item['tmdb_id'])
+                    if full_details:
+                         if full_details.get('vote_average'):
+                             item['vote_average'] = full_details.get('vote_average')
+                         if full_details.get('overview'):
+                             item['overview'] = full_details.get('overview')
+                         logger.info(f"Enriched {clean_title} via get_details logic. Rating: {item['vote_average']}")
+                except Exception as e:
+                    logger.warning(f"Failed to fetch full details for enrichment fallback: {e}")
             
             # Correction: if we searched for a show but got movie default, trust TMDB
             # If nothing found, try to infer from title (e.g. if "Season" was present originally)

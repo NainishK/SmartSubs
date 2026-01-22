@@ -153,6 +153,8 @@ class AIGapItem(BaseModel):
     tmdb_id: Optional[int] = None
     media_type: Optional[str] = "movie"
     poster_path: Optional[str] = None
+    vote_average: Optional[float] = None
+    overview: Optional[str] = None
 
 class AIUnifiedResponse(BaseModel):
     picks: List[AIRecommendation]
