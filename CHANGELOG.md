@@ -36,3 +36,10 @@ All notable changes to the Smart Subscription Manager project.
 ### 🧹 Maintenance
 -   **Code Cleanup**: Removed temporary debug scripts and artifacts.
 -   **Deployment**: Ran metadata backfills to ensure data consistency across environments.
+
+## [1.1.0] - 2025-12-28
+
+### 🚀 New Features
+-   **Advanced Watchlist Filtering**: Added "More Filters" options to sort by Genre, Release Year, and Rating.
+-   **List Search**: Implemented real-time search within the Watchlist to quickly find titles by name.
+-   **Compact View**: Introduced the togglable "List View" alongside the grid view for better density on desktop.
