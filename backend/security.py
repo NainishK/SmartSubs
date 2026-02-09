@@ -24,4 +24,24 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
         expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+# Password Reset Token Logic
+from itsdangerous import URLSafeTimedSerializer
+
+_serializer = URLSafeTimedSerializer(SECRET_KEY)
+
+def create_password_reset_token(email: str):
+    return _serializer.dumps(email, salt="password-reset-salt")
+
+def verify_password_reset_token(token: str, expiration=3600):
+    try:
+        email = _serializer.loads(
+            token,
+            salt="password-reset-salt",
+            max_age=expiration
+        )
+        return email
+    except:
+        return None

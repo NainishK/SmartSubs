@@ -101,6 +101,7 @@ class Service(ServiceBase):
 class UserBase(BaseModel):
     email: str
     country: str = "IN"
+    avatar_url: Optional[str] = None
 
 class UserCreate(UserBase):
     password: str

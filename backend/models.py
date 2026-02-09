@@ -8,7 +8,9 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
+    hashed_password = Column(String, nullable=True) # Nullable for OAuth users
+    google_id = Column(String, unique=True, nullable=True, index=True)
+    avatar_url = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
     country = Column(String, default="US")
     preferences = Column(String, nullable=True) # JSON stored as string

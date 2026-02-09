@@ -25,3 +25,6 @@ certifi
 charset-normalizer
 idna
 urllib3
+fastapi-mail
+authlib
+httpx

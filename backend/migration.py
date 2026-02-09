@@ -32,14 +32,31 @@ def run_migration():
             ("watchlist_items", "current_episode", "INTEGER DEFAULT 0"),
             ("watchlist_items", "total_seasons", "INTEGER DEFAULT 0"),
             ("watchlist_items", "total_episodes", "INTEGER DEFAULT 0"),
+            ("users", "google_id", "TEXT UNIQUE"),
+            ("users", "avatar_url", "TEXT"),
         ]
         
         for table, col, dtype in columns_to_add:
             try:
                 print(f"   Adding column {col} to {table}...")
-                sql = text(f"ALTER TABLE {table} ADD COLUMN {col} {dtype}")
-                conn.execute(sql)
-                conn.commit()
+                # SQLite Workaround for UNIQUE
+                is_sqlite = "sqlite" in str(conn.engine.url)
+                if is_sqlite and "UNIQUE" in dtype:
+                    # 1. Add column without UNIQUE
+                    safe_dtype = dtype.replace("UNIQUE", "").strip()
+                    sql = text(f"ALTER TABLE {table} ADD COLUMN {col} {safe_dtype}")
+                    conn.execute(sql)
+                    conn.commit()
+                    
+                    # 2. Add Unique Index
+                    index_sql = text(f"CREATE UNIQUE INDEX IF NOT EXISTS ix_{table}_{col} ON {table} ({col})")
+                    conn.execute(index_sql)
+                    conn.commit()
+                else:
+                    sql = text(f"ALTER TABLE {table} ADD COLUMN {col} {dtype}")
+                    conn.execute(sql)
+                    conn.commit()
+                
                 print(f"   ✅ Added {col}")
             except Exception as e:
                 # IMPORTANT: Postgres requires rollback after error to reset transaction state

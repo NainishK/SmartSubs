@@ -291,3 +291,12 @@ def update_user_ai_usage(db: Session, user_id: int):
         user.last_ai_usage = func.now()
         user.ai_usage_count = (user.ai_usage_count or 0) + 1
         db.commit()
+
+def update_user_password(db: Session, user_id: int, new_password: str):
+    user = get_user(db, user_id)
+    if user:
+        hashed_password = security.get_password_hash(new_password)
+        user.hashed_password = hashed_password
+        db.commit()
+        db.refresh(user)
+    return user

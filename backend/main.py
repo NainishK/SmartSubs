@@ -15,6 +15,10 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+# Include Routers
+from routers import auth
+app.include_router(auth.router)
+
 # [NEW] Logging Middleware
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -107,7 +111,7 @@ origins = [
 
 from starlette.middleware.sessions import SessionMiddleware
 
-app.add_middleware(SessionMiddleware, secret_key="SUPER_SECRET_KEY")
+app.add_middleware(SessionMiddleware, secret_key="SUPER_SECRET_KEY", https_only=False, same_site="lax", session_cookie="smartsubs_session")
 
 app.add_middleware(
     CORSMiddleware,
