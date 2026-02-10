@@ -119,6 +119,7 @@ class UserPreferences(BaseModel):
 
 class User(UserBase):
     id: int
+    google_id: Optional[str] = None
     is_active: bool
     preferences: Optional[str] = None # JSON string
     ai_allowed: bool

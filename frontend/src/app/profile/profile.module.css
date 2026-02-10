@@ -1,10 +1,11 @@
-/* Settings Page Styles - Premium Glassmorphism */
+/* Profile Page Styles - Premium Glassmorphism */
+/* Extending existing settings.module.css */
+
 .container {
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    /* Mesh Gradient Background (Consistent with Login) */
     background-color: #0f172a;
     background-image:
         radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
@@ -40,7 +41,6 @@
     flex-direction: column;
     width: 100%;
     max-width: 600px;
-    transform: translateY(0);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -81,22 +81,83 @@
     color: #334155;
 }
 
-.formSection {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+.section {
+    margin-bottom: 2rem;
 }
 
-.inputGroup {
+.sectionTitle {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.infoRow {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.infoRow:last-child {
+    border-bottom: none;
+}
+
+.infoLabel {
+    font-weight: 600;
+    color: #334155;
+    font-size: 0.95rem;
+}
+
+.infoValue {
+    font-size: 0.95rem;
+    color: #64748b;
+}
+
+.googleBtn {
+    display: flex;
+    align-items: center;
     gap: 0.5rem;
+    background-color: white;
+    border: 1px solid #e2e8f0;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    color: #334155;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
 }
 
+.googleBtn:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.googleConnected {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background-color: #f0fdf4;
+    color: #166534;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid #bbf7d0;
+}
+
+/* Include existing form styles for Region selector */
 .label {
     font-weight: 600;
     color: #334155;
     font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    display: block;
 }
 
 .select {
@@ -126,11 +187,12 @@
 .helperText {
     font-size: 0.85rem;
     color: #64748b;
-    margin: 0;
+    margin-top: 0.5rem;
 }
 
 .saveButton {
-    margin-top: 1rem;
+    margin-top: 1.5rem;
+    width: 100%;
     padding: 1rem;
     background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
     color: white;
@@ -141,6 +203,24 @@
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+}
+
+.disconnectBtn {
+    background: none;
+    border: 1px solid #fee2e2;
+    color: #ef4444;
+    padding: 0.3rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+}
+
+.disconnectBtn:hover {
+    background-color: #fef2f2;
+    border-color: #fecaca;
+    color: #dc2626;
 }
 
 .saveButton:hover {
@@ -157,18 +237,7 @@
     align-items: center;
     gap: 0.5rem;
     animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    margin-top: 1rem;
 }
 
 .messageSuccess {
@@ -181,4 +250,16 @@
     background-color: #fef2f2;
     color: #dc2626;
     border: 1px solid #fecaca;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

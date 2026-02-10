@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr
 import models, schemas, crud, security, email_client
 from database import get_db # Assuming get_db is available or I need to import it
-from dependencies import get_db
+from dependencies import get_db, get_current_user
 import logging
 import sys
 
@@ -40,7 +40,7 @@ async def forgot_password(
         return {"message": "If this email is registered, you will receive a password reset link."}
     
     token = security.create_password_reset_token(user.email)
-    reset_link = f"http://localhost:3000/reset-password?token={token}" # Hardcoded frontend URL for now
+    reset_link = f"{settings.FRONTEND_URL}/reset-password?token={token}"
     
     email_body = f"""
     <h1>Password Reset Request</h1>
@@ -153,6 +153,21 @@ async def auth_google(request: Request, db: Session = Depends(get_db)):
     
     # Redirect to Frontend with Token
     # In production, use a secure cookie or postMessage. For now, URL param is easiest for Dev.
-    frontend_url = f"http://localhost:3000/login/callback?token={access_token}"
+    frontend_url = f"{settings.FRONTEND_URL}/login/callback?token={access_token}"
     from starlette.responses import RedirectResponse
     return RedirectResponse(url=frontend_url)
+
+@router.post("/disconnect/google")
+async def disconnect_google(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    user = db.query(models.User).filter(models.User.id == current_user.id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    if not user.hashed_password:
+        raise HTTPException(status_code=400, detail="You must set a password before disconnecting your Google account.")
+        
+    user.google_id = None
+    # user.avatar_url = None # Keep avatar? acts as a nice default. Let's keep it.
+    db.commit()
+    
+    return {"message": "Google account disconnected successfully"}

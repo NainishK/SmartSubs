@@ -2,6 +2,23 @@
 
 All notable changes to the Smart Subscription Manager project.
 
+## [1.4.0] - 2026-02-10
+
+### 🚀 Major Features
+-   **Profile Dashboard**: Renamed "Settings" to "Profile", creating a dedicated home for identity management.
+-   **Google Account Linking**:
+    -   **Connect**: Existing email users can now link their Google Account for one-click login.
+    -   **Disconnect**: Added safe unlink functionality with password verification to prevent lockouts.
+-   **Production OAuth**: Implemented robust environment-based configuration (`FRONTEND_URL`) to support separate Dev/Prod OAuth flows.
+
+### ✨ UX Improvements
+-   **Custom Confirmations**: Replaced native browser alerts with a cohesive `ConfirmationModal` for dangerous actions (Logout, Disconnect).
+-   **General Settings**: Consolidated regional preferences into a scalable "General Settings" section.
+
+### 🧹 Maintenance
+-   **Code Cleanup**: Organized backend structure by moving debug scripts to `backend/scripts/`.
+-   **Security**: Enforced password checks before allowing OAuth unlinking.
+
 ## [1.3.0] - 2026-01-22
 
 ### 🧠 AI Intelligence Center

@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
     GOOGLE_REDIRECT_URI: str = "http://localhost:8000/auth/callback/google"
+    
+    # Frontend Settings
+    FRONTEND_URL: str = "http://localhost:3000"
 
     class Config:
         env_file = ".env"

@@ -49,7 +49,7 @@ export default function Sidebar({ isCollapsed, toggle, className = '', countryCo
         { name: 'Subscriptions', icon: CreditCard, path: '/dashboard/subscriptions' },
         { name: 'Watchlist', icon: TvMinimalPlay, path: '/dashboard/watchlist' },
         { name: 'Recommendations', icon: Sparkles, path: '/dashboard/recommendations' },
-        { name: 'Settings', icon: Settings, path: '/settings' },
+        { name: 'Profile', icon: Settings, path: '/profile' },
     ];
 
     const handleLogoutClick = () => {
