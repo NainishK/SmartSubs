@@ -5,7 +5,7 @@
     max-width: 1400px;
     margin: 0 auto;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    color: #1a1a1a;
+    color: var(--foreground);
 }
 
 /* Header */
@@ -22,7 +22,7 @@
     /* Mobile First Default (Prevents Huge Flash) */
     font-weight: 700;
     margin: 0;
-    background: linear-gradient(135deg, #1a1a1a 0%, #4a4a4a 100%);
+    background: linear-gradient(135deg, var(--foreground) 0%, var(--muted-foreground) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     display: inline-block;
@@ -39,7 +39,7 @@
 
 .subtitle {
     margin: 0.25rem 0 0 0;
-    color: #666;
+    color: var(--muted-foreground);
     font-size: 0.95rem;
 }
 
@@ -48,7 +48,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 2px solid #f0f0f0;
+    border-bottom: 2px solid var(--border);
     margin-bottom: 1rem;
     /* Much tighter gap */
     gap: 1.5rem;
@@ -73,12 +73,12 @@
 }
 
 .tabs::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.1);
+    background-color: var(--muted-foreground);
     border-radius: 20px;
 }
 
 .tabs::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: var(--foreground);
 }
 
 .tab {
@@ -87,7 +87,7 @@
     background: none;
     border: none;
     border-bottom: 3px solid transparent;
-    color: #64748b;
+    color: var(--muted-foreground);
     font-weight: 500;
     font-size: 0.95rem;
     cursor: pointer;
@@ -100,12 +100,12 @@
 }
 
 .tab:hover {
-    color: #0070f3;
+    color: var(--primary);
 }
 
 .tabActive {
-    color: #0070f3;
-    border-bottom-color: #0070f3;
+    color: var(--primary);
+    border-bottom-color: var(--primary);
     font-weight: 600;
 }
 
@@ -119,8 +119,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: #f0f0f0;
-    color: #666;
+    background: var(--muted);
+    color: var(--muted-foreground);
     font-size: 0.8rem;
     font-weight: 600;
     padding: 0.15rem 0.4rem;
@@ -130,8 +130,9 @@
 }
 
 .tabActive .tabCount {
-    background: rgba(0, 112, 243, 0.1);
-    color: #0070f3;
+    background: rgba(37, 99, 235, 0.1);
+    /* Primary with opacity requires CSS var tweaks or hardcode */
+    color: var(--primary);
 }
 
 /* Toolbar (Command Center) */
@@ -140,11 +141,11 @@
     gap: 1rem;
     /* Tighter gap */
     align-items: center;
-    background: #f8fafc;
+    background: var(--card);
     padding: 0.5rem;
     /* Reduced padding */
     border-radius: 12px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border);
     margin-bottom: 1.5rem;
     flex-wrap: wrap;
 }

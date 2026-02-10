@@ -12,6 +12,7 @@ import {
     ChevronRight
 } from 'lucide-react';
 import styles from './Sidebar.module.css';
+import { ThemeToggle } from './ThemeToggle';
 import ConfirmationModal from './ConfirmationModal';
 
 interface SidebarProps {
@@ -107,6 +108,10 @@ export default function Sidebar({ isCollapsed, toggle, className = '', countryCo
                 </nav>
 
                 <div className={styles.footer}>
+                    <div className={styles.themeToggleContainer}>
+                        <ThemeToggle isCollapsed={isCollapsed} className={styles.themeToggle} />
+                    </div>
+
                     {/* Region Badge in Sidebar */}
                     <div className={styles.regionBadge}>
                         {countryCode ? (

@@ -210,7 +210,7 @@ export default function DashboardOverview() {
                                     width: `${stats?.total_cost ? (item.cost / stats.total_cost) * 100 : 0}%`,
                                     backgroundColor: item.color
                                 }}
-                                title={`${item.name}: ${formatCurrency(item.cost)}`}
+                                title={`${item.name}: ${formatCurrency(item.cost, user?.country || 'US')}`}
                             />
                         ))}
                     </div>

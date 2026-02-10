@@ -17,6 +17,8 @@ export const metadata: Metadata = {
   description: "Track, Manage, and Discover content across all your services.",
 };
 
+import { ThemeProvider } from "@/context/ThemeContext";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -25,7 +27,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
-        {children}
+        <ThemeProvider defaultTheme="system" storageKey="smartsubs-theme">
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

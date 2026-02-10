@@ -1,11 +1,11 @@
 /* Main Card Container */
 .card {
     position: relative;
-    background: white;
+    background: var(--card);
     border-radius: 16px;
     overflow: hidden;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--border);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
     height: 100%;
     display: flex;
@@ -22,7 +22,7 @@
     position: relative;
     width: 100%;
     aspect-ratio: 2/3;
-    background: #f3f4f6;
+    background: var(--muted);
     overflow: hidden;
 }
 
@@ -129,7 +129,7 @@
 .title {
     font-size: 1.1rem;
     font-weight: 700;
-    color: #111827;
+    color: var(--card-foreground);
     margin: 0 0 0.5rem 0;
     line-height: 1.4;
     display: -webkit-box;
@@ -141,7 +141,7 @@
 
 .overview {
     font-size: 0.875rem;
-    color: #6b7280;
+    color: var(--muted-foreground);
     line-height: 1.5;
     margin-bottom: 1rem;
     display: -webkit-box;

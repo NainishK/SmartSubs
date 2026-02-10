@@ -3,14 +3,14 @@
     max-width: 1400px;
     margin: 0 auto;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    color: #1a1a1a;
+    color: var(--foreground);
 }
 
 .pageTitle {
     font-size: 2rem;
     font-weight: 700;
     margin: 0 0 2.5rem 0;
-    background: linear-gradient(135deg, #1a1a1a 0%, #4a4a4a 100%);
+    background: linear-gradient(135deg, var(--foreground) 0%, var(--muted-foreground) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -33,7 +33,7 @@
 /* Mobile Tabs */
 .mobileTabs {
     display: none;
-    background: #f1f5f9;
+    background: var(--muted);
     padding: 4px;
     border-radius: 12px;
     margin-bottom: 2rem;
@@ -50,7 +50,7 @@
     padding: 10px;
     border: none;
     background: transparent;
-    color: #64748b;
+    color: var(--muted-foreground);
     font-weight: 600;
     font-size: 0.95rem;
     border-radius: 10px;
@@ -59,8 +59,8 @@
 }
 
 .activeTab {
-    background: white;
-    color: #0070f3;
+    background: var(--card);
+    color: var(--primary);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
@@ -83,9 +83,9 @@
 .filterPill {
     padding: 6px 16px;
     border-radius: 20px;
-    border: 1px solid #e2e8f0;
-    background: white;
-    color: #64748b;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--muted-foreground);
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
@@ -94,9 +94,9 @@
 }
 
 .activePill {
-    background: #1a1a1a;
-    color: white;
-    border-color: #1a1a1a;
+    background: var(--foreground);
+    color: var(--background);
+    border-color: var(--foreground);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
@@ -108,10 +108,10 @@
 }
 
 .subCard {
-    background: white;
+    background: var(--card);
     padding: 1.5rem;
     border-radius: 16px;
-    border: 1px solid rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--border);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
     transition: all 0.3s ease;
     display: flex;
