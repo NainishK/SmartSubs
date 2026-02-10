@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pydantic import field_validator
 
 class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./sql_app.db"
@@ -26,6 +27,12 @@ class Settings(BaseSettings):
     
     # Frontend Settings
     FRONTEND_URL: str = "http://localhost:3000"
+
+
+
+    @field_validator("FRONTEND_URL")
+    def strip_slash(cls, v):
+        return v.rstrip("/")
 
     class Config:
         env_file = ".env"
