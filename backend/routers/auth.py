@@ -98,16 +98,19 @@ oauth.register(
 async def login_google(request: Request):
     logger.info("👉 Redirecting to Google Login...")
     redirect_uri = settings.GOOGLE_REDIRECT_URI
-    return await oauth.google.authorize_redirect(request, redirect_uri)
+    resp = await oauth.google.authorize_redirect(request, redirect_uri)
+    logger.info(f"👉 Login Endpoint called. Redirecting to: {redirect_uri}")
+    return resp
 
 @router.get("/callback/google")
 async def auth_google(request: Request, db: Session = Depends(get_db)):
+    logger.info(f"👉 OAuth Callback Hit. Session Keys: {request.session.keys()}")
     try:
         # 1. Exchange Code for Token
         token = await oauth.google.authorize_access_token(request)
     except Exception as e:
         logger.error(f"OAuth Token Exchange Failed: {e}")
-        raise HTTPException(status_code=400, detail="Authentication failed. Please try again.")
+        raise HTTPException(status_code=400, detail=f"Authentication failed: {str(e)}")
 
     # 2. Fetch User Info manually (Pure OAuth2 Flow)
     try:

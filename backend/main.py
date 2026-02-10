@@ -111,7 +111,8 @@ origins = [
 
 from starlette.middleware.sessions import SessionMiddleware
 
-app.add_middleware(SessionMiddleware, secret_key="SUPER_SECRET_KEY", https_only=False, same_site="lax", session_cookie="smartsubs_session")
+from config import settings
+app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY, https_only=False, same_site="lax", session_cookie="smartsubs_session")
 
 app.add_middleware(
     CORSMiddleware,
