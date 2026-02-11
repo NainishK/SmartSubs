@@ -22,11 +22,8 @@
     /* Mobile First Default (Prevents Huge Flash) */
     font-weight: 700;
     margin: 0;
-    background: linear-gradient(135deg, var(--foreground) 0%, var(--muted-foreground) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
+    color: var(--foreground);
     display: inline-block;
-    -webkit-text-fill-color: transparent;
     letter-spacing: -0.5px;
 }
 
@@ -64,9 +61,7 @@
     border-bottom: none;
 }
 
-.tabs::-webkit-scrollbar {
-    height: 4px;
-}
+
 
 .tabs::-webkit-scrollbar-track {
     background: transparent;

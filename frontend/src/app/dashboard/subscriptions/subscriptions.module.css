@@ -10,10 +10,7 @@
     font-size: 2rem;
     font-weight: 700;
     margin: 0 0 2.5rem 0;
-    background: linear-gradient(135deg, var(--foreground) 0%, var(--muted-foreground) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--foreground);
     letter-spacing: -0.5px;
 }
 
@@ -76,9 +73,7 @@
     -ms-overflow-style: none;
 }
 
-.filterContainer::-webkit-scrollbar {
-    display: none;
-}
+
 
 .filterPill {
     padding: 6px 16px;
@@ -802,14 +797,7 @@ select.input {
 }
 
 /* Hide default scrollbar for dropdowns */
-:global(.react-datepicker__year-dropdown::-webkit-scrollbar) {
-    width: 6px;
-}
 
-:global(.react-datepicker__year-dropdown::-webkit-scrollbar-thumb) {
-    background-color: #cbd5e0;
-    border-radius: 3px;
-}
 
 /* Custom Selects in Header */
 :global(.react-datepicker__header__dropdown) {

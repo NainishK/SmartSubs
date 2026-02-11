@@ -109,14 +109,3 @@
         transform: translateY(0);
     }
 }
-
-/* Scrollbar styling for list */
-.optionsList::-webkit-scrollbar {
-    width: 6px;
-}
-
-.optionsList::-webkit-scrollbar-thumb {
-    background-color: var(--muted-foreground);
-    border-radius: 3px;
-    opacity: 0.3;
-}

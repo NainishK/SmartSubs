@@ -67,28 +67,7 @@
 }
 
 /* Scrollbar Styling */
-.modal::-webkit-scrollbar,
-.infoSide::-webkit-scrollbar {
-    width: 6px;
-}
 
-.modal::-webkit-scrollbar-track,
-.infoSide::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.modal::-webkit-scrollbar-thumb,
-.infoSide::-webkit-scrollbar-thumb {
-    background-color: var(--muted-foreground);
-    border-radius: 20px;
-    opacity: 0.3;
-}
-
-.modal::-webkit-scrollbar-thumb:hover,
-.infoSide::-webkit-scrollbar-thumb:hover {
-    background-color: var(--foreground);
-    opacity: 0.5;
-}
 
 @media (min-width: 768px) {
     .modal {

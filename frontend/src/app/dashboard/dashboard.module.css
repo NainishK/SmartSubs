@@ -18,12 +18,7 @@
     font-size: 2rem;
     font-weight: 700;
     margin: 0;
-    /* Gradient adapted for both modes via variables or specific overrides */
-    background: linear-gradient(135deg, var(--foreground) 0%, var(--muted-foreground) 100%);
-    -webkit-background-clip: text;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--foreground);
     letter-spacing: -0.5px;
 }
 

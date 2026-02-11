@@ -22,10 +22,7 @@
     font-weight: 700;
     margin: 0;
     letter-spacing: -0.5px;
-    background: linear-gradient(135deg, #1a1a1a 0%, #4a4a4a 100%);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--foreground);
 }
 
 @media (min-width: 769px) {

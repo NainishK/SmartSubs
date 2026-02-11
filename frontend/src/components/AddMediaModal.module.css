@@ -115,24 +115,7 @@
 }
 
 /* Scrollbar Styling */
-.resultsList::-webkit-scrollbar {
-    width: 6px;
-}
 
-.resultsList::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.resultsList::-webkit-scrollbar-thumb {
-    background-color: var(--muted-foreground);
-    border-radius: 20px;
-    opacity: 0.3;
-}
-
-.resultsList::-webkit-scrollbar-thumb:hover {
-    background-color: var(--foreground);
-    opacity: 0.5;
-}
 
 .resultsList {
     flex: 1;
