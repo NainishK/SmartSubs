@@ -3,7 +3,7 @@
     position: relative;
     background: var(--card);
     border-radius: 16px;
-    overflow: hidden;
+    /* overflow: hidden; */
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid var(--border);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
@@ -15,6 +15,8 @@
 .card:hover {
     transform: translateY(-4px);
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    z-index: 20;
+    /* Fix dropdown clipping/stacking */
 }
 
 /* Poster Section */
@@ -24,6 +26,8 @@
     aspect-ratio: 2/3;
     background: var(--muted);
     overflow: hidden;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
 }
 
 .posterImage {
@@ -176,35 +180,36 @@
 .statusSelectWrapper {
     flex: 1;
     position: relative;
+    z-index: 20;
+    /* Ensure it stays on top of other actions */
+    /* Wrapper handles positioning */
 }
 
-.statusSelect {
-    width: 100%;
-    padding: 0.6rem 1.6rem 0.6rem 0.8rem;
-    /* Extra right padding for arrow */
-    border: 1px solid var(--border);
-    border-radius: 8px;
+/* Custom Select Override for Card */
+.statusCustomSelect {
     font-size: 0.825rem;
-    /* Slightly smaller font to fit text */
-    color: var(--foreground);
-    background: var(--input-bg);
-    cursor: pointer;
-    transition: all 0.2s;
-    appearance: none;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    min-width: 130px;
 }
 
-.statusSelect:hover {
-    border-color: var(--muted-foreground);
-    background: var(--accent);
+.statusCustomSelect button {
+    padding: 0 0.75rem !important;
+    height: 36px !important;
+    min-height: 36px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
 }
 
-.statusSelect:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+.statusCustomSelect ul {
+    min-width: 150px;
+    padding: 4px;
+    font-size: 0.8rem;
+}
+
+.statusCustomSelect li {
+    padding: 6px 10px;
+    font-size: 0.8rem;
 }
 
 .actionBtn {

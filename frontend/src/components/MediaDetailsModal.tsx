@@ -269,7 +269,7 @@ export default function MediaDetailsModal({
                         <div className={styles.providersSection}>
                             <div className={styles.sectionTitle}>WHERE TO WATCH (STREAMING)</div>
                             {loading ? (
-                                <p style={{ color: '#666', fontSize: '0.9rem' }}>Checking availability...</p>
+                                <p style={{ color: 'var(--muted-foreground)', fontSize: '0.9rem' }}>Checking availability...</p>
                             ) : streamProviders.length > 0 ? (
                                 <div className={styles.providersList}>
                                     {streamProviders.map(p => (

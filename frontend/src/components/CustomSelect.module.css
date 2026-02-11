@@ -5,12 +5,12 @@
 
 .selectButton {
     width: 100%;
-    padding: 0.8rem 1rem;
+    padding: 0.6rem 0.85rem;
     border-radius: 14px;
     border: 1.5px solid var(--border);
     background: var(--input-bg);
     color: var(--foreground);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-family: inherit;
     display: flex;
     justify-content: space-between;
@@ -23,6 +23,12 @@
     /* Ensure button is above hidden input */
 }
 
+.selectButton:hover {
+    background: var(--accent);
+    border-color: var(--muted-foreground);
+    box-shadow: none;
+}
+
 .selectButton:focus {
     outline: none;
     border-color: var(--primary);
@@ -33,6 +39,9 @@
 .selectButton.active {
     border-color: var(--primary);
     background: var(--card);
+    color: var(--primary);
+    /* Highlight text blue */
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
 .placeholder {
@@ -65,11 +74,11 @@
 }
 
 .option {
-    padding: 10px 12px;
+    padding: 8px 10px;
     cursor: pointer;
     border-radius: 8px;
     color: var(--foreground);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     transition: background-color 0.2s;
 }
 
