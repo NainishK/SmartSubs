@@ -52,7 +52,7 @@ export default function GenreFilter({ selectedIds, onChange }: GenreFilterProps)
     return (
         <div className={styles.genreFilterContainer} ref={containerRef}>
             <button
-                className={`${styles.genreFilterBtn} ${selectedIds.length > 0 ? styles.genreFilterActive : ''}`}
+                className={`${styles.genreFilterBtn} ${selectedIds.length > 0 ? styles.genreFilterActive : ''} ${isOpen ? styles.genreFilterOpen : ''}`}
                 onClick={() => setIsOpen(!isOpen)}
             >
                 <span className={styles.genreLabel}>{label}</span>
@@ -61,7 +61,14 @@ export default function GenreFilter({ selectedIds, onChange }: GenreFilterProps)
                         <X size={12} />
                     </div>
                 ) : (
-                    <ChevronDown size={14} className={styles.genreChevron} />
+                    <ChevronDown
+                        size={14}
+                        className={styles.genreChevron}
+                        style={{
+                            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s ease'
+                        }}
+                    />
                 )}
             </button>
 

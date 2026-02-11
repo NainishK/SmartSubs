@@ -201,84 +201,53 @@
     align-items: center;
 }
 
-/* Standard Control Select */
-.controlSelect {
+/* Custom Select Wrappers */
+.customSelectWrapper {
+    min-width: 140px;
     height: 2.125rem;
-    /* 34px */
-    padding: 0 1.5rem 0 0.5rem;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    font-size: 0.85rem;
-    background: var(--input-bg);
-    color: var(--foreground);
-    font-family: inherit;
-    cursor: pointer;
-    min-width: 100px;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-    background-position: right 0.25rem center;
-    background-repeat: no-repeat;
-    background-size: 1.1em 1.1em;
-    display: flex;
-    align-items: center;
+    z-index: 20;
 }
 
-.controlSelect:focus {
-    outline: none;
-    border-color: var(--primary);
-}
-
-/* Fused Sort Group */
-.sortGroup {
-    display: flex;
-    align-items: center;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow: hidden;
-    background: var(--input-bg);
-    height: 2.125rem;
-    /* 34px */
-}
-
-/* Fused children overrides */
-.sortGroup .controlSelect {
-    border: none;
-    border-radius: 0;
-    margin: 0;
-    box-shadow: none;
+.customSelectWrapper button {
     height: 100%;
-    min-height: auto;
+    padding: 0 0.75rem !important;
+    /* Force fit */
     font-size: 0.85rem;
-    background: transparent;
-    color: var(--foreground);
+    border-radius: 6px !important;
 }
 
-.sortGroup .controlSelect:focus {
-    outline: none;
-    box-shadow: none;
-    background-color: var(--accent);
+/* Fused Sort Group - REMOVED, using standalone components now */
+/* .sortGroup { ... } */
+
+.sortSelectWrapper {
+    min-width: 140px;
+    /* Match others */
+    height: 100%;
 }
 
+/* Standalone Sort Direction Button */
 .sortDirectionBtn {
     background: var(--input-bg);
-    border: none;
-    border-left: 1px solid var(--border);
-    border-radius: 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    /* Standalone rounded */
     padding: 0 0.5rem;
-    height: 100%;
-    min-height: auto;
+    height: 2.125rem;
+    /* Match input height */
     cursor: pointer;
     color: var(--muted-foreground);
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
-    min-width: 32px;
+    min-width: 36px;
+    /* Slightly wider */
 }
 
 .sortDirectionBtn:hover {
     background: var(--accent);
     color: var(--foreground);
+    border-color: var(--muted-foreground);
 }
 
 /* Actions Group */
@@ -362,10 +331,14 @@
     border-color: var(--muted-foreground);
 }
 
-.genreFilterActive {
+.genreFilterActive,
+.genreFilterOpen,
+.genreFilterActive:hover,
+.genreFilterOpen:hover {
     border-color: var(--primary);
-    background: rgba(37, 99, 235, 0.1);
+    background: var(--card);
     color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
 .genreLabel {

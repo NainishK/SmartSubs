@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import styles from './MediaCard.module.css';
-import { Trash2, Plus, Check, Star, Tv, Film, Sparkles, ChevronDown, Calendar } from 'lucide-react';
+import { Trash2, Plus, Check, Star, Tv, Film, Sparkles, Calendar } from 'lucide-react';
 import StarRating from './StarRating';
 import MediaDetailsModal from './MediaDetailsModal';
+import CustomSelect from '@/components/CustomSelect';
 import { GENRES } from '@/lib/genres';
 
 export interface MediaItem {
@@ -131,8 +132,7 @@ export default function MediaCard({
         }
     };
 
-    const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const newStatus = e.target.value;
+    const handleStatusChange = async (newStatus: string) => {
         setStatus(newStatus);
 
         if (dbId) {
@@ -303,20 +303,20 @@ export default function MediaCard({
 
                     {/* Actions */}
                     <div className={styles.actions}>
-                        <div className={styles.statusSelectWrapper}>
-                            <select
+                        <div className={styles.statusSelectWrapper} onClick={(e) => e.stopPropagation()}>
+                            <CustomSelect
                                 value={status}
-                                onChange={handleStatusChange}
-                                className={styles.statusSelect}
+                                options={[
+                                    { value: 'plan_to_watch', label: 'Plan to Watch' },
+                                    { value: 'watching', label: 'Watching' },
+                                    { value: 'paused', label: 'Paused' },
+                                    { value: 'dropped', label: 'Dropped' },
+                                    { value: 'watched', label: 'Watched' }
+                                ]}
+                                onChange={(val) => handleStatusChange(val as string)}
                                 disabled={added || (existingStatus !== undefined && !onStatusChange)}
-                            >
-                                <option value="plan_to_watch">Plan to Watch</option>
-                                <option value="watching">Watching</option>
-                                <option value="paused">Paused</option>
-                                <option value="dropped">Dropped</option>
-                                <option value="watched">Watched</option>
-                            </select>
-                            <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#6b7280' }} />
+                                className={styles.statusCustomSelect}
+                            />
                         </div>
 
                         {onRemove ? (

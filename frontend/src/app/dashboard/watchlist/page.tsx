@@ -9,6 +9,7 @@ import AddMediaModal from '@/components/AddMediaModal';
 import { Plus, Search, Clapperboard, CalendarClock, CheckCircle, LayoutGrid, List, Layers, ArrowUp, ArrowDown, PauseCircle, XCircle, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import styles from './watchlist.module.css';
 import GenreFilter from './GenreFilter';
+import CustomSelect from '@/components/CustomSelect';
 
 export default function WatchlistPage() {
     const router = useRouter();
@@ -340,58 +341,56 @@ export default function WatchlistPage() {
                 )}
 
                 <div className={`${styles.controls} ${isMobile && !showMobileFilters ? styles.controlsHidden : (isMobile ? styles.controlsExpanded : '')}`}>
-                    <select
+                    <CustomSelect
                         value={typeFilter}
-                        onChange={(e) => setTypeFilter(e.target.value as any)}
-                        className={styles.controlSelect}
-                        style={{ minWidth: '120px' }}
-                    >
-                        <option value="all">All Types</option>
-                        <option value="movie">Movies</option>
-                        <option value="tv">TV Shows</option>
-                    </select>
+                        options={[
+                            { value: 'all', label: 'All Types' },
+                            { value: 'movie', label: 'Movies' },
+                            { value: 'tv', label: 'TV Shows' }
+                        ]}
+                        onChange={(val) => setTypeFilter(val as any)}
+                        className={styles.customSelectWrapper}
+                    />
 
-                    <select
+                    <CustomSelect
                         value={providerFilter}
-                        onChange={(e) => setProviderFilter(e.target.value)}
-                        className={styles.controlSelect}
-                        style={{ minWidth: '140px' }}
-                    >
-                        <option value="all">All Availability</option>
-                        <option value="available">Available Now (Any)</option>
-                        <option value="unavailable">Not on My Services</option>
-                        {Array.from(new Set(items.map(i => i.available_on).filter(Boolean))).sort().map(p => (
-                            <option key={p} value={p!}>{p}</option>
-                        ))}
-                    </select>
+                        options={[
+                            { value: 'all', label: 'All Availability' },
+                            { value: 'available', label: 'Available Now' },
+                            { value: 'unavailable', label: 'Not on My Services' },
+                            ...Array.from(new Set(items.map(i => i.available_on).filter(Boolean))).sort().map(p => ({
+                                value: p!, label: p!
+                            }))
+                        ]}
+                        onChange={(val) => setProviderFilter(val as string)}
+                        className={styles.customSelectWrapper}
+                    />
 
                     <GenreFilter
                         selectedIds={selectedGenres}
                         onChange={setSelectedGenres}
                     />
 
-                    <div className={styles.sortGroup}>
-                        <select
-                            value={sortField}
-                            onChange={(e) => setSortField(e.target.value as any)}
-                            className={styles.controlSelect}
-                            style={{ minWidth: '130px' }}
-                        >
-                            <option value="date_added">Date Added</option>
-                            <option value="rating">Rating</option>
-                            <option value="title">Title</option>
-                        </select>
-                        <button
-                            className={styles.sortDirectionBtn}
-                            onClick={toggleSortOrder}
-                            title={sortOrder === 'asc' ? "Ascending (Oldest/Low/A-Z)" : "Descending (Newest/High/Z-A)"}
-                        >
-                            {sortOrder === 'asc' ?
-                                <ArrowUp size={18} style={{ color: '#0070f3' }} /> :
-                                <ArrowDown size={18} style={{ color: '#0070f3' }} />
-                            }
-                        </button>
-                    </div>
+                    <CustomSelect
+                        value={sortField}
+                        options={[
+                            { value: 'date_added', label: 'Date Added' },
+                            { value: 'rating', label: 'Rating' },
+                            { value: 'title', label: 'Title' }
+                        ]}
+                        onChange={(val) => setSortField(val as any)}
+                        className={styles.customSelectWrapper}
+                    />
+                    <button
+                        className={styles.sortDirectionBtn}
+                        onClick={toggleSortOrder}
+                        title={sortOrder === 'asc' ? "Ascending (Oldest/Low/A-Z)" : "Descending (Newest/High/Z-A)"}
+                    >
+                        {sortOrder === 'asc' ?
+                            <ArrowUp size={18} style={{ color: '#0070f3' }} /> :
+                            <ArrowDown size={18} style={{ color: '#0070f3' }} />
+                        }
+                    </button>
                 </div>
 
                 <div className={styles.actionGroup}>

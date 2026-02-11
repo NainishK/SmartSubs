@@ -16,6 +16,7 @@ interface CustomSelectProps {
     placeholder?: string;
     disabled?: boolean;
     required?: boolean;
+    className?: string;
 }
 
 export default function CustomSelect({
@@ -24,7 +25,8 @@ export default function CustomSelect({
     onChange,
     placeholder = 'Select an option',
     disabled = false,
-    required = false
+    required = false,
+    className = ''
 }: CustomSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -49,7 +51,7 @@ export default function CustomSelect({
     };
 
     return (
-        <div className={styles.selectContainer} ref={containerRef}>
+        <div className={`${styles.selectContainer} ${className}`} ref={containerRef}>
             <button
                 type="button"
                 className={`${styles.selectButton} ${isOpen ? styles.active : ''}`}
