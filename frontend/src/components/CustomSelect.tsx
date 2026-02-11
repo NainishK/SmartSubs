@@ -80,14 +80,29 @@ export default function CustomSelect({
                 </ul>
             )}
 
-            {/* Hidden input for form validation compatibility if needed */}
+            {/* Hidden input for form validation compatibility */}
             {required && (
                 <input
                     type="text"
                     value={String(value || '')}
                     required={required}
-                    style={{ position: 'absolute', opacity: 0, height: 0, padding: 0 }}
+                    style={{
+                        position: 'absolute',
+                        opacity: 0,
+                        width: '1px',
+                        height: '1px',
+                        bottom: 0,
+                        left: 0,
+                        zIndex: -1,
+                        pointerEvents: 'none',
+                        clip: 'rect(0, 0, 0, 0)'
+                    }}
                     readOnly
+                    autoComplete="off"
+                    tabIndex={-1}
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    aria-hidden="true"
                 />
             )}
         </div>

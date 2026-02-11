@@ -8,7 +8,7 @@
     padding: 0.8rem 1rem;
     border-radius: 14px;
     border: 1.5px solid var(--border);
-    background: var(--background);
+    background: var(--input-bg);
     color: var(--foreground);
     font-size: 0.95rem;
     font-family: inherit;
@@ -18,6 +18,9 @@
     cursor: pointer;
     transition: border-color 0.3s, box-shadow 0.3s;
     text-align: left;
+    position: relative;
+    z-index: 1;
+    /* Ensure button is above hidden input */
 }
 
 .selectButton:focus {

@@ -332,7 +332,7 @@
     border: 1.5px solid var(--border);
     font-size: 0.95rem;
     transition: border-color 0.3s, box-shadow 0.3s;
-    background: var(--background);
+    background: var(--input-bg);
     color: var(--foreground);
     width: 100%;
     font-family: inherit;
