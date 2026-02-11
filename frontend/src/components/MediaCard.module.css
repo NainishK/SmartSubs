@@ -182,12 +182,12 @@
     width: 100%;
     padding: 0.6rem 1.6rem 0.6rem 0.8rem;
     /* Extra right padding for arrow */
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border);
     border-radius: 8px;
     font-size: 0.825rem;
     /* Slightly smaller font to fit text */
-    color: #374151;
-    background: #f9fafb;
+    color: var(--foreground);
+    background: var(--input-bg);
     cursor: pointer;
     transition: all 0.2s;
     appearance: none;
@@ -197,13 +197,13 @@
 }
 
 .statusSelect:hover {
-    border-color: #d1d5db;
-    background: #f3f4f6;
+    border-color: var(--muted-foreground);
+    background: var(--accent);
 }
 
 .statusSelect:focus {
     outline: none;
-    border-color: #3b82f6;
+    border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
@@ -241,13 +241,16 @@
 }
 
 .btnRemove {
-    background: #fee2e2;
+    background: rgba(239, 68, 68, 0.1);
+    /* Red-500 with opacity */
     color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .btnRemove:hover {
-    background: #fecaca;
+    background: rgba(239, 68, 68, 0.2);
     color: #dc2626;
+    border-color: rgba(239, 68, 68, 0.4);
 }
 
 .toggleBtn {
@@ -273,12 +276,12 @@
     position: absolute;
     bottom: 12px;
     left: 12px;
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--card);
     padding: 4px 10px;
     border-radius: 20px;
     font-size: 0.75rem;
     font-weight: 700;
-    color: #111827;
+    color: var(--card-foreground);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     display: flex;
     align-items: center;
@@ -370,16 +373,16 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    background: #fffbeb;
-    /* Amber-50 */
+    background: rgba(251, 191, 36, 0.1);
+    /* Amber-50 equivalent */
     padding: 2px 8px;
     border-radius: 12px;
 }
 
 .metaRatingText {
     font-weight: 700;
-    color: #b45309;
-    /* Amber-700 */
+    color: #f59e0b;
+    /* Amber-500 optimized for dark */
     font-size: 0.8rem;
 }
 
@@ -399,25 +402,26 @@
 /* Specific Child Styles */
 .metaGenre {
     font-weight: 500;
-    color: #475569;
+    color: var(--muted-foreground);
 }
 
 .metaDate {
     /* display: flex; REMOVED to allow Grid View override */
     align-items: center;
-    color: #94a3b8;
+    color: var(--muted-foreground);
+    opacity: 0.8;
 }
 
 .metaDivider {
-    color: #cbd5e1;
+    color: var(--border);
 }
 
 .metaProvider {
     /* display: flex; REMOVED */
     align-items: center;
-    color: #374151;
+    color: var(--foreground);
     font-weight: 600;
-    background: #f3f4f6;
+    background: var(--accent);
     padding: 2px 8px;
     border-radius: 6px;
     font-size: 0.75rem;
@@ -426,8 +430,8 @@
 .metaProgress {
     font-size: 0.75rem;
     font-weight: 600;
-    color: #4b5563;
-    background: #f3f4f6;
+    color: var(--foreground);
+    background: var(--accent);
     padding: 2px 6px;
     border-radius: 4px;
 }

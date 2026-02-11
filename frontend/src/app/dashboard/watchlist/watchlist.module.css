@@ -177,20 +177,20 @@
     /* 34px */
     padding: 0 0.75rem 0 2rem;
     /* Adjusted padding */
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--border);
     border-radius: 6px;
     /* Slightly tighter radius */
     font-size: 0.85rem;
     /* Slightly smaller font */
     font-family: inherit;
-    background: white;
-    color: #0f172a;
+    background: var(--input-bg);
+    color: var(--foreground);
     transition: all 0.2s;
 }
 
 .searchInput:focus {
     outline: none;
-    border-color: #3b82f6;
+    border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
@@ -206,11 +206,11 @@
     height: 2.125rem;
     /* 34px */
     padding: 0 1.5rem 0 0.5rem;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--border);
     border-radius: 6px;
     font-size: 0.85rem;
-    background: white;
-    color: #0f172a;
+    background: var(--input-bg);
+    color: var(--foreground);
     font-family: inherit;
     cursor: pointer;
     min-width: 100px;
@@ -225,17 +225,17 @@
 
 .controlSelect:focus {
     outline: none;
-    border-color: #3b82f6;
+    border-color: var(--primary);
 }
 
 /* Fused Sort Group */
 .sortGroup {
     display: flex;
     align-items: center;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--border);
     border-radius: 6px;
     overflow: hidden;
-    background: white;
+    background: var(--input-bg);
     height: 2.125rem;
     /* 34px */
 }
@@ -249,24 +249,26 @@
     height: 100%;
     min-height: auto;
     font-size: 0.85rem;
+    background: transparent;
+    color: var(--foreground);
 }
 
 .sortGroup .controlSelect:focus {
     outline: none;
     box-shadow: none;
-    background-color: #f8fafc;
+    background-color: var(--accent);
 }
 
 .sortDirectionBtn {
-    background: white;
+    background: var(--input-bg);
     border: none;
-    border-left: 1px solid #cbd5e1;
+    border-left: 1px solid var(--border);
     border-radius: 0;
     padding: 0 0.5rem;
     height: 100%;
     min-height: auto;
     cursor: pointer;
-    color: #64748b;
+    color: var(--muted-foreground);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -275,15 +277,15 @@
 }
 
 .sortDirectionBtn:hover {
-    background: #f1f5f9;
-    color: #0f172a;
+    background: var(--accent);
+    color: var(--foreground);
 }
 
 /* Actions Group */
 .actionGroup {
     display: flex;
     gap: 0.5rem;
-    border-left: 1px solid #e2e8f0;
+    border-left: 1px solid var(--border);
     padding-left: 0.5rem;
     margin-left: auto;
     align-items: center;
@@ -293,10 +295,10 @@
 
 .viewToggle {
     display: flex;
-    background: white;
+    background: var(--input-bg);
     padding: 2px;
     border-radius: 6px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--border);
     gap: 2px;
     height: 2.125rem;
     /* 34px */
@@ -309,7 +311,7 @@
     padding: 0 6px;
     height: 100%;
     border-radius: 4px;
-    color: #64748b;
+    color: var(--muted-foreground);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -318,14 +320,15 @@
 }
 
 .toggleBtn:hover {
-    color: #0f172a;
-    background: #f1f5f9;
+    color: var(--foreground);
+    background: var(--accent);
 }
 
 .activeToggle {
-    background: #e2e8f0;
-    color: #0f172a;
+    background: var(--card);
+    color: var(--foreground);
     font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 
@@ -339,15 +342,15 @@
 .genreFilterBtn {
     height: 100%;
     padding: 0 0.75rem;
-    background: white;
-    border: 1px solid #cbd5e1;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
     border-radius: 6px;
     display: flex;
     align-items: center;
     gap: 0.5rem;
     cursor: pointer;
     font-size: 0.85rem;
-    color: #0f172a;
+    color: var(--foreground);
     transition: all 0.2s;
     min-width: 100px;
     justify-content: space-between;
@@ -355,14 +358,14 @@
 }
 
 .genreFilterBtn:hover {
-    background: #f8fafc;
-    border-color: #94a3b8;
+    background: var(--accent);
+    border-color: var(--muted-foreground);
 }
 
 .genreFilterActive {
-    border-color: #0070f3;
-    background: #f0f7ff;
-    color: #0070f3;
+    border-color: var(--primary);
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--primary);
 }
 
 .genreLabel {
@@ -373,12 +376,12 @@
 }
 
 .genreChevron {
-    color: #64748b;
+    color: var(--muted-foreground);
 }
 
 .clearBadge {
-    background: rgba(0, 112, 243, 0.1);
-    color: #0070f3;
+    background: rgba(37, 99, 235, 0.2);
+    color: var(--primary);
     border-radius: 50%;
     width: 16px;
     height: 16px;
@@ -389,7 +392,7 @@
 }
 
 .clearBadge:hover {
-    background: #0070f3;
+    background: var(--primary);
     color: white;
 }
 
@@ -399,10 +402,10 @@
     left: 0;
     width: 200px;
     max-height: 300px;
-    background: white;
-    border: 1px solid #e2e8f0;
+    background: var(--card);
+    border: 1px solid var(--border);
     border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     overflow-y: auto;
     z-index: 50;
     padding: 0.25rem;
@@ -418,7 +421,7 @@
 }
 
 .genreDropdown::-webkit-scrollbar-thumb {
-    background-color: #cbd5e1;
+    background-color: var(--muted-foreground);
     border-radius: 20px;
 }
 
@@ -431,35 +434,35 @@
     border-radius: 6px;
     transition: all 0.1s;
     font-size: 0.85rem;
-    color: #334155;
+    color: var(--foreground);
 }
 
 .genreOption:hover {
-    background: #f1f5f9;
+    background: var(--accent);
 }
 
 .selectedOption {
-    background: #f0f7ff;
-    color: #0070f3;
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--primary);
     font-weight: 500;
 }
 
 .checkbox {
     width: 16px;
     height: 16px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--muted-foreground);
     border-radius: 4px;
     /* Soft square */
     display: flex;
     align-items: center;
     justify-content: center;
-    background: white;
+    background: var(--card);
     transition: all 0.2s;
 }
 
 .selectedOption .checkbox {
-    background: #0070f3;
-    border-color: #0070f3;
+    background: var(--primary);
+    border-color: var(--primary);
 }
 
 /* Add Button */
