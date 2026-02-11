@@ -4,34 +4,15 @@ import { useEffect, useState, useRef } from 'react';
 import api from '@/lib/api';
 import styles from './subscriptions.module.css';
 import { Subscription, Service, Plan } from '@/lib/types';
-import { Trash2, Plus, Calendar, DollarSign, Tag, X, Edit2 } from 'lucide-react';
+import { Plus, Loader2, Search, Filter, Edit2, Trash2, Calendar, FileText, DollarSign } from 'lucide-react';
 import { useRecommendations } from '@/context/RecommendationsContext';
 import { formatCurrency, getCurrencySymbol } from '@/lib/currency';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { ServiceIcon } from '@/components/ServiceIcon';
+import CustomSelect from '@/components/CustomSelect';
 
-const SERVICE_DOMAINS: Record<string, string> = {
-    'Netflix': 'netflix.com',
-    'Amazon Prime Video': 'primevideo.com',
-    'Disney Plus': 'disneyplus.com',
-    'Spotify': 'spotify.com',
-    'Hulu': 'hulu.com',
-    'Max': 'max.com',
-    'Apple TV+': 'apple.com',
-    'YouTube Premium': 'youtube.com',
-    'Peacock': 'peacocktv.com',
-    'Paramount+': 'paramountplus.com',
-    'FanCode': 'fancode.com'
-};
 
-const getServiceLogo = (name: string) => {
-    const domain = SERVICE_DOMAINS[name];
-    if (domain) {
-        return `https://www.google.com/s2/favicons?sz=128&domain=${domain}`;
-    }
-    const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-    return `https://www.google.com/s2/favicons?sz=128&domain=${slug}.com`;
-};
 
 export default function SubscriptionsPage() {
     const { refreshRecommendations } = useRecommendations();
@@ -256,31 +237,7 @@ export default function SubscriptionsPage() {
         }
     };
 
-    // Service Icon Helper
-    const ServiceIcon = ({ name, logoUrl: propLogoUrl }: { name: string, logoUrl?: string }) => {
-        const [error, setError] = useState(false);
-        const logoUrl = propLogoUrl || getServiceLogo(name);
 
-        if (error || !logoUrl) {
-            const stringToColor = (str: string) => {
-                let hash = 0;
-                for (let i = 0; i < str.length; i++) {
-                    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-                }
-                const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
-                return '#' + '00000'.substring(0, 6 - c.length) + c;
-            };
-            return (
-                <div className={styles.fallbackLogo} style={{ backgroundColor: stringToColor(name) }}>
-                    {name.charAt(0).toUpperCase()}
-                </div>
-            );
-        }
-
-        return (
-            <img src={logoUrl} alt={name} className={styles.serviceLogo} onError={() => setError(true)} />
-        );
-    };
 
     if (loading) return <div className={styles.loading}>Loading your subscriptions...</div>;
 
@@ -363,7 +320,12 @@ export default function SubscriptionsPage() {
                                                             <div key={sub.id} className={styles.subCard}>
                                                                 <div className={styles.subHeader}>
                                                                     <div className={styles.serviceIdentity}>
-                                                                        <ServiceIcon name={sub.service_name} logoUrl={sub.logo_url} />
+                                                                        <ServiceIcon
+                                                                            name={sub.service_name}
+                                                                            logoUrl={sub.logo_url}
+                                                                            className={styles.serviceLogo}
+                                                                            fallbackClassName={styles.fallbackLogo}
+                                                                        />
                                                                         <h3 className={styles.serviceName}>{sub.service_name}</h3>
                                                                     </div>
                                                                     <span className={styles.statusBadge}>Active</span>
@@ -413,39 +375,36 @@ export default function SubscriptionsPage() {
                             <form onSubmit={handleFormSubmit} className={styles.form}>
                                 <div className={styles.field}>
                                     <label>Category</label>
-                                    <select
+                                    <CustomSelect
                                         value={newSub.category}
-                                        onChange={(e) => {
-                                            setNewSub({ ...newSub, category: e.target.value, service_name: '' });
+                                        onChange={(val) => {
+                                            setNewSub({ ...newSub, category: val as string, service_name: '' });
                                             setSelectedServiceId('');
                                             setPlans([]);
                                         }}
+                                        options={[
+                                            { value: 'OTT', label: 'Streaming (OTT)' },
+                                            { value: 'OTHER', label: 'Other Service' }
+                                        ]}
                                         required
-                                        className={styles.input}
-                                    >
-                                        <option value="OTT">Streaming (OTT)</option>
-                                        <option value="OTHER">Other Service</option>
-                                    </select>
+                                    />
                                 </div>
 
                                 <div className={styles.field}>
                                     <label>Service</label>
-                                    <select
+                                    <CustomSelect
                                         value={selectedServiceId}
-                                        onChange={(e) => setSelectedServiceId(e.target.value === 'custom' ? 'custom' : Number(e.target.value))}
+                                        onChange={(val) => setSelectedServiceId(val === 'custom' ? 'custom' : Number(val))}
+                                        options={[
+                                            ...services
+                                                .filter(s => (s.category || 'OTT') === newSub.category)
+                                                .map(service => ({ value: service.id, label: service.name })),
+                                            { value: 'custom', label: 'Other (Custom)' }
+                                        ]}
+                                        placeholder="Select a service"
+                                        disabled={isEditing}
                                         required
-                                        className={styles.input}
-                                        disabled={isEditing} // Prevent changing service name when editing for consistency
-                                    >
-                                        <option value="">Select a service</option>
-                                        {services
-                                            .filter(s => (s.category || 'OTT') === newSub.category)
-                                            .map(service => (
-                                                <option key={service.id} value={service.id}>{service.name}</option>
-                                            ))
-                                        }
-                                        <option value="custom">Other (Custom)</option>
-                                    </select>
+                                    />
                                 </div>
 
                                 {selectedServiceId === 'custom' && (
@@ -466,16 +425,15 @@ export default function SubscriptionsPage() {
                                 {plans.length > 0 && selectedServiceId !== 'custom' && (
                                     <div className={styles.field}>
                                         <label>Plan</label>
-                                        <select
-                                            value={selectedPlanId}
-                                            onChange={(e) => setSelectedPlanId(Number(e.target.value))}
-                                            className={styles.input}
-                                        >
-                                            <option value="">Select a plan</option>
-                                            {plans.map(plan => (
-                                                <option key={plan.id} value={plan.id}>{plan.name} - {formatCurrency(plan.cost, userCountry)}</option>
-                                            ))}
-                                        </select>
+                                        <CustomSelect
+                                            value={selectedPlanId || ''}
+                                            onChange={(val) => setSelectedPlanId(Number(val))}
+                                            options={plans.map(plan => ({
+                                                value: plan.id,
+                                                label: `${plan.name} - ${formatCurrency(plan.cost, userCountry)}`
+                                            }))}
+                                            placeholder="Select a plan"
+                                        />
                                     </div>
                                 )}
 
@@ -497,14 +455,15 @@ export default function SubscriptionsPage() {
 
                                 <div className={styles.field}>
                                     <label>Billing Cycle</label>
-                                    <select
+                                    <CustomSelect
                                         value={newSub.billing_cycle}
-                                        onChange={(e) => setNewSub({ ...newSub, billing_cycle: e.target.value })}
-                                        className={styles.input}
-                                    >
-                                        <option value="monthly">Monthly</option>
-                                        <option value="yearly">Yearly</option>
-                                    </select>
+                                        onChange={(val) => setNewSub({ ...newSub, billing_cycle: val as string })}
+                                        options={[
+                                            { value: 'monthly', label: 'Monthly' },
+                                            { value: 'yearly', label: 'Yearly' }
+                                        ]}
+                                        required
+                                    />
                                 </div>
 
                                 <div className={styles.field}>

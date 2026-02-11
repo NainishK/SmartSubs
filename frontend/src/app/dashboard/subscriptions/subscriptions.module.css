@@ -164,7 +164,7 @@
     margin: 0;
     font-size: 1.1rem;
     font-weight: 700;
-    color: #111;
+    color: var(--card-foreground);
 }
 
 .statusBadge {
@@ -173,9 +173,10 @@
     text-transform: uppercase;
     padding: 4px 8px;
     border-radius: 6px;
-    background: #f0f7ff;
-    color: #0070f3;
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary);
     letter-spacing: 0.5px;
+    border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
 .subBody {
@@ -189,13 +190,13 @@
 .costValue {
     font-size: 1.75rem;
     font-weight: 800;
-    color: #111;
+    color: var(--card-foreground);
     margin: 0;
 }
 
 .billingPeriod {
     font-size: 0.85rem;
-    color: #888;
+    color: var(--muted-foreground);
     text-transform: capitalize;
 }
 
@@ -209,7 +210,7 @@
     display: flex;
     justify-content: space-between;
     font-size: 0.85rem;
-    color: #666;
+    color: var(--muted-foreground);
 }
 
 .detailLabel {
@@ -218,7 +219,7 @@
 
 .detailValue {
     font-weight: 600;
-    color: #333;
+    color: var(--foreground);
 }
 
 .subFooter {
@@ -285,10 +286,10 @@
 
 /* Add Subscription Section */
 .addSection {
-    background: #ffffff;
+    background: var(--card);
     padding: 2.5rem 2rem;
     border-radius: 20px;
-    border: 1px solid rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--border);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.02), 0 2px 4px rgba(0, 0, 0, 0.01);
     position: sticky;
     top: 2.5rem;
@@ -298,7 +299,7 @@
     font-size: 1.4rem;
     font-weight: 700;
     margin-bottom: 2rem;
-    color: #111;
+    color: var(--card-foreground);
     letter-spacing: -0.02em;
 }
 
@@ -317,7 +318,7 @@
 .field label {
     font-size: 0.75rem;
     font-weight: 600;
-    color: #4a5568;
+    color: var(--muted-foreground);
     /* Slightly darker for readability */
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -328,11 +329,11 @@
 .inputWithIcon {
     padding: 0.8rem 1rem;
     border-radius: 14px;
-    border: 1.5px solid #edf2f7;
+    border: 1.5px solid var(--border);
     font-size: 0.95rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: #fcfdfe;
-    color: #1a202c;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    background: var(--background);
+    color: var(--foreground);
     width: 100%;
     font-family: inherit;
 }
@@ -362,7 +363,7 @@
     left: 14px;
     top: 50%;
     transform: translateY(-50%);
-    color: #4a5568;
+    color: var(--muted-foreground);
     font-weight: 600;
     font-size: 1.1rem;
     pointer-events: none;
@@ -444,9 +445,9 @@ select.input {
 .input:focus,
 .inputWithIcon:focus {
     outline: none;
-    border-color: #3182ce;
-    background: #ffffff;
-    box-shadow: 0 0 0 4px rgba(49, 130, 206, 0.1);
+    border-color: var(--primary);
+    background: var(--card);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
 .input:focus+.currencySymbol,
@@ -461,7 +462,7 @@ select.input {
 
 .input:hover:not(:focus),
 .inputWithIcon:hover:not(:focus) {
-    border-color: #cbd5e0;
+    border-color: var(--muted-foreground);
 }
 
 .button {
@@ -763,7 +764,41 @@ select.input {
 :global(.react-datepicker__year-option:hover),
 :global(.react-datepicker__month-option:hover),
 :global(.react-datepicker__month-year-option:hover) {
-    background-color: #f1f5f9 !important;
+    background-color: var(--border) !important;
+}
+
+/* Dark Mode Datepicker */
+:global(.dark) :global(.react-datepicker),
+:global([data-theme='dark']) :global(.react-datepicker) {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+}
+
+:global(.dark) :global(.react-datepicker__header),
+:global([data-theme='dark']) :global(.react-datepicker__header) {
+    background-color: var(--card) !important;
+    border-color: var(--border) !important;
+}
+
+:global(.dark) :global(.react-datepicker__current-month),
+:global([data-theme='dark']) :global(.react-datepicker__current-month) {
+    color: var(--foreground) !important;
+}
+
+:global(.dark) :global(.react-datepicker__day-name),
+:global([data-theme='dark']) :global(.react-datepicker__day-name) {
+    color: var(--muted-foreground) !important;
+}
+
+:global(.dark) :global(.react-datepicker__day),
+:global([data-theme='dark']) :global(.react-datepicker__day) {
+    color: var(--foreground) !important;
+}
+
+:global(.dark) :global(.react-datepicker__day:hover),
+:global([data-theme='dark']) :global(.react-datepicker__day:hover) {
+    background-color: var(--accent) !important;
+    color: var(--foreground) !important;
 }
 
 /* Hide default scrollbar for dropdowns */
@@ -786,17 +821,95 @@ select.input {
 :global(.react-datepicker__year-select) {
     padding: 4px 8px;
     border-radius: 6px;
-    border: 1px solid #e2e8f0;
-    background-color: white;
-    color: #475569;
+    border: 1px solid var(--border);
+    background-color: var(--card);
+    color: var(--foreground);
     font-weight: 500;
     margin: 0 4px;
     cursor: pointer;
+    margin: 0 4px;
+    cursor: pointer;
     outline: none;
+    color-scheme: light dark;
+    /* Ensures native dropdowns respect theme */
+}
+
+:global(.react-datepicker__month-select) option,
+:global(.react-datepicker__year-select) option {
+    background-color: var(--card);
+    color: var(--foreground);
 }
 
 :global(.react-datepicker__year-select:focus) {
-    border-color: #0070f3;
+    border-color: var(--primary);
+}
+
+/* Custom Dropdown Triggers (The visible text "January" / "2026") */
+:global(.react-datepicker__header__dropdown) {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+:global(.react-datepicker__month-read-view),
+:global(.react-datepicker__year-read-view),
+:global(.react-datepicker__month-year-read-view) {
+    color: var(--foreground) !important;
+    background-color: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 6px;
+    padding: 4px 8px;
+    visibility: visible !important;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+:global(.react-datepicker__month-read-view--down-arrow),
+:global(.react-datepicker__year-read-view--down-arrow),
+:global(.react-datepicker__month-year-read-view--down-arrow) {
+    border-color: var(--muted-foreground) !important;
+    margin-top: -2px;
+}
+
+/* The actual Dropdown Container (The list that pops up) */
+:global(.react-datepicker__month-dropdown),
+:global(.react-datepicker__year-dropdown),
+:global(.react-datepicker__month-year-dropdown) {
+    background-color: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--foreground) !important;
+    width: auto !important;
+    min-width: 100px;
+    z-index: 100 !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Individual Options in the Dropdown */
+:global(.react-datepicker__month-option),
+:global(.react-datepicker__year-option),
+:global(.react-datepicker__month-year-option) {
+    background-color: var(--card) !important;
+    color: var(--muted-foreground) !important;
+    padding: 8px 12px !important;
+    transition: none !important;
+    /* Kill flashing */
+}
+
+:global(.react-datepicker__month-option:hover),
+:global(.react-datepicker__year-option:hover),
+:global(.react-datepicker__month-year-option:hover) {
+    background-color: var(--accent) !important;
+    color: var(--foreground) !important;
+}
+
+/* Selected Option */
+:global(.react-datepicker__month-option--selected_month),
+:global(.react-datepicker__year-option--selected_year) {
+    color: var(--primary) !important;
+    font-weight: 700;
+    background-color: rgba(59, 130, 246, 0.1) !important;
 }
 
 /* Mobile Typography & Layout Overrides */
@@ -864,4 +977,82 @@ select.input {
     .addSection {
         padding: 1.5rem;
     }
+}
+
+/* =========================================
+   DATEPICKER CUSTOM DROPDOWN FIXES (FINAL)
+   ========================================= */
+
+/* 1. Custom Dropdown Triggers (The visible text "January" / "2026") */
+:global(.react-datepicker__header__dropdown) {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 8px !important;
+}
+
+:global(.react-datepicker__month-read-view),
+:global(.react-datepicker__year-read-view),
+:global(.react-datepicker__month-year-read-view) {
+    color: var(--foreground) !important;
+    background-color: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 6px;
+    padding: 4px 8px;
+    visibility: visible !important;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+:global(.react-datepicker__month-read-view--down-arrow),
+:global(.react-datepicker__year-read-view--down-arrow),
+:global(.react-datepicker__month-year-read-view--down-arrow) {
+    border-color: var(--muted-foreground) !important;
+    margin-top: -2px;
+}
+
+/* 2. The actual Dropdown Container (The list that pops up) */
+:global(.react-datepicker__month-dropdown),
+:global(.react-datepicker__year-dropdown),
+:global(.react-datepicker__month-year-dropdown) {
+    background-color: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--foreground) !important;
+    width: auto !important;
+    min-width: 100px;
+    z-index: 100 !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+    overflow: hidden !important;
+}
+
+/* 3. Individual Options in the Dropdown */
+:global(.react-datepicker__month-option),
+:global(.react-datepicker__year-option),
+:global(.react-datepicker__month-year-option) {
+    background-color: var(--card) !important;
+    color: var(--muted-foreground) !important;
+    padding: 8px 12px !important;
+    transition: none !important;
+    /* Kill flashing */
+}
+
+:global(.react-datepicker__month-option:hover),
+:global(.react-datepicker__year-option:hover),
+:global(.react-datepicker__month-year-option:hover) {
+    background-color: var(--accent) !important;
+    color: var(--foreground) !important;
+}
+
+/* 4. Selected Option */
+:global(.react-datepicker__month-option--selected_month),
+:global(.react-datepicker__year-option--selected_year) {
+    color: var(--primary) !important;
+    font-weight: 700;
+    background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* 5. Kill ALL transitions inside datepicker to prevent white flash */
+:global(.react-datepicker) * {
+    transition: none !important;
 }

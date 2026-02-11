@@ -70,8 +70,9 @@
   --destructive: #7f1d1d;
   --destructive-foreground: #fecaca;
 
-  --border: #30363d;
   /* Subtle contrast border */
+  --border: #222530;
+  /* Darker border to blend better */
   --input: #30363d;
   --ring: #60a5fa;
 }
@@ -123,4 +124,110 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* =========================================
+   DATEPICKER GLOBAL OVERRIDES (THEME FIXES)
+   ========================================= */
+
+/* 1. Custom Dropdown Triggers (The visible text "January" / "2026") */
+.react-datepicker__header__dropdown {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.react-datepicker__month-read-view,
+.react-datepicker__year-read-view,
+.react-datepicker__month-year-read-view {
+  color: var(--foreground) !important;
+  background-color: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 6px;
+  padding: 4px 8px;
+  visibility: visible !important;
+  justify-content: center;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.react-datepicker__month-read-view--down-arrow,
+.react-datepicker__year-read-view--down-arrow,
+.react-datepicker__month-year-read-view--down-arrow {
+  border-color: var(--muted-foreground) !important;
+  margin-top: -2px;
+}
+
+/* 2. The actual Dropdown Container (The list that pops up) */
+.react-datepicker__month-dropdown,
+.react-datepicker__year-dropdown,
+.react-datepicker__month-year-dropdown {
+  background-color: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--foreground) !important;
+  width: auto !important;
+  min-width: 100px;
+  z-index: 9999 !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4) !important;
+  overflow: hidden !important;
+}
+
+/* 3. Individual Options in the Dropdown */
+.react-datepicker__month-option,
+.react-datepicker__year-option,
+.react-datepicker__month-year-option {
+  background-color: var(--card) !important;
+  color: var(--muted-foreground) !important;
+  padding: 8px 12px !important;
+  transition: none !important;
+  /* Kill flashing */
+}
+
+.react-datepicker__month-option:hover,
+.react-datepicker__year-option:hover,
+.react-datepicker__month-year-option:hover {
+  background-color: var(--accent) !important;
+  color: var(--foreground) !important;
+}
+
+/* 4. Selected Option */
+.react-datepicker__month-option--selected_month,
+.react-datepicker__year-option--selected_year {
+  color: var(--primary) !important;
+  font-weight: 700;
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* 5. Kill ALL transitions & animations inside datepicker to prevent white flash */
+.react-datepicker,
+.react-datepicker-popper,
+.react-datepicker * {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* 6. Triangle/Arrow Fix (Prevent White Flash) */
+.react-datepicker__triangle {
+  fill: var(--card) !important;
+  color: var(--card) !important;
+  stroke: var(--border) !important;
+}
+
+.react-datepicker__triangle::before {
+  border-top-color: var(--border) !important;
+  border-bottom-color: var(--border) !important;
+}
+
+.react-datepicker__triangle::after {
+  border-top-color: var(--card) !important;
+  border-bottom-color: var(--card) !important;
+}
+
+/* 7. Native Selects (Just in case) */
+.react-datepicker__month-select,
+.react-datepicker__year-select {
+  background-color: var(--card) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--border) !important;
 }
