@@ -271,7 +271,7 @@ export default function AddMediaModal({ isOpen, onClose, onAddSuccess, existingI
                                         background: 'transparent',
                                         border: 'none',
                                         cursor: 'pointer',
-                                        color: '#9ca3af',
+                                        color: 'var(--muted-foreground)',
                                         display: 'flex',
                                         alignItems: 'center',
                                         padding: 4
@@ -368,7 +368,7 @@ export default function AddMediaModal({ isOpen, onClose, onAddSuccess, existingI
                                                             />
                                                             <button
                                                                 className={styles.dropdownItem}
-                                                                style={{ justifyContent: 'center', fontSize: '0.8rem', color: '#6b7280' }}
+                                                                style={{ justifyContent: 'center', fontSize: '0.8rem', color: 'var(--muted-foreground)' }}
                                                                 onClick={() => executeSave(item, pendingStatus || 'watched', null)}
                                                             >
                                                                 Skip Rating

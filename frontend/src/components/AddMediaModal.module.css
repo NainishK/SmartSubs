@@ -16,7 +16,7 @@
 }
 
 .modal {
-    background-color: white;
+    background-color: var(--card);
     width: 90%;
     max-width: 600px;
     border-radius: 16px;
@@ -27,11 +27,12 @@
     animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
     overflow: hidden;
+    border: 1px solid var(--border);
 }
 
 .header {
     padding: 1.5rem;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -55,14 +56,14 @@
     margin: 0;
     font-size: 1.25rem;
     font-weight: 700;
-    color: #111827;
+    color: var(--foreground);
 }
 
 .closeButton {
     background: none;
     border: none;
     cursor: pointer;
-    color: #6b7280;
+    color: var(--muted-foreground);
     padding: 4px;
     border-radius: 50%;
     display: flex;
@@ -72,8 +73,8 @@
 }
 
 .closeButton:hover {
-    background: #f3f4f6;
-    color: #111827;
+    background: var(--accent);
+    color: var(--foreground);
 }
 
 .searchSection {
@@ -89,7 +90,7 @@
 .searchIcon {
     position: absolute;
     left: 1rem;
-    color: #9ca3af;
+    color: var(--muted-foreground);
     pointer-events: none;
     width: 20px;
     height: 20px;
@@ -98,18 +99,18 @@
 .searchInput {
     width: 100%;
     padding: 1rem 1rem 1rem 3rem;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border);
     border-radius: 12px;
     font-size: 1rem;
-    background: #f9fafb;
-    color: #1a1a1a;
+    background: var(--input-bg);
+    color: var(--foreground);
     transition: all 0.2s;
 }
 
 .searchInput:focus {
     outline: none;
-    border-color: #3b82f6;
-    background: white;
+    border-color: var(--primary);
+    background: var(--card);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
@@ -123,12 +124,14 @@
 }
 
 .resultsList::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.1);
+    background-color: var(--muted-foreground);
     border-radius: 20px;
+    opacity: 0.3;
 }
 
 .resultsList::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: var(--foreground);
+    opacity: 0.5;
 }
 
 .resultsList {
@@ -142,7 +145,7 @@
 
 .noResults {
     text-align: center;
-    color: #6b7280;
+    color: var(--muted-foreground);
     padding: 2rem 0;
     font-style: italic;
 }
@@ -154,8 +157,8 @@
     gap: 0;
     padding: 0;
     border-radius: 12px;
-    background: white;
-    border: 1px solid #f3f4f6;
+    background: var(--card);
+    border: 1px solid var(--border);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
     cursor: pointer;
@@ -165,7 +168,8 @@
 
 /* Remove hover effect from item, now actions are interactive */
 .resultItem:hover {
-    border-color: #e5e7eb;
+    border-color: var(--primary);
+    /* subtle highlight */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
@@ -205,7 +209,7 @@
     width: 60px;
     height: 90px;
     border-radius: 8px;
-    background: #f3f4f6;
+    background: var(--muted);
     object-fit: cover;
     flex-shrink: 0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -223,7 +227,7 @@
 .itemTitle {
     font-size: 1rem;
     font-weight: 600;
-    color: #111827;
+    color: var(--foreground);
     margin: 0;
     line-height: 1.3;
     white-space: nowrap;
@@ -233,7 +237,7 @@
 
 .itemMeta {
     font-size: 0.85rem;
-    color: #6b7280;
+    color: var(--muted-foreground);
     display: flex;
     align-items: center;
     gap: 12px;
@@ -243,13 +247,14 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    color: #b45309;
-    /* Amber-700 */
+    background: rgba(251, 191, 36, 0.1);
+    /* Amber-50 equivalent */
+    color: #f59e0b;
+    /* Amber-500 */
     font-weight: 600;
     font-size: 0.85rem;
-    background: #fef3c7;
-    padding: 2px 6px;
-    border-radius: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
 }
 
 .starIcon {
@@ -261,9 +266,9 @@
 .details {
     padding: 0 1rem 1rem 1rem;
     font-size: 0.9rem;
-    color: #4b5563;
+    color: var(--foreground);
     line-height: 1.5;
-    border-top: 1px solid #f3f4f6;
+    border-top: 1px solid var(--border);
     margin-top: -0.5rem;
     /* pull closer styling */
     padding-top: 1rem;
@@ -272,7 +277,7 @@
 
 .detailsEmpty {
     font-style: italic;
-    color: #9ca3af;
+    color: var(--muted-foreground);
 }
 
 /* Actions */
@@ -332,8 +337,8 @@
     top: 100%;
     right: 0;
     margin-top: 0.5rem;
-    background: white;
-    border: 1px solid #f3f4f6;
+    background: var(--popover);
+    border: 1px solid var(--border);
     border-radius: 12px;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     padding: 0.5rem;
@@ -356,14 +361,14 @@
     border: none;
     border-radius: 8px;
     font-size: 0.9rem;
-    color: #4b5563;
+    color: var(--popover-foreground);
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .dropdownItem:hover {
-    background: #f9fafb;
-    color: #111827;
+    background: var(--accent);
+    color: var(--accent-foreground);
 }
 
 .dropdownLabel {
@@ -374,12 +379,11 @@
 .resultItemActive {
     z-index: 50;
     position: relative;
-    border-color: #d1d5db;
+    border-color: var(--border);
     overflow: visible !important;
     /* Allow dropdown to overflow */
 }
 
-/* Rest of styles matches existing... just adding the Search Button styles */
 .detailsHeader {
     display: flex;
     justify-content: space-between;
@@ -393,9 +397,9 @@
     align-items: center;
     gap: 6px;
     font-size: 0.8rem;
-    color: #2563eb;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
+    color: var(--primary);
+    background: var(--secondary);
+    border: 1px solid var(--border);
     padding: 0.4rem 0.8rem;
     border-radius: 6px;
     cursor: pointer;
@@ -406,13 +410,13 @@
 }
 
 .webSearchBtn:hover {
-    background: #dbeafe;
-    border-color: #93c5fd;
+    background: var(--accent);
+    border-color: var(--primary);
 }
 
 .detailsText {
     font-size: 0.9rem;
-    color: #4b5563;
+    color: var(--foreground);
     line-height: 1.5;
 }
 
@@ -460,6 +464,6 @@
 
 .ratingLabel {
     font-size: 0.9rem;
-    color: #4b5563;
+    color: var(--muted-foreground);
     font-weight: 500;
 }
