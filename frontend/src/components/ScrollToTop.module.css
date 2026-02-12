@@ -40,4 +40,19 @@
         /* Adjust for mobile tab bar */
         right: 1.5rem;
     }
+
+    :global([data-theme='dark']) .scrollToTopBtn {
+        background-color: #151622 !important;
+        /* Matches dark card */
+        border-color: #222530 !important;
+        /* Matches dark border */
+        color: #94a3b8 !important;
+        /* Matches dark muted foreground */
+    }
+
+    :global([data-theme='dark']) .scrollToTopBtn:hover {
+        background-color: #3b82f6 !important;
+        /* Primary Blue */
+        color: #ffffff !important;
+    }
 }

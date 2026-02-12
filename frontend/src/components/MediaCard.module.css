@@ -194,8 +194,8 @@
 
 .statusCustomSelect button {
     width: 100%;
-    padding: 0.6rem 0.8rem;
-    /* Adjusted padding since arrow is custom */
+    padding: 0.6rem 0.5rem;
+    /* Reduced padding to fit 'Plan to Watch' */
     border: 1px solid var(--border);
     border-radius: 8px;
     font-size: 0.825rem;
@@ -216,7 +216,8 @@
     text-overflow: ellipsis;
     flex: 1;
     text-align: left;
-    margin-right: 0.5rem;
+    margin-right: 0.25rem;
+    /* Reduced margin */
 }
 
 .statusCustomSelect button:hover {
@@ -450,20 +451,20 @@
 /* On mobile list view, definitely hide overview to save vertical space */
 @media (max-width: 768px) {
     .overview {
-        -webkit-line-clamp: 2 !important;
-        line-clamp: 2 !important;
+        -webkit-line-clamp: 3 !important;
+        line-clamp: 3 !important;
         /* Standard property */
-        font-size: 0.7rem !important;
-        margin-bottom: 0.5rem !important;
-        line-height: 1.2 !important;
+        font-size: 0.75rem !important;
+        margin-bottom: 0.75rem !important;
+        line-height: 1.4 !important;
         display: -webkit-box !important;
         -webkit-box-orient: vertical !important;
         overflow: hidden !important;
     }
 
     .content {
-        padding: 0.5rem !important;
-        /* Ultra compact for 3-col */
+        padding: 0.75rem !important;
+        /* More breathing room */
     }
 
     .btnText {
@@ -483,19 +484,26 @@
     }
 
     .actions {
-        gap: 0.5rem !important;
+        gap: 0.35rem !important;
+        /* Reduce gap to maximize space */
     }
 
     /* Status Select Compact */
     .statusCustomSelect button {
         height: 32px !important;
-        padding: 0 0.5rem !important;
+        padding: 0 0.4rem !important;
+        /* Reduce horizontal padding */
         font-size: 0.8rem !important;
+    }
+
+    .statusCustomSelect button span {
+        margin-right: 0.2rem !important;
+        /* Minimize margin to icon */
     }
 
     .posterContainer {
         aspect-ratio: 2/3 !important;
-        /* Ensure standard tall poster */
+        /* Standard modern poster ratio */
     }
 }
 

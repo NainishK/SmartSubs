@@ -504,6 +504,17 @@
     color: #0070f3;
 }
 
+:global([data-theme='dark']) .fabSecondary {
+    background-color: #151622 !important;
+    border-color: #222530 !important;
+    color: #94a3b8 !important;
+}
+
+:global([data-theme='dark']) .fabSecondary:hover {
+    background-color: #3b82f6 !important;
+    color: white !important;
+}
+
 /* Filter Toggle Button */
 .filterToggleBtn {
     display: flex;

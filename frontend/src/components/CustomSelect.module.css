@@ -110,3 +110,16 @@
         transform: translateY(0);
     }
 }
+
+@media (max-width: 768px) {
+    .option {
+        font-size: 0.8rem;
+        /* Smaller font for mobile */
+        padding: 6px 8px;
+        /* Tighter padding */
+    }
+
+    .selectButton {
+        font-size: 0.8rem;
+    }
+}
