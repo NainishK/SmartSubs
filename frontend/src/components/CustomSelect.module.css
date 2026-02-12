@@ -80,6 +80,7 @@
     color: var(--foreground);
     font-size: 0.9rem;
     transition: background-color 0.2s;
+    white-space: nowrap;
 }
 
 .option:hover {

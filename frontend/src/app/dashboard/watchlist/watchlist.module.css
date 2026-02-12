@@ -61,7 +61,9 @@
     border-bottom: none;
 }
 
-
+.tabs::-webkit-scrollbar {
+    height: 4px;
+}
 
 .tabs::-webkit-scrollbar-track {
     background: transparent;
@@ -126,7 +128,6 @@
 
 .tabActive .tabCount {
     background: rgba(37, 99, 235, 0.1);
-    /* Primary with opacity requires CSS var tweaks or hardcode */
     color: var(--primary);
 }
 
@@ -206,17 +207,12 @@
 .customSelectWrapper button {
     height: 100%;
     padding: 0 0.75rem !important;
-    /* Force fit */
     font-size: 0.85rem;
     border-radius: 6px !important;
 }
 
-/* Fused Sort Group - REMOVED, using standalone components now */
-/* .sortGroup { ... } */
-
 .sortSelectWrapper {
     min-width: 140px;
-    /* Match others */
     height: 100%;
 }
 
@@ -368,7 +364,8 @@
     position: absolute;
     top: calc(100% + 4px);
     left: 0;
-    width: 200px;
+    width: 100%;
+    min-width: 200px;
     max-height: 300px;
     background: var(--card);
     border: 1px solid var(--border);
@@ -515,17 +512,17 @@
     justify-content: center;
     width: 2.125rem;
     height: 2.125rem;
-    background: white;
-    border: 1px solid #cbd5e1;
+    background: var(--card);
+    border: 1px solid var(--border);
     border-radius: 6px;
-    color: #64748b;
+    color: var(--muted-foreground);
     cursor: pointer;
 }
 
 .filterToggleBtnActive {
-    background: #e2e8f0;
-    color: #0f172a;
-    border-color: #94a3b8;
+    background: var(--accent);
+    color: var(--foreground);
+    border-color: var(--primary);
 }
 
 .watchlistGrid {
@@ -601,11 +598,13 @@
 @media (max-width: 768px) {
     .container {
         padding: 1rem;
+        /* Standard alignment */
     }
 
     .watchlistGrid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.5rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        /* FORCE 2 columns with minmax(0, 1fr) to prevent blowout */
+        gap: 0.75rem !important;
     }
 
 
@@ -660,8 +659,36 @@
         width: 100%;
         gap: 0.75rem;
         padding-top: 0.5rem;
-        border-top: 1px solid #e2e8f0;
+        border-top: 1px solid var(--border);
         margin-top: 0.5rem;
+    }
+
+    /* Taller inputs for mobile touch targets */
+    .controlsExpanded .customSelectWrapper,
+    .controlsExpanded .sortSelectWrapper,
+    .controlsExpanded .genreFilterContainer {
+        height: 42px;
+    }
+
+    .controlsExpanded .controlSelect,
+    .controlsExpanded .sortGroup,
+    .controlsExpanded .genreFilterContainer {
+        width: 100%;
+    }
+
+    /* Group Sort Direction and View Toggle in one row */
+    .controlsExpanded .sortDirectionBtn,
+    .controlsExpanded .viewToggle {
+        height: 42px;
+        flex: 1;
+        justify-content: center;
+    }
+
+    /* New container for the action row to keep them side-by-side */
+    .controlsExpanded .mobileActionRow {
+        display: flex;
+        gap: 0.75rem;
+        width: 100%;
     }
 
     .controlsExpanded .controlSelect,
@@ -689,19 +716,19 @@
         justify-content: space-between;
         align-items: center;
         padding: 0.75rem 1rem;
-        background: white;
-        border: 1px solid #e2e8f0;
+        background: var(--card);
+        border: 1px solid var(--border);
         border-radius: 8px;
         font-family: inherit;
         font-size: 0.85rem;
         /* Reduced from 0.95rem */
-        color: #0f172a;
+        color: var(--foreground);
         cursor: pointer;
         transition: all 0.2s;
     }
 
     .dropdownTrigger:hover {
-        background-color: #f8fafc;
+        background-color: var(--accent);
     }
 
     .dropdownTriggerOpen {
@@ -716,13 +743,13 @@
     }
 
     .triggerCount {
-        color: #64748b;
+        color: var(--muted-foreground);
         font-weight: 500;
         margin-left: 0.25rem;
     }
 
     .triggerChevron {
-        color: #64748b;
+        color: var(--muted-foreground);
     }
 
     .dropdownMenu {
@@ -730,10 +757,10 @@
         top: calc(100% + 4px);
         left: 0;
         width: 100%;
-        background: white;
-        border: 1px solid #e2e8f0;
+        background: var(--card);
+        border: 1px solid var(--border);
         border-radius: 8px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         z-index: 50;
         padding: 0.25rem;
         animation: slideDown 0.15s ease-out;
@@ -747,7 +774,7 @@
         padding: 0.75rem;
         border: none;
         background: transparent;
-        color: #334155;
+        color: var(--muted-foreground);
         font-family: inherit;
         font-size: 0.85rem;
         /* Reduced from 0.95rem */
@@ -758,13 +785,13 @@
     }
 
     .dropdownItem:hover {
-        background: #f1f5f9;
-        color: #0f172a;
+        background: var(--accent);
+        color: var(--foreground);
     }
 
     .dropdownItemActive {
-        background: #f0f7ff;
-        color: #0070f3;
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--primary);
         font-weight: 500;
     }
 
@@ -772,30 +799,10 @@
         flex: 1;
     }
 
-    .itemCount {
-        background: #f1f5f9;
-        font-size: 0.8rem;
-        padding: 0.15rem 0.5rem;
-        border-radius: 12px;
-        color: #64748b;
-    }
-
-    .dropdownItemActive .itemCount {
-        background: rgba(0, 112, 243, 0.1);
-        color: #0070f3;
-    }
-
-    /* Override Desktop tabIcon logic only for inside dropdown */
-    .dropdownItem .tabIcon {
-        display: flex;
-        width: 20px;
-        justify-content: center;
-    }
-
     @keyframes slideDown {
         from {
             opacity: 0;
-            transform: translateY(-4px);
+            transform: translateY(-5px);
         }
 
         to {
@@ -803,102 +810,4 @@
             transform: translateY(0);
         }
     }
-
-    .tabs {
-        display: none;
-        /* Hide standard tabs */
-    }
-}
-
-/* Empty State */
-.emptyState {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 4rem 1rem;
-    max-width: 500px;
-    margin: 0 auto;
-}
-
-.emptyIcon {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-    background: white;
-    width: 64px;
-    height: 64px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    color: #94a3b8;
-    border: 1px solid #e2e8f0;
-}
-
-.emptyTitle {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 0.5rem;
-}
-
-.emptyText {
-    color: #64748b;
-    margin-bottom: 1.5rem;
-    font-size: 0.95rem;
-}
-
-.emptyBtn {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    color: white;
-    padding: 0.75rem 1.5rem;
-    cursor: pointer;
-    border-radius: 8px;
-    border: none;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-/* Loading */
-.loadingGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 1.25rem;
-}
-
-.skeletonCard {
-    background: white;
-    border-radius: 12px;
-    aspect-ratio: 2/3;
-    animation: pulse 1.5s infinite;
-}
-
-.skeletonText {
-    background: #e2e8f0;
-    border-radius: 4px;
-}
-
-@keyframes pulse {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.6;
-    }
-}
-
-.loading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 50vh;
-    font-size: 1.2rem;
-    color: #666;
-    font-weight: 500;
 }

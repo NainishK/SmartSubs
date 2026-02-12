@@ -381,54 +381,92 @@ export default function WatchlistPage() {
                         onChange={(val) => setSortField(val as any)}
                         className={styles.customSelectWrapper}
                     />
-                    <button
-                        className={styles.sortDirectionBtn}
-                        onClick={toggleSortOrder}
-                        title={sortOrder === 'asc' ? "Ascending (Oldest/Low/A-Z)" : "Descending (Newest/High/Z-A)"}
-                    >
-                        {sortOrder === 'asc' ?
-                            <ArrowUp size={18} style={{ color: '#0070f3' }} /> :
-                            <ArrowDown size={18} style={{ color: '#0070f3' }} />
-                        }
-                    </button>
-                </div>
+                    {/* Mobile: Group these two in a single row */}
+                    {isMobile ? (
+                        <div className={styles.mobileActionRow}>
+                            <button
+                                className={styles.sortDirectionBtn}
+                                onClick={toggleSortOrder}
+                                title={sortOrder === 'asc' ? "Ascending" : "Descending"}
+                            >
+                                {sortOrder === 'asc' ?
+                                    <ArrowUp size={20} style={{ color: '#0070f3' }} /> :
+                                    <ArrowDown size={20} style={{ color: '#0070f3' }} />
+                                }
+                            </button>
 
-                <div className={styles.actionGroup}>
-                    <div className={styles.viewToggle}>
-                        <button
-                            className={`${styles.toggleBtn} ${viewMode === 'grid' ? styles.activeToggle : ''}`}
-                            onClick={() => handleViewChange('grid')}
-                            title="Grid View"
-                        >
-                            <LayoutGrid size={18} />
-                        </button>
-                        <button
-                            className={`${styles.toggleBtn} ${viewMode === 'list' ? styles.activeToggle : ''}`}
-                            onClick={() => handleViewChange('list')}
-                            title="List View"
-                        >
-                            <List size={18} />
-                        </button>
-                    </div>
+                            <div className={styles.viewToggle} style={{ flex: 1 }}>
+                                <button
+                                    className={`${styles.toggleBtn} ${viewMode === 'grid' ? styles.activeToggle : ''}`}
+                                    onClick={() => handleViewChange('grid')}
+                                    title="Grid View"
+                                    style={{ flex: 1 }}
+                                >
+                                    <LayoutGrid size={20} />
+                                </button>
+                                <button
+                                    className={`${styles.toggleBtn} ${viewMode === 'list' ? styles.activeToggle : ''}`}
+                                    onClick={() => handleViewChange('list')}
+                                    title="List View"
+                                    style={{ flex: 1 }}
+                                >
+                                    <List size={20} />
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        /* Desktop: Keep original separate layout */
+                        <>
+                            <button
+                                className={styles.sortDirectionBtn}
+                                onClick={toggleSortOrder}
+                                title={sortOrder === 'asc' ? "Ascending" : "Descending"}
+                            >
+                                {sortOrder === 'asc' ?
+                                    <ArrowUp size={18} style={{ color: '#0070f3' }} /> :
+                                    <ArrowDown size={18} style={{ color: '#0070f3' }} />
+                                }
+                            </button>
+                            <div className={styles.actionGroup}>
+                                <div className={styles.viewToggle}>
+                                    <button
+                                        className={`${styles.toggleBtn} ${viewMode === 'grid' ? styles.activeToggle : ''}`}
+                                        onClick={() => handleViewChange('grid')}
+                                        title="Grid View"
+                                    >
+                                        <LayoutGrid size={18} />
+                                    </button>
+                                    <button
+                                        className={`${styles.toggleBtn} ${viewMode === 'list' ? styles.activeToggle : ''}`}
+                                        onClick={() => handleViewChange('list')}
+                                        title="List View"
+                                    >
+                                        <List size={18} />
+                                    </button>
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
 
             {filteredItems.length > 0 ? (
                 <div className={viewMode === 'grid' ? styles.watchlistGrid : styles.watchlistList}>
                     {filteredItems.map(item => (
-                        <MediaCard
-                            key={item.dbId}
-                            item={item}
-                            existingStatus={item.status}
-                            showServiceBadge={
-                                item.available_on && userServices.has(item.available_on)
-                                    ? item.available_on
-                                    : undefined
-                            }
-                            layout={viewMode}
-                            onRemove={() => confirmRemove(item)}
-                            onStatusChange={(s, r) => handleStatusUpdate(item.dbId!, s, r)}
-                        />
+                        <div key={item.dbId} style={{ display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0 }}>
+                            <MediaCard
+                                item={item}
+                                existingStatus={item.status}
+                                showServiceBadge={
+                                    item.available_on && userServices.has(item.available_on)
+                                        ? item.available_on
+                                        : undefined
+                                }
+                                layout={viewMode}
+                                onRemove={() => confirmRemove(item)}
+                                onStatusChange={(s, r) => handleStatusUpdate(item.dbId!, s, r)}
+                            />
+                        </div>
                     ))}
                 </div>
             ) : (

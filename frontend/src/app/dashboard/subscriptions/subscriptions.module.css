@@ -89,10 +89,10 @@
 }
 
 .activePill {
-    background: var(--foreground);
-    color: var(--background);
-    border-color: var(--foreground);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
 }
 
 /* Subscriptions Grid */

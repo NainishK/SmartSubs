@@ -1,6 +1,5 @@
-'use client';
-
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown } from 'lucide-react';
 import styles from './CustomSelect.module.css';
 
@@ -30,8 +29,21 @@ export default function CustomSelect({
 }: CustomSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    const [dropdownStyles, setDropdownStyles] = useState<{ top: number, left: number, width: number }>({ top: 0, left: 0, width: 0 });
 
     const selectedOption = options.find(opt => opt.value === value);
+
+    // Update position when opening
+    useEffect(() => {
+        if (isOpen && containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            setDropdownStyles({
+                top: rect.bottom + window.scrollY + 4,
+                left: rect.left + window.scrollX,
+                width: rect.width
+            });
+        }
+    }, [isOpen]);
 
     // Handle clicking outside to close
     useEffect(() => {
@@ -41,9 +53,20 @@ export default function CustomSelect({
             }
         };
 
+        const handleScroll = () => {
+            if (isOpen) setIsOpen(false); // Close on scroll to prevent detached dropdowns
+        };
+
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+        window.addEventListener('scroll', handleScroll, true);
+        window.addEventListener('resize', handleScroll);
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            window.removeEventListener('scroll', handleScroll, true);
+            window.removeEventListener('resize', handleScroll);
+        };
+    }, [isOpen]);
 
     const handleSelect = (optionValue: string | number) => {
         onChange(optionValue);
@@ -51,7 +74,10 @@ export default function CustomSelect({
     };
 
     return (
-        <div className={`${styles.selectContainer} ${className}`} ref={containerRef}>
+        <div
+            className={`${styles.selectContainer} ${className} ${isOpen ? styles.containerOpen : ''}`}
+            ref={containerRef}
+        >
             <button
                 type="button"
                 className={`${styles.selectButton} ${isOpen ? styles.active : ''}`}
@@ -66,8 +92,19 @@ export default function CustomSelect({
                 <ChevronDown size={18} className={`${styles.icon} ${isOpen ? styles.open : ''}`} />
             </button>
 
-            {isOpen && (
-                <ul className={styles.optionsList} role="listbox">
+            {isOpen && createPortal(
+                <ul
+                    className={styles.optionsList}
+                    role="listbox"
+                    style={{
+                        position: 'absolute',
+                        top: dropdownStyles.top,
+                        left: dropdownStyles.left,
+                        minWidth: dropdownStyles.width,
+                        width: 'max-content',
+                        zIndex: 9999 // Portal ensures high z-index
+                    }}
+                >
                     {options.map((option) => (
                         <li
                             key={option.value}
@@ -79,7 +116,8 @@ export default function CustomSelect({
                             {option.label}
                         </li>
                     ))}
-                </ul>
+                </ul>,
+                document.body
             )}
 
             {/* Hidden input for form validation compatibility */}

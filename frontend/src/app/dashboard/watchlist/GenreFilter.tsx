@@ -50,7 +50,11 @@ export default function GenreFilter({ selectedIds, onChange }: GenreFilterProps)
     }
 
     return (
-        <div className={styles.genreFilterContainer} ref={containerRef}>
+        <div
+            className={styles.genreFilterContainer}
+            ref={containerRef}
+            style={{ zIndex: isOpen ? 50 : 'auto' }}
+        >
             <button
                 className={`${styles.genreFilterBtn} ${selectedIds.length > 0 ? styles.genreFilterActive : ''} ${isOpen ? styles.genreFilterOpen : ''}`}
                 onClick={() => setIsOpen(!isOpen)}
@@ -58,11 +62,11 @@ export default function GenreFilter({ selectedIds, onChange }: GenreFilterProps)
                 <span className={styles.genreLabel}>{label}</span>
                 {selectedIds.length > 0 ? (
                     <div className={styles.clearBadge} onClick={clearAll} title="Clear filters">
-                        <X size={12} />
+                        <X size={14} />
                     </div>
                 ) : (
                     <ChevronDown
-                        size={14}
+                        size={18}
                         className={styles.genreChevron}
                         style={{
                             transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -84,7 +88,7 @@ export default function GenreFilter({ selectedIds, onChange }: GenreFilterProps)
                                     onClick={() => toggleGenre(genre.id)}
                                 >
                                     <div className={styles.checkbox}>
-                                        {isSelected && <Check size={10} color="white" strokeWidth={4} />}
+                                        {isSelected && <Check size={12} color="white" strokeWidth={4} />}
                                     </div>
                                     <span className={styles.optionLabel}>{genre.name}</span>
                                 </div>

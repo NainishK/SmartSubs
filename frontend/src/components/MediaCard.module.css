@@ -10,13 +10,13 @@
     height: 100%;
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    /* Prevent flex blowout */
 }
 
 .card:hover {
     transform: translateY(-4px);
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    z-index: 20;
-    /* Fix dropdown clipping/stacking */
 }
 
 /* Poster Section */
@@ -131,11 +131,11 @@
 }
 
 .title {
-    font-size: 1.1rem;
+    font-size: 0.8rem !important;
     font-weight: 700;
     color: var(--card-foreground);
     margin: 0 0 0.5rem 0;
-    line-height: 1.4;
+    line-height: 1.2 !important;
     display: -webkit-box;
     line-clamp: 1;
     -webkit-line-clamp: 1;
@@ -179,37 +179,49 @@
 
 .statusSelectWrapper {
     flex: 1;
+    /* Restore flex: 1 to filling space */
     position: relative;
-    z-index: 20;
-    /* Ensure it stays on top of other actions */
-    /* Wrapper handles positioning */
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    /* Essential for truncation */
 }
 
-/* Custom Select Override for Card */
+/* NEW: Styles for CustomSelect mapped from old .statusSelect */
 .statusCustomSelect {
-    font-size: 0.825rem;
-    min-width: 130px;
+    width: 100%;
 }
 
 .statusCustomSelect button {
-    padding: 0 0.75rem !important;
-    height: 36px !important;
-    min-height: 36px;
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    /* Adjusted padding since arrow is custom */
+    border: 1px solid var(--border);
     border-radius: 8px;
-    font-size: 0.8rem;
+    font-size: 0.825rem;
+    color: var(--foreground);
+    background: var(--input-bg);
+    cursor: pointer;
+    transition: all 0.2s;
+    /* Flex constraint */
     display: flex;
     align-items: center;
+    justify-content: space-between;
 }
 
-.statusCustomSelect ul {
-    min-width: 150px;
-    padding: 4px;
-    font-size: 0.8rem;
+/* Truncation for the text inside CustomSelect button */
+.statusCustomSelect button span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    text-align: left;
+    margin-right: 0.5rem;
 }
 
-.statusCustomSelect li {
-    padding: 6px 10px;
-    font-size: 0.8rem;
+.statusCustomSelect button:hover {
+    border-color: var(--muted-foreground);
+    background: var(--accent);
 }
 
 .actionBtn {
@@ -247,15 +259,12 @@
 
 .btnRemove {
     background: rgba(239, 68, 68, 0.1);
-    /* Red-500 with opacity */
     color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .btnRemove:hover {
     background: rgba(239, 68, 68, 0.2);
     color: #dc2626;
-    border-color: rgba(239, 68, 68, 0.4);
 }
 
 .toggleBtn {
@@ -360,7 +369,7 @@
     align-items: center;
     gap: 0.5rem;
     font-size: 0.8rem;
-    color: #64748b;
+    color: var(--muted-foreground);
     margin-bottom: 0.5rem;
     flex-wrap: wrap;
 }
@@ -379,7 +388,7 @@
     align-items: center;
     gap: 4px;
     background: rgba(251, 191, 36, 0.1);
-    /* Amber-50 equivalent */
+    /* Amber-50 */
     padding: 2px 8px;
     border-radius: 12px;
 }
@@ -387,7 +396,7 @@
 .metaRatingText {
     font-weight: 700;
     color: #f59e0b;
-    /* Amber-500 optimized for dark */
+    /* Amber-500 optimized */
     font-size: 0.8rem;
 }
 
@@ -411,10 +420,8 @@
 }
 
 .metaDate {
-    /* display: flex; REMOVED to allow Grid View override */
     align-items: center;
     color: var(--muted-foreground);
-    opacity: 0.8;
 }
 
 .metaDivider {
@@ -422,7 +429,6 @@
 }
 
 .metaProvider {
-    /* display: flex; REMOVED */
     align-items: center;
     color: var(--foreground);
     font-weight: 600;
@@ -443,55 +449,53 @@
 
 /* On mobile list view, definitely hide overview to save vertical space */
 @media (max-width: 768px) {
-    .cardList {
-        min-height: 100px;
-        /* Reduced to be more compact */
+    .overview {
+        -webkit-line-clamp: 2 !important;
+        line-clamp: 2 !important;
+        /* Standard property */
+        font-size: 0.7rem !important;
+        margin-bottom: 0.5rem !important;
+        line-height: 1.2 !important;
+        display: -webkit-box !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
     }
 
-    .cardList .overview {
-        display: none;
+    .content {
+        padding: 0.5rem !important;
+        /* Ultra compact for 3-col */
     }
 
-    .cardList .posterContainer {
-        width: 70px;
-        /* Reduced from 80px */
+    .btnText {
+        display: none !important;
     }
 
-    .cardList .content {
-        padding: 0.5rem 0.75rem;
-        /* Tighter padding */
+    .actionBtn {
+        width: 32px !important;
+        height: 32px !important;
+        padding: 0 !important;
     }
 
-    .cardList .topBadges {
-        top: 4px;
-        left: 4px;
-        transform: scale(0.75);
-        transform-origin: top left;
+    .btnPrimary {
+        width: 32px !important;
+        padding: 0 !important;
+        border-radius: 8px !important;
     }
 
-    .cardList .ratingBadge {
-        /* Hide poster badge on mobile list view since we have inline rating now */
-        display: none;
+    .actions {
+        gap: 0.5rem !important;
     }
 
-    .cardList .serviceBadge {
-        display: none;
+    /* Status Select Compact */
+    .statusCustomSelect button {
+        height: 32px !important;
+        padding: 0 0.5rem !important;
+        font-size: 0.8rem !important;
     }
 
-    /* Declutter: Hide Genres, Date, and Progress on mobile list view */
-    .cardList .metaGenre,
-    .cardList .metaGenre+.metaDivider,
-    .cardList .metaDate,
-    .cardList .metaDate+.metaDivider,
-    .cardList .metaProgress,
-    .cardList .metaProgress+.metaDivider {
-        display: none;
-    }
-
-    /* Ensure Rating and Provider are visible side-by-side */
-    .cardList .metaRating,
-    .cardList .metaProvider {
-        display: flex;
+    .posterContainer {
+        aspect-ratio: 2/3 !important;
+        /* Ensure standard tall poster */
     }
 }
 
@@ -504,9 +508,6 @@
 }
 
 .cardList .ratingBadge {
-    /* If we want rating badge shown in list view poster? */
-    /* Currently it overlaps with top badges or service badge */
-    /* Let's move it to bottom left or hide if cluttered */
     bottom: 8px;
     top: auto;
     right: auto;
@@ -516,7 +517,6 @@
 }
 
 .cardList .serviceBadge {
-    /* Hide service badge on small posters in list view to avoid clutter */
     display: none;
 }
 
@@ -555,8 +555,9 @@
         gap: 0.5rem;
     }
 
-    .statusSelect {
-        padding: 0.5rem 1.4rem 0.5rem 0.6rem;
+    /* Ensure small buttons for status select if needed */
+    .statusCustomSelect button {
+        padding: 0 0.5rem;
         font-size: 0.8rem;
     }
 }
