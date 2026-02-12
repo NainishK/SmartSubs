@@ -9,31 +9,33 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 2000;
+    /* Must be higher than AddMediaModal (1100) */
     animation: fadeIn 0.2s ease-out;
 }
 
 .modal {
-    background-color: white;
+    background-color: var(--card);
     padding: 2rem;
     border-radius: 16px;
     width: 90%;
     max-width: 400px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.25);
     animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     text-align: center;
+    border: 1px solid var(--border);
 }
 
 .title {
     margin-top: 0;
     margin-bottom: 0.5rem;
-    color: #1a1a1a;
+    color: var(--foreground);
     font-size: 1.5rem;
     font-weight: 700;
 }
 
 .message {
-    color: #4b5563;
+    color: var(--muted-foreground);
     margin-bottom: 2rem;
     line-height: 1.5;
 }
@@ -46,9 +48,9 @@
 
 .cancelBtn {
     padding: 0.75rem 1.5rem;
-    border: 1px solid #e5e7eb;
-    background: white;
-    color: #374151;
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    color: var(--foreground);
     font-weight: 600;
     border-radius: 8px;
     cursor: pointer;
@@ -57,8 +59,8 @@
 }
 
 .cancelBtn:hover {
-    background: #f9fafb;
-    border-color: #d1d5db;
+    background: var(--accent);
+    border-color: var(--muted-foreground);
 }
 
 .confirmBtn {

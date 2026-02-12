@@ -278,9 +278,22 @@
     }
 
     .dropdownMenu {
-        left: 0;
+        left: -66px;
+        /* Counteract the margin-left of parent .actions */
+        width: calc(100% + 66px);
+        /* Full width of the card */
         right: auto;
-        width: 100%;
+        border-radius: 0 0 12px 12px;
+        /* Curved bottom only */
+        border-right: none;
+        border-left: none;
+        border-bottom: none;
+        box-shadow: none;
+        background: var(--card);
+        /* Blend with card */
+        border-top: 1px solid var(--border);
+        position: static;
+        /* Make it flow in document on mobile? No, absolute is better for overlay, but let's try making it look integrated */
     }
 }
 

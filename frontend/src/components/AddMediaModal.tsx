@@ -133,23 +133,25 @@ export default function AddMediaModal({ isOpen, onClose, onAddSuccess, existingI
     };
 
     const handleStatusSelect = async (item: SearchResult, status: string) => {
-        // If status is 'watched' or 'watching', show rating UI first
-        if (status === 'watched' || status === 'watching') {
-            setPendingStatus(status);
-            setRatingModeId(item.id);
-            return;
-        }
+        // Save status immediately first
+        // If status is 'watched' or 'watching', keep dropdown open and show rating UI
+        const showRating = status === 'watched' || status === 'watching';
 
-        // Otherwise just save immediately
-        await executeSave(item, status, null);
+        // Pass false to keep dropdown open if showing rating
+        await executeSave(item, status, null, !showRating);
+
+        if (showRating) {
+            setRatingModeId(item.id);
+            setPendingStatus(status);
+        }
     };
 
     const handleRatingSelect = async (item: SearchResult, rating: number) => {
         // We have a pending status and a new rating
-        await executeSave(item, pendingStatus || 'watched', rating);
+        await executeSave(item, pendingStatus || 'watched', rating, true);
     };
 
-    const executeSave = async (item: SearchResult, status: string, rating: number | null) => {
+    const executeSave = async (item: SearchResult, status: string, rating: number | null, closeDropdown: boolean = true) => {
         const existing = existingMap.get(item.id);
 
         try {
@@ -188,8 +190,10 @@ export default function AddMediaModal({ isOpen, onClose, onAddSuccess, existingI
                 }));
             }
 
-            setOpenDropdownId(null);
-            setRatingModeId(null);
+            if (closeDropdown) {
+                setOpenDropdownId(null);
+                setRatingModeId(null);
+            }
             onAddSuccess(); // Trigger parent refresh if needed
         } catch (error) {
             console.error("Failed to save", error);
