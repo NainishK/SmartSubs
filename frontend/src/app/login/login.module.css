@@ -18,6 +18,20 @@
     animation: meshFlow 20s ease infinite alternate;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     padding: 1rem;
+
+    /* Enforce Light Mode Variables for Login/Signup */
+    --background: #f8fafc;
+    --foreground: #0f172a;
+    --card: #ffffff;
+    --card-foreground: #0f172a;
+    --border: #e2e8f0;
+    --input: #e2e8f0;
+    --input-bg: #f8fafc;
+    --primary: #2563eb;
+    --primary-foreground: #ffffff;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --accent: #f1f5f9;
 }
 
 @keyframes meshFlow {

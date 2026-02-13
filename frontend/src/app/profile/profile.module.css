@@ -1,42 +1,21 @@
-/* Profile Page Styles - Premium Glassmorphism */
-/* Extending existing settings.module.css */
-
+/* Profile Page Styles - Standard Theme */
 .container {
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #0f172a;
-    background-image:
-        radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
-        radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
-        radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%),
-        radial-gradient(at 0% 50%, hsla(263, 49%, 20%, 1) 0, transparent 50%),
-        radial-gradient(at 100% 50%, hsla(276, 49%, 20%, 1) 0, transparent 50%),
-        radial-gradient(at 0% 100%, hsla(293, 42%, 15%, 1) 0, transparent 50%),
-        radial-gradient(at 100% 100%, hsla(247, 42%, 15%, 1) 0, transparent 50%);
-    background-size: 150% 150%;
-    animation: meshFlow 20s ease infinite alternate;
+    background-color: var(--background);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     padding: 1rem;
-}
-
-@keyframes meshFlow {
-    0% {
-        background-position: 0% 0%;
-    }
-
-    100% {
-        background-position: 100% 100%;
-    }
+    transition: background-color 0.3s ease;
 }
 
 .glassCard {
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--card);
     padding: 3rem;
     border-radius: 24px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -44,9 +23,17 @@
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+/* On mobile, reduce padding */
+@media (max-width: 640px) {
+    .glassCard {
+        padding: 1.5rem;
+        border-radius: 16px;
+    }
+}
+
 .glassCard:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
 }
 
 .header {
@@ -55,19 +42,19 @@
     align-items: center;
     margin-bottom: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid var(--border);
 }
 
 .title {
     font-size: 2rem;
     font-weight: 800;
-    color: #0f172a;
+    color: var(--foreground);
     margin: 0;
     letter-spacing: -1px;
 }
 
 .backLink {
-    color: #64748b;
+    color: var(--muted-foreground);
     text-decoration: none;
     font-weight: 600;
     font-size: 0.9rem;
@@ -78,7 +65,7 @@
 }
 
 .backLink:hover {
-    color: #334155;
+    color: var(--foreground);
 }
 
 .section {
@@ -86,10 +73,10 @@
 }
 
 .sectionTitle {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #94a3b8;
+    color: var(--muted-foreground);
     font-weight: 700;
     margin-bottom: 1rem;
 }
@@ -99,7 +86,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem 0;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--border);
 }
 
 .infoRow:last-child {
@@ -108,25 +95,26 @@
 
 .infoLabel {
     font-weight: 600;
-    color: #334155;
+    color: var(--foreground);
     font-size: 0.95rem;
 }
 
 .infoValue {
     font-size: 0.95rem;
-    color: #64748b;
+    color: var(--muted-foreground);
 }
 
 .googleBtn {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background-color: white;
-    border: 1px solid #e2e8f0;
+    background-color: var(--card);
+    /* Adaptive */
+    border: 1px solid var(--border);
     padding: 0.5rem 1rem;
     border-radius: 8px;
     font-weight: 600;
-    color: #334155;
+    color: var(--foreground);
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.2s;
@@ -134,27 +122,28 @@
 }
 
 .googleBtn:hover {
-    background-color: #f8fafc;
-    border-color: #cbd5e1;
+    background-color: var(--accent);
+    border-color: var(--muted-foreground);
 }
 
 .googleConnected {
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    background-color: #f0fdf4;
-    color: #166534;
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    /* Green-500 */
     padding: 0.4rem 0.8rem;
     border-radius: 20px;
     font-size: 0.85rem;
     font-weight: 600;
-    border: 1px solid #bbf7d0;
+    border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 /* Include existing form styles for Region selector */
 .label {
     font-weight: 600;
-    color: #334155;
+    color: var(--foreground);
     font-size: 0.95rem;
     margin-bottom: 0.5rem;
     display: block;
@@ -162,31 +151,18 @@
 
 .select {
     width: 100%;
-    padding: 1rem 1.25rem;
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
-    font-size: 1rem;
-    background: #f8fafc;
-    transition: all 0.2s ease;
-    color: #334155;
-    outline: none;
-    cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 1.25rem center;
-    background-size: 1rem;
+    /* Border and background handled by CustomSelect component */
 }
 
 .select:focus {
-    border-color: #6366f1;
-    background-color: white;
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    border-color: var(--primary);
+    background-color: var(--card);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
 .helperText {
     font-size: 0.85rem;
-    color: #64748b;
+    color: var(--muted-foreground);
     margin-top: 0.5rem;
 }
 
@@ -194,21 +170,21 @@
     margin-top: 1.5rem;
     width: 100%;
     padding: 1rem;
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-    color: white;
+    background: var(--primary);
+    color: var(--primary-foreground);
     border: none;
     border-radius: 12px;
     font-size: 1.1rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .disconnectBtn {
-    background: none;
-    border: 1px solid #fee2e2;
-    color: #ef4444;
+    background: transparent;
+    border: 1px solid var(--destructive-foreground);
+    color: var(--destructive);
     padding: 0.3rem 0.8rem;
     border-radius: 8px;
     font-size: 0.8rem;
@@ -217,16 +193,22 @@
     font-weight: 600;
 }
 
+/* If destructives are too light in dark mode, override */
+:global([data-theme='dark']) .disconnectBtn {
+    border-color: rgba(220, 38, 38, 0.3);
+    color: #ef4444;
+}
+
 .disconnectBtn:hover {
-    background-color: #fef2f2;
-    border-color: #fecaca;
-    color: #dc2626;
+    background-color: var(--destructive);
+    color: var(--destructive-foreground);
+    border-color: var(--destructive);
 }
 
 .saveButton:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);
-    background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+    filter: brightness(1.1);
 }
 
 .message {
@@ -241,15 +223,15 @@
 }
 
 .messageSuccess {
-    background-color: #f0fdf4;
-    color: #15803d;
-    border: 1px solid #bbf7d0;
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .messageError {
-    background-color: #fef2f2;
-    color: #dc2626;
-    border: 1px solid #fecaca;
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 @keyframes slideIn {

@@ -161,21 +161,22 @@ export default function Profile() {
                                 This affects subscription costs and content availability.
                             </p>
                         </div>
+                    </div>
 
-                        <button
-                            type="submit"
-                            className={styles.saveButton}
-                            disabled={saving}
-                        >
-                            {saving ? 'Saving...' : 'Save Changes'}
-                        </button>
+                    <button
+                        type="submit"
+                        className={styles.saveButton}
+                        disabled={saving}
+                    >
+                        {saving ? 'Saving...' : 'Save Changes'}
+                    </button>
 
-                        {message && (
-                            <div className={`${styles.message} ${message.includes('Failed') ? styles.messageError : styles.messageSuccess}`}>
-                                {message.includes('Failed') ? <AlertCircle size={20} /> : <CheckCircle size={20} />}
-                                {message}
-                            </div>
-                        )}
+                    {message && (
+                        <div className={`${styles.message} ${message.includes('Failed') ? styles.messageError : styles.messageSuccess}`}>
+                            {message.includes('Failed') ? <AlertCircle size={20} /> : <CheckCircle size={20} />}
+                            {message}
+                        </div>
+                    )}
                 </form>
             </div>
 

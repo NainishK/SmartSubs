@@ -16,6 +16,7 @@ interface CustomSelectProps {
     disabled?: boolean;
     required?: boolean;
     className?: string;
+    forceLightMode?: boolean;
 }
 
 export default function CustomSelect({
@@ -25,7 +26,8 @@ export default function CustomSelect({
     placeholder = 'Select an option',
     disabled = false,
     required = false,
-    className = ''
+    className = '',
+    forceLightMode = false,
 }: CustomSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -94,7 +96,7 @@ export default function CustomSelect({
 
             {isOpen && createPortal(
                 <ul
-                    className={styles.optionsList}
+                    className={`${styles.optionsList} ${forceLightMode ? styles.lightTheme : ''}`}
                     role="listbox"
                     style={{
                         position: 'absolute',

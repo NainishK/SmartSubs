@@ -123,3 +123,14 @@
         font-size: 0.8rem;
     }
 }
+
+.lightTheme {
+    --background: #f8fafc;
+    --foreground: #0f172a;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --input-bg: #f8fafc;
+    --primary: #2563eb;
+    --muted-foreground: #64748b;
+    --accent: #f1f5f9;
+}

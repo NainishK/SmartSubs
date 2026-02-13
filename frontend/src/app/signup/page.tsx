@@ -135,7 +135,7 @@ export default function SignupPage() {
                                 { value: 'AU', label: '🇦🇺 Australia (AU)' }
                             ]}
                             onChange={(val) => setCountry(val as string)}
-                            className={styles.input}
+                            forceLightMode={true}
                         />
                     </div>
 
