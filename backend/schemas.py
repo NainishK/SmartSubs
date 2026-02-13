@@ -117,6 +117,10 @@ class UserPreferences(BaseModel):
     devices: Optional[List[str]] = None
     deal_breakers: Optional[List[str]] = None
 
+class UserProfileUpdate(BaseModel):
+    country: Optional[str] = None
+    preferences: Optional[UserPreferences] = None
+
 class User(UserBase):
     id: int
     google_id: Optional[str] = None

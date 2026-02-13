@@ -131,6 +131,8 @@ async def auth_google(request: Request, db: Session = Depends(get_db)):
     # 1. Existing User?
     user = crud.get_user_by_email(db, email=email)
     
+    is_new_user = False
+    
     if user:
         # Link Account logic (if not linked)
         if not user.google_id:
@@ -139,6 +141,7 @@ async def auth_google(request: Request, db: Session = Depends(get_db)):
              db.commit()
     else:
         # Create New User (No Password)
+        is_new_user = True
         new_user = models.User(
             email=email, 
             google_id=google_id, 
@@ -157,6 +160,10 @@ async def auth_google(request: Request, db: Session = Depends(get_db)):
     # Redirect to Frontend with Token
     # In production, use a secure cookie or postMessage. For now, URL param is easiest for Dev.
     frontend_url = f"{settings.FRONTEND_URL}/login/callback?token={access_token}"
+    
+    if is_new_user:
+        frontend_url += "&new_user=true"
+
     from starlette.responses import RedirectResponse
     return RedirectResponse(url=frontend_url)
 

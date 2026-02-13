@@ -226,6 +226,23 @@ async def login_for_access_token(background_tasks: BackgroundTasks, form_data: O
 async def read_users_me(current_user: models.User = Depends(dependencies.get_current_user)):
     return current_user
 
+@app.put("/users/profile", response_model=schemas.User)
+def update_profile(
+    update: schemas.UserProfileUpdate, 
+    db: Session = Depends(get_db), 
+    current_user: models.User = Depends(dependencies.get_current_user)
+):
+    if update.country:
+        crud.update_user_profile(db, user_id=current_user.id, country=update.country)
+    
+    if update.preferences:
+        crud.update_user_preferences(db, user_id=current_user.id, preferences=update.preferences)
+        
+    # Re-fetch user to ensure we return the latest state without "not persistent" errors
+    # (CRUD commits expire the previous session objects)
+    updated_user = db.query(models.User).filter(models.User.id == current_user.id).first()
+    return updated_user
+
 @app.post("/users/me/access/ai")
 async def request_ai_access(
     db: Session = Depends(get_db),

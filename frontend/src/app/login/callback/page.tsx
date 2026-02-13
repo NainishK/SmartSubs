@@ -18,12 +18,20 @@ export default function AuthCallbackPage() {
         if (token) {
             // 2. Store Token
             localStorage.setItem('token', token);
-            setStatus('Redirecting to dashboard...');
 
-            // 3. Redirect (Short delay for UX)
-            setTimeout(() => {
-                window.location.href = '/dashboard';
-            }, 800);
+            const isNewUser = params.get('new_user') === 'true';
+
+            if (isNewUser) {
+                setStatus('Welcome! Setting up your profile...');
+                setTimeout(() => {
+                    window.location.href = '/welcome';
+                }, 800);
+            } else {
+                setStatus('Redirecting to dashboard...');
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 800);
+            }
         } else if (error) {
             setStatus('Authentication failed. Redirecting to login...');
             setTimeout(() => router.push('/login'), 2000);

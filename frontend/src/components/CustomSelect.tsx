@@ -31,6 +31,7 @@ export default function CustomSelect({
 }: CustomSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    const listRef = useRef<HTMLUListElement>(null);
     const [dropdownStyles, setDropdownStyles] = useState<{ top: number, left: number, width: number }>({ top: 0, left: 0, width: 0 });
 
     const selectedOption = options.find(opt => opt.value === value);
@@ -50,7 +51,12 @@ export default function CustomSelect({
     // Handle clicking outside to close
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+            if (
+                containerRef.current &&
+                !containerRef.current.contains(event.target as Node) &&
+                listRef.current &&
+                !listRef.current.contains(event.target as Node)
+            ) {
                 setIsOpen(false);
             }
         };
@@ -59,9 +65,11 @@ export default function CustomSelect({
             if (isOpen) setIsOpen(false); // Close on scroll to prevent detached dropdowns
         };
 
-        document.addEventListener('mousedown', handleClickOutside);
-        window.addEventListener('scroll', handleScroll, true);
-        window.addEventListener('resize', handleScroll);
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+            window.addEventListener('scroll', handleScroll, true);
+            window.addEventListener('resize', handleScroll);
+        }
 
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
@@ -77,7 +85,7 @@ export default function CustomSelect({
 
     return (
         <div
-            className={`${styles.selectContainer} ${className} ${isOpen ? styles.containerOpen : ''}`}
+            className={`${styles.selectContainer} ${className} ${isOpen ? styles.containerOpen : ''} ${forceLightMode ? styles.lightTheme : ''}`}
             ref={containerRef}
         >
             <button
@@ -98,6 +106,7 @@ export default function CustomSelect({
                 <ul
                     className={`${styles.optionsList} ${forceLightMode ? styles.lightTheme : ''}`}
                     role="listbox"
+                    ref={listRef}
                     style={{
                         position: 'absolute',
                         top: dropdownStyles.top,
