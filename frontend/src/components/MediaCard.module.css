@@ -157,9 +157,11 @@
 }
 
 .aiOverview {
-    background: #f5f3ff;
+    background: var(--accent);
+    /* Soft accent background */
     border-left: 3px solid #7c3aed;
-    color: #4c1d95;
+    color: var(--foreground);
+    /* Ensure readable text */
     padding: 0.75rem;
     border-radius: 4px;
     font-size: 0.85rem;

@@ -401,9 +401,9 @@
 .carouselBtn {
     padding: 8px;
     border-radius: 50%;
-    border: 1px solid #e5e7eb;
-    background: white;
-    color: #111827;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--foreground);
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
@@ -412,14 +412,14 @@
 }
 
 .carouselBtn:hover:not(:disabled) {
-    background: #f9fafb;
-    border-color: #d1d5db;
+    background: var(--accent);
+    border-color: var(--border);
 }
 
 .carouselBtn:disabled {
     opacity: 0.4;
     cursor: default;
-    background: #f3f4f6;
+    background: var(--muted);
 }
 
 /* Updated Reason Header */
@@ -435,20 +435,22 @@
     align-items: flex-start;
     gap: 6px;
     font-size: 0.8rem;
-    color: #4b5563;
+    color: var(--muted-foreground);
     padding: 6px 10px;
-    background: #f3f4f6;
+    background: var(--muted);
     border-radius: 8px;
     line-height: 1.4;
     border-left: 3px solid #60a5fa;
-    /* Blue accent */
+    /* Blue accent remains fine */
 }
 
 /* Refresher Button */
 .refreshBtn {
-    background: #eff6ff;
-    color: #2563eb;
-    border: 1px solid #bfdbfe;
+    background: var(--muted);
+    /* More distinct from page background */
+    color: var(--primary);
+    border: 1px solid var(--border);
+    /* Ensure border visibility */
     padding: 0.35rem 0.75rem;
     /* Compact Padding */
     border-radius: 8px;
@@ -471,8 +473,9 @@
 }
 
 .refreshBtn:hover:not(:disabled) {
-    background: #dbeafe;
-    border-color: #93c5fd;
+    background: var(--input);
+    /* Lighter on hover */
+    border-color: var(--border);
 }
 
 .emptyState {
