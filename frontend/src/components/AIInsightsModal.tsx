@@ -445,7 +445,7 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                                                                     const existingItem = watchlist.find(w => w.tmdb_id === tmdbId || (w.tmdb_id === 0 && rec.title === 'Title needed'));
 
                                                                     return (
-                                                                        <div key={idx} style={{ position: 'relative' }}>
+                                                                        <div key={idx} style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%' }}>
                                                                             <MediaCard
                                                                                 item={{
                                                                                     id: tmdbId,
@@ -523,7 +523,7 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                                                                         const existingItem = watchlist.find(w => w.tmdb_id === tmdbId);
 
                                                                         return (
-                                                                            <div key={idx} style={{ position: 'relative' }}>
+                                                                            <div key={idx} style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%' }}>
                                                                                 <MediaCard
                                                                                     item={{
                                                                                         id: tmdbId,
