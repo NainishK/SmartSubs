@@ -572,6 +572,7 @@ select.input {
 }
 
 /* Empty State */
+/* Empty State */
 .emptyStateContainer {
     display: flex;
     flex-direction: column;
@@ -579,40 +580,40 @@ select.input {
     justify-content: center;
     text-align: center;
     padding: 6rem 2rem;
-    background: white;
+    background: var(--card);
     border-radius: 16px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
-    border: 1px solid #f1f5f9;
+    border: 1px solid var(--border);
     margin-top: 1rem;
     width: 100%;
     grid-column: span 2;
     min-height: 400px;
-    /* Give it some height for balance */
 }
 
 .emptyIcon {
     font-size: 3rem;
     margin-bottom: 1.5rem;
-    background: #f0f9ff;
+    background: rgba(59, 130, 246, 0.1);
+    /* Primary with opacity */
     padding: 1.5rem;
     border-radius: 50%;
-    color: #0284c7;
+    color: var(--primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .emptyTitle {
     font-size: 1.75rem;
     font-weight: 800;
-    color: #1e293b;
+    color: var(--foreground);
     margin-bottom: 0.75rem;
     letter-spacing: -0.02em;
 }
 
 .emptySubtitle {
-    color: #64748b;
+    color: var(--muted-foreground);
     max-width: 450px;
     line-height: 1.6;
     font-size: 1.1rem;

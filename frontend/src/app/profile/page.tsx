@@ -8,6 +8,7 @@ import styles from './profile.module.css';
 import { ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import CustomSelect from '@/components/CustomSelect';
+import { useRecommendations } from '@/context/RecommendationsContext';
 
 interface User {
     id: number;
@@ -24,6 +25,14 @@ export default function Profile() {
     const [saving, setSaving] = useState(false);
     const [isDisconnectModalOpen, setIsDisconnectModalOpen] = useState(false);
     const router = useRouter();
+    // Safely get context (might be undefined if outside provider, but we expect it to be inside dashboard if linked)
+    let refreshRecommendations: ((force?: boolean) => Promise<void>) | undefined;
+    try {
+        const context = useRecommendations();
+        refreshRecommendations = context.refreshRecommendations;
+    } catch (e) {
+        // Ignore if outside provider
+    }
 
     useEffect(() => {
         fetchProfile();
@@ -46,13 +55,18 @@ export default function Profile() {
         setSaving(true);
         setMessage('');
         try {
-            await api.put(`/users/me?country=${country}`);
+            await api.put(`/users/profile`, { country: country });
             setMessage('Settings saved successfully!');
             setTimeout(() => setMessage(''), 3000);
 
-            // Optimistic update
             if (user) {
                 setUser({ ...user, country });
+            }
+
+            // Force refresh recommendations context if available
+            if (refreshRecommendations) {
+                // Run in background
+                refreshRecommendations(true).catch(e => console.error("Failed to refresh recs", e));
             }
         } catch (error) {
             console.error('Failed to update profile', error);

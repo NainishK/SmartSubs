@@ -103,7 +103,7 @@ export default function SubscriptionsPage() {
 
             // 2. Fetch Subscriptions & Services for that Country
             const [subsRes, servicesRes] = await Promise.all([
-                api.get('/subscriptions/'),
+                api.get('/subscriptions/', { params: { country } }),
                 api.get(`/services/?country=${country}`)
             ]);
 
@@ -128,7 +128,7 @@ export default function SubscriptionsPage() {
 
     const fetchSubscriptions = async () => {
         try {
-            const response = await api.get('/subscriptions/');
+            const response = await api.get('/subscriptions/', { params: { country: userCountry } });
             setSubscriptions(response.data);
         } catch (error) {
             console.error('Failed to fetch subscriptions', error);
@@ -157,11 +157,12 @@ export default function SubscriptionsPage() {
 
         try {
             if (isEditing && editSubId) {
-                await api.put(`/subscriptions/${editSubId}`, newSub);
+                await api.put(`/subscriptions/${editSubId}`, { ...newSub, country: userCountry });
             } else {
                 const subData = {
                     ...newSub,
-                    start_date: new Date().toISOString().split('T')[0]
+                    start_date: new Date().toISOString().split('T')[0],
+                    country: userCountry
                 };
                 await api.post('/subscriptions/', subData);
             }

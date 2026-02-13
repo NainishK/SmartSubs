@@ -41,6 +41,7 @@ class Subscription(Base):
     next_billing_date = Column(Date)
     is_active = Column(Boolean, default=True)
     category = Column(String, default="OTT") # OTT, OTHER
+    country = Column(String, default="US") # Region separation
 
     owner = relationship("User", back_populates="subscriptions")
 

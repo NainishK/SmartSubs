@@ -229,11 +229,64 @@ async def read_users_me(current_user: models.User = Depends(dependencies.get_cur
 @app.put("/users/profile", response_model=schemas.User)
 def update_profile(
     update: schemas.UserProfileUpdate, 
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db), 
     current_user: models.User = Depends(dependencies.get_current_user)
 ):
     if update.country:
         crud.update_user_profile(db, user_id=current_user.id, country=update.country)
+        
+        # Reset budget preference to avoid currency mismatch AND persist old budget
+        if current_user.preferences:
+             import json
+             try:
+                 prefs = json.loads(current_user.preferences)
+                 
+                 # 1. Initialize regional store if needed
+                 if "regional_profiles" not in prefs:
+                     prefs["regional_profiles"] = {}
+                 
+                 # 2. Save SNAPSHOT of current profile to OLD country
+                 old_country = current_user.country or "US"
+                 
+                 # Filter out internal keys to avoid recursion or bloating
+                 profile_snapshot = {
+                     k: v for k, v in prefs.items() 
+                     if k not in ["regional_profiles", "regional_budgets", "ai_skip_counts"]
+                 }
+                 
+                 if profile_snapshot:
+                     prefs["regional_profiles"][old_country] = profile_snapshot
+                 
+                 # 3. Check NEW country
+                 new_country = update.country
+                 
+                 # 4. Restore or Inherit
+                 if new_country in prefs["regional_profiles"]:
+                     saved_profile = prefs["regional_profiles"][new_country]
+                     # Restore all saved fields
+                     prefs.update(saved_profile)
+                 else:
+                     # INHERIT mode: Keep cosmetic settings (Household, Style) 
+                     # BUT Clear currency-dependent fields
+                     if "target_budget" in prefs:
+                         del prefs["target_budget"]
+                     if "target_currency" in prefs: 
+                         del prefs["target_currency"] 
+                 
+                 # Clean up legacy keys
+                 if "budget" in prefs: del prefs["budget"]
+                 if "regional_budgets" in prefs: del prefs["regional_budgets"] # Migrate to new key
+
+                 crud.update_user_preferences(db, user_id=current_user.id, preferences=json.dumps(prefs))
+                 
+             except Exception as e:
+                 logger.error(f"Error in preference persistence: {e}")
+                 pass
+
+        # 2. Trigger background refresh to populate new cache (Region-keyed now, so no need to clear old)
+        import recommendations
+        background_tasks.add_task(recommendations.refresh_recommendations, SessionLocal(), current_user.id, force=True)
     
     if update.preferences:
         crud.update_user_preferences(db, user_id=current_user.id, preferences=update.preferences)
@@ -268,10 +321,12 @@ async def request_ai_access(
     return {"status": "requested", "message": "Access requested. Waiting for approval."}
 
 @app.get("/users/me/stats", response_model=schemas.UserStats)
-def read_user_stats(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+def read_user_stats(country: str = None, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    target_country = country if country else (current_user.country or "US")
     subs = db.query(models.Subscription).filter(
         models.Subscription.user_id == current_user.id,
-        models.Subscription.is_active == True
+        models.Subscription.is_active == True,
+        models.Subscription.country == target_country
     ).all()
     
     def get_monthly_cost(sub):
@@ -297,10 +352,12 @@ def read_user_stats(db: Session = Depends(get_db), current_user: models.User = D
     )
 
 @app.get("/users/me/spending", response_model=list[schemas.SpendingCategory])
-def read_user_spending(db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+def read_user_spending(country: str = None, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    target_country = country if country else (current_user.country or "US")
     subs = db.query(models.Subscription).filter(
         models.Subscription.user_id == current_user.id,
-        models.Subscription.is_active == True
+        models.Subscription.is_active == True,
+        models.Subscription.country == target_country
     ).all()
     
     def get_monthly_cost(sub):
@@ -343,13 +400,17 @@ def search_content(query: str, current_user: models.User = Depends(dependencies.
 
 @app.post("/subscriptions/", response_model=schemas.Subscription)
 def create_subscription(subscription: schemas.SubscriptionCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    # Auto-assign country if not provided
+    if not subscription.country:
+        subscription.country = current_user.country or "US"
+        
     sub = crud.create_user_subscription(db=db, subscription=subscription, user_id=current_user.id)
     
     # Attach logo
     service = db.query(models.Service).filter(
         models.Service.name == sub.service_name,
-        (models.Service.country == current_user.country) | (models.Service.country == "US")
-    ).order_by(models.Service.country == current_user.country).first()
+        (models.Service.country == sub.country) | (models.Service.country == "US")
+    ).order_by(models.Service.country == sub.country).first()
     if service:
         sub.logo_url = service.logo_url
 
@@ -360,15 +421,19 @@ def create_subscription(subscription: schemas.SubscriptionCreate, background_tas
     return sub
 
 @app.get("/subscriptions/", response_model=list[schemas.Subscription])
-def read_subscriptions(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
-    subs = db.query(models.Subscription).filter(models.Subscription.user_id == current_user.id).offset(skip).limit(limit).all()
+def read_subscriptions(country: str = None, skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
+    # Default to user's country if not specified
+    target_country = country if country else (current_user.country or "US")
+    
+    subs = crud.get_user_subscriptions(db, user_id=current_user.id, country=target_country)
+    
     # Attach logos
     for sub in subs:
         # Use desc() to prioritize True (Match) over False
         service = db.query(models.Service).filter(
             models.Service.name == sub.service_name,
-            (models.Service.country == current_user.country) | (models.Service.country == "US")
-        ).order_by(desc(models.Service.country == current_user.country)).first()
+            (models.Service.country == sub.country) | (models.Service.country == "US")
+        ).order_by(desc(models.Service.country == sub.country)).first()
         if service:
             sub.logo_url = service.logo_url
     return subs
@@ -422,16 +487,11 @@ def read_watchlist(skip: int = 0, limit: int = 100, db: Session = Depends(get_db
 def check_watch_availability(item_ids: list[int], background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: models.User = Depends(dependencies.get_current_user)):
     import tmdb_client
     
-    # Fetch items for context
-    items = db.query(models.WatchlistItem).filter(
-        models.WatchlistItem.user_id == current_user.id,
-        models.WatchlistItem.tmdb_id.in_(item_ids)
-    ).all()
-    
     subs = db.query(models.Subscription).filter(
         models.Subscription.user_id == current_user.id,
         models.Subscription.is_active == True,
-        models.Subscription.category == 'OTT'
+        models.Subscription.category == 'OTT',
+        models.Subscription.country == (current_user.country or "US")
     ).all()
     
     # Robust Provider Map
@@ -631,8 +691,17 @@ def get_unified_insights(
     # Check cache first? (Optional - lets do fresh for now or cache with 24h expiry)
     import recommendations
     if current_user.subscriptions and not force_refresh: 
-         # Using a distinct category for this unified blob
-         cached = recommendations.get_cached_data(db, user_id=current_user.id, category="unified_insights")
+         # Using a distinct category for this unified blob, now keyed by country
+         country = current_user.country or "US"
+         cache_key = f"unified_insights_{country}"
+         print(f"DEBUG: Checking cache for user {current_user.id} with key: {cache_key}")
+         cached = recommendations.get_cached_data(db, user_id=current_user.id, category=cache_key)
+         
+         if cached:
+             print(f"DEBUG: Cache HIT for {cache_key}. Keys: {cached.keys()}")
+         else:
+             print(f"DEBUG: Cache MISS for {cache_key}")
+
          if cached and (cached.get('picks') or cached.get('strategy')):
              # Validate and filter bad items, but keep good ones (Partial Cache Strategy)
              valid_picks = []
@@ -641,8 +710,11 @@ def get_unified_insights(
                      if pick.get('tmdb_id') and pick.get('tmdb_id') != 0 and pick.get('poster_path'):
                          valid_picks.append(pick)
              
-             # If we have at least some valid picks, return them to prevent constant loading loops
-             if len(valid_picks) > 0:
+             # If we have at least some valid picks OR valid strategy, return cached
+             has_picks = len(valid_picks) > 0
+             has_strategy = cached.get('strategy') and len(cached.get('strategy')) > 0
+             
+             if has_picks or has_strategy:
                  cached['picks'] = valid_picks
                  return cached
 
@@ -653,7 +725,8 @@ def get_unified_insights(
         if e.status_code == 429:
              # LIMIT REACHED: Try to fallback to ANY cache (even if we thought it was 'bad' or 'old')
              # Re-fetch raw cache just in case we filtered it out above
-             fallback = recommendations.get_cached_data(db, user_id=current_user.id, category="unified_insights")
+             country = current_user.country or "US"
+             fallback = recommendations.get_cached_data(db, user_id=current_user.id, category=f"unified_insights_{country}")
              
              # If we have cache, use it
              if fallback and (fallback.get('picks') or fallback.get('strategy')):
@@ -713,7 +786,8 @@ def get_unified_insights(
     # 4. Handle "ignored/repetitive" recommendations Logic
     # We load old cache -> see if user ignored them -> increment count
     import recommendations
-    old_cache = recommendations.get_cached_data(db, user_id=current_user.id, category="unified_insights")
+    country = current_user.country or "US"
+    old_cache = recommendations.get_cached_data(db, user_id=current_user.id, category=f"unified_insights_{country}")
     
     ignored_counts = preferences.get("ai_skip_counts", {})
     dirty_pref = False
@@ -784,7 +858,8 @@ def get_unified_insights(
              print(f"DEBUG: AI Service Unavailable (Quota/Error): {e}")
              
              # 1. Try Cache
-             fallback = recommendations.get_cached_data(db, user_id=current_user.id, category="unified_insights")
+             country = current_user.country or "US"
+             fallback = recommendations.get_cached_data(db, user_id=current_user.id, category=f"unified_insights_{country}")
              if fallback and (fallback.get('picks') or fallback.get('strategy')):
                  fallback['warning'] = "AI is currently experiencing high demand. Viewing cached results from previous session."
                  return fallback
@@ -806,7 +881,8 @@ def get_unified_insights(
         return {"picks": [], "strategy": [], "gaps": []}
         
     # Cache
-    recommendations.set_cached_data(db, user_id=current_user.id, category="unified_insights", data=insights)
+    country = current_user.country or "US"
+    recommendations.set_cached_data(db, user_id=current_user.id, category=f"unified_insights_{country}", data=insights)
     
     # SUCCESS: Now we save the skip counts (if any)
     if dirty_pref:

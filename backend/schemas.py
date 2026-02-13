@@ -11,6 +11,7 @@ class SubscriptionBase(BaseModel):
     next_billing_date: date
     is_active: bool = True
     category: str = "OTT"
+    country: str = "US"
 
 class SubscriptionCreate(SubscriptionBase):
     pass
@@ -24,6 +25,7 @@ class SubscriptionUpdate(BaseModel):
     next_billing_date: Optional[date] = None
     is_active: Optional[bool] = None
     category: Optional[str] = None
+    country: Optional[str] = None
 
 class Subscription(SubscriptionBase):
     id: int
@@ -116,6 +118,9 @@ class UserPreferences(BaseModel):
     viewing_style: Optional[str] = None # New: Binge, Weekly, Casual
     devices: Optional[List[str]] = None
     deal_breakers: Optional[List[str]] = None
+
+    class Config:
+        extra = "allow"
 
 class UserProfileUpdate(BaseModel):
     country: Optional[str] = None

@@ -28,12 +28,10 @@ def run_migration():
         
         # Simpler approach: Try adding each column, catch "duplicate column" error
         columns_to_add = [
-            ("watchlist_items", "current_season", "INTEGER DEFAULT 0"),
-            ("watchlist_items", "current_episode", "INTEGER DEFAULT 0"),
-            ("watchlist_items", "total_seasons", "INTEGER DEFAULT 0"),
             ("watchlist_items", "total_episodes", "INTEGER DEFAULT 0"),
             ("users", "google_id", "TEXT UNIQUE"),
             ("users", "avatar_url", "TEXT"),
+            ("subscriptions", "country", "TEXT DEFAULT 'US'")
         ]
         
         for table, col, dtype in columns_to_add:
@@ -67,6 +65,33 @@ def run_migration():
                     print(f"   ⚠️  Column {col} already exists (Skipping)")
                 else:
                     print(f"   ❌ Error adding {col}: {e}")
+
+        # Data Backfill for Subscriptions
+        print("🔄 Running Data Backfill for Subscriptions...")
+        try:
+            # 1. Fetch all users with their country
+            # SQLite specific or Generic SQL
+            users_result = conn.execute(text("SELECT id, country FROM users"))
+            users = users_result.fetchall()
+            
+            for user in users:
+                uid, country = user
+                u_country = country if country else 'US'
+                
+                # Update subs for this user
+                # We want to set country = user.country WHERE user_id = uid AND country IS NULL (or check if it was just added default 'US')
+                # Actually, since we added column with default 'US', they are all 'US'. 
+                # We only need to update if user.country != 'US'.
+                if u_country != 'US':
+                    print(f"   📍 Backfilling User {uid} subs to '{u_country}'")
+                    update_sql = text(f"UPDATE subscriptions SET country = :c WHERE user_id = :uid")
+                    conn.execute(update_sql, {"c": u_country, "uid": uid})
+            
+            conn.commit()
+            print("✅ Data Backfill Complete")
+        except Exception as e:
+            print(f"❌ Data Backfill Failed: {e}")
+            conn.rollback()
 
 if __name__ == "__main__":
     try:

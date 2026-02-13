@@ -54,6 +54,13 @@ def set_cached_data(db: Session, user_id: int, category: str, data: list):
     cache_entry.updated_at = datetime.utcnow() # Ensure timestamp update
     db.commit()
 
+def clear_user_cache(db: Session, user_id: int):
+    """Invalidate all recommendation cache for a user."""
+    db.query(models.RecommendationCache).filter(
+        models.RecommendationCache.user_id == user_id
+    ).delete()
+    db.commit()
+
 def refresh_recommendations(db: Session, user_id: int, force: bool = False, category: str = None):
     """
     Background task to re-calculate and cache all recommendations.
@@ -107,25 +114,23 @@ def get_dashboard_recommendations(db: Session, user_id: int):
     Fast recommendations: Watch Now (on your subs) and Cancel (unused subs).
     Tries cache first, then calculates if missing.
     """
-    cached = get_cached_data(db, user_id, "dashboard")
-    if cached is not None:
-        # Smart Validation: If we have 0 trending items, assume cache is stale/broken and recalc
-        trending_count = sum(1 for r in cached if r.get("type") in ["trending", "global_trending"])
-        if trending_count > 0:
-            return cached
-        
-    # Calculate
-    recs = calculate_dashboard_recommendations(db, user_id)
+    # Context (fetch here to key cache)
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    country = user.country if user and user.country else "US"
+    
+    cached = get_cached_data(db, user_id, f"dashboard_{country}")
+    if cached:
+        return cached
+
+    recs = calculate_dashboard_recommendations(db, user_id, country)
     
     if recs:
-        set_cached_data(db, user_id, "dashboard", recs)
+        set_cached_data(db, user_id, f"dashboard_{country}", recs)
         
     return recs
 
-def calculate_dashboard_recommendations(db: Session, user_id: int):
-    # 0. Get User Context
-    user = db.query(models.User).filter(models.User.id == user_id).first()
-    country = user.country if user and user.country else "US"
+def calculate_dashboard_recommendations(db: Session, user_id: int, country: str):
+    # 0. Get User Context (country is now passed in)
 
     # 1. Get User's Watchlist
     watchlist_query = db.query(models.WatchlistItem).filter(models.WatchlistItem.user_id == user_id).all()
@@ -136,7 +141,8 @@ def calculate_dashboard_recommendations(db: Session, user_id: int):
     subscriptions = db.query(models.Subscription).filter(
         models.Subscription.user_id == user_id,
         models.Subscription.is_active == True,
-        models.Subscription.category == 'OTT'
+        models.Subscription.category == 'OTT',
+        models.Subscription.country == country
     ).all()
     
     # Allow proceeding even without explicit subscriptions to show "Global Trending"
@@ -350,23 +356,26 @@ def get_similar_content(db: Session, user_id: int, force_refresh: bool = False):
     Slow recommendations: Similar content based on watched history.
     Tries cache first, then calculates if missing.
     """
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    country = user.country if user and user.country else "US"
+    
     if not force_refresh:
-        cached = get_cached_data(db, user_id, "similar")
+        cached = get_cached_data(db, user_id, f"similar_{country}")
         if cached is not None:
             return cached
 
     # Calculate
-    recs = calculate_similar_content(db, user_id)
+    recs = calculate_similar_content(db, user_id, country)
     
     if recs:
-        set_cached_data(db, user_id, "similar", recs)
+        set_cached_data(db, user_id, f"similar_{country}", recs)
         
     return recs
 
-def calculate_similar_content(db: Session, user_id: int):
-    # 0. Get User Context (Country)
-    user = db.query(models.User).filter(models.User.id == user_id).first()
-    country = user.country if user and user.country else "US"
+def calculate_similar_content(db: Session, user_id: int, country: str):
+    # 0. Get User Context (Passed in)
+    # user = db.query(models.User).filter(models.User.id == user_id).first()
+    # country = user.country if user and user.country else "US"
 
     def get_service_logo(name, user_country):
         service = db.query(models.Service).filter(
@@ -379,7 +388,8 @@ def calculate_similar_content(db: Session, user_id: int):
     subscriptions = db.query(models.Subscription).filter(
         models.Subscription.user_id == user_id,
         models.Subscription.is_active == True,
-        models.Subscription.category == 'OTT'
+        models.Subscription.category == 'OTT',
+        models.Subscription.country == country
     ).all()
     
     if not subscriptions:

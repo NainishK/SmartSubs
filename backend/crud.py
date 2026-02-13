@@ -20,17 +20,21 @@ def create_user(db: Session, user: schemas.UserCreate):
 def get_subscriptions(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Subscription).offset(skip).limit(limit).all()
 
-def get_user_subscriptions(db: Session, user_id: int):
-    return db.query(models.Subscription).filter(
+def get_user_subscriptions(db: Session, user_id: int, country: str = None):
+    query = db.query(models.Subscription).filter(
         models.Subscription.user_id == user_id,
         models.Subscription.is_active == True
-    ).all()
+    )
+    if country:
+        query = query.filter(models.Subscription.country == country)
+    return query.all()
 
 def create_user_subscription(db: Session, subscription: schemas.SubscriptionCreate, user_id: int):
     # Check for duplicate
     existing_sub = db.query(models.Subscription).filter(
         models.Subscription.user_id == user_id,
-        models.Subscription.service_name == subscription.service_name
+        models.Subscription.service_name == subscription.service_name,
+        models.Subscription.country == subscription.country
     ).first()
     if existing_sub:
         return existing_sub
@@ -260,8 +264,11 @@ def update_user_profile(db: Session, user_id: int, country: str):
 def update_user_preferences(db: Session, user_id: int, preferences: schemas.UserPreferences):
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if user:
-        # Convert pydantic model to json string
-        user.preferences = preferences.json()
+        # Check if already string (from internal logic) or Pydantic model (from API)
+        if isinstance(preferences, str):
+            user.preferences = preferences
+        else:
+            user.preferences = preferences.json()
         db.commit()
         db.refresh(user)
     return user
