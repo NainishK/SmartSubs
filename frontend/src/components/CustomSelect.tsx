@@ -5,7 +5,7 @@ import styles from './CustomSelect.module.css';
 
 interface Option {
     value: string | number;
-    label: string;
+    label: string | React.ReactNode;
 }
 
 interface CustomSelectProps {

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
 import { Loader2 } from 'lucide-react';
+import CustomSelect from '@/components/CustomSelect';
 import styles from '../login/login.module.css'; // Reuse login styles
 
 export default function SignupPage() {
@@ -124,14 +125,18 @@ export default function SignupPage() {
                     </div>
 
                     <div className={styles.inputGroup}>
-                        <select
+                        <CustomSelect
                             value={country}
-                            onChange={(e) => setCountry(e.target.value)}
+                            options={[
+                                { value: 'IN', label: '🇮🇳 India (IN)' },
+                                { value: 'US', label: '🇺🇸 United States (US)' },
+                                { value: 'GB', label: '🇬🇧 United Kingdom (GB)' },
+                                { value: 'CA', label: '🇨🇦 Canada (CA)' },
+                                { value: 'AU', label: '🇦🇺 Australia (AU)' }
+                            ]}
+                            onChange={(val) => setCountry(val as string)}
                             className={styles.input}
-                        >
-                            <option value="IN">India (IN)</option>
-                            <option value="US">United States (US)</option>
-                        </select>
+                        />
                     </div>
 
                     {showLongWait && loading && (

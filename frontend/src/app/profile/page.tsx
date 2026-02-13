@@ -7,6 +7,7 @@ import Link from 'next/link';
 import styles from './profile.module.css';
 import { ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import CustomSelect from '@/components/CustomSelect';
 
 interface User {
     id: number;
@@ -143,39 +144,38 @@ export default function Profile() {
                         <div className={styles.inputGroup}>
                             <label htmlFor="country" className={styles.label}>Country / Region</label>
                             <div style={{ position: 'relative' }}>
-                                <select
-                                    id="country"
+                                <CustomSelect
                                     value={country}
-                                    onChange={(e) => setCountry(e.target.value)}
+                                    options={[
+                                        { value: 'US', label: '🇺🇸 United States (US)' },
+                                        { value: 'IN', label: '🇮🇳 India (IN)' },
+                                        { value: 'GB', label: '🇬🇧 United Kingdom (GB)' },
+                                        { value: 'CA', label: '🇨🇦 Canada (CA)' },
+                                        { value: 'AU', label: '🇦🇺 Australia (AU)' }
+                                    ]}
+                                    onChange={(val) => setCountry(val as string)}
                                     className={styles.select}
-                                >
-                                    <option value="US">🇺🇸 United States (US)</option>
-                                    <option value="IN">🇮🇳 India (IN)</option>
-                                    <option value="GB">🇬🇧 United Kingdom (GB)</option>
-                                    <option value="CA">🇨🇦 Canada (CA)</option>
-                                    <option value="AU">🇦🇺 Australia (AU)</option>
-                                </select>
+                                />
                             </div>
                             <p className={styles.helperText}>
                                 This affects subscription costs and content availability.
                             </p>
                         </div>
-                    </div>
 
-                    <button
-                        type="submit"
-                        className={styles.saveButton}
-                        disabled={saving}
-                    >
-                        {saving ? 'Saving...' : 'Save Changes'}
-                    </button>
+                        <button
+                            type="submit"
+                            className={styles.saveButton}
+                            disabled={saving}
+                        >
+                            {saving ? 'Saving...' : 'Save Changes'}
+                        </button>
 
-                    {message && (
-                        <div className={`${styles.message} ${message.includes('Failed') ? styles.messageError : styles.messageSuccess}`}>
-                            {message.includes('Failed') ? <AlertCircle size={20} /> : <CheckCircle size={20} />}
-                            {message}
-                        </div>
-                    )}
+                        {message && (
+                            <div className={`${styles.message} ${message.includes('Failed') ? styles.messageError : styles.messageSuccess}`}>
+                                {message.includes('Failed') ? <AlertCircle size={20} /> : <CheckCircle size={20} />}
+                                {message}
+                            </div>
+                        )}
                 </form>
             </div>
 
