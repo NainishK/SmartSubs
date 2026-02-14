@@ -261,22 +261,23 @@ def update_profile(
                  # 3. Check NEW country
                  new_country = update.country
                  
-                 # 4. Restore or Inherit
+                 # 4. Restore or Clear (NO INHERITANCE)
                  if new_country in prefs["regional_profiles"]:
                      saved_profile = prefs["regional_profiles"][new_country]
                      # Restore all saved fields
                      prefs.update(saved_profile)
                  else:
-                     # INHERIT mode: Keep cosmetic settings (Household, Style) 
-                     # BUT Clear currency-dependent fields
-                     if "target_budget" in prefs:
-                         del prefs["target_budget"]
-                     if "target_currency" in prefs: 
-                         del prefs["target_currency"] 
+                     # NEW REGION = CLEAN SLATE
+                     # We explicitly clear all preference fields except the regional stores
+                     keys_to_keep = ["regional_profiles", "regional_budgets", "ai_skip_counts"]
+                     keys_to_clear = [k for k in prefs.keys() if k not in keys_to_keep]
+                     
+                     for k in keys_to_clear:
+                         del prefs[k]
                  
                  # Clean up legacy keys
                  if "budget" in prefs: del prefs["budget"]
-                 if "regional_budgets" in prefs: del prefs["regional_budgets"] # Migrate to new key
+                 if "regional_budgets" in prefs: del prefs["regional_budgets"] 
 
                  crud.update_user_preferences(db, user_id=current_user.id, preferences=json.dumps(prefs))
                  

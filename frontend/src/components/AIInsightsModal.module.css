@@ -625,6 +625,17 @@
     border-color: rgba(255, 255, 255, 0.3);
 }
 
+:global([data-theme='dark']) .pillActive {
+    background: #7c3aed;
+    color: white;
+    border-color: #7c3aed;
+}
+
+:global([data-theme='dark']) .pillActive:hover {
+    background: #6d28d9;
+    border-color: #6d28d9;
+}
+
 :global([data-theme='dark']) .refreshTab {
     color: white;
     background: #7c3aed;

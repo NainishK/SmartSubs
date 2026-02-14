@@ -45,28 +45,8 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
 
     const autoLoadRef = useRef(false);
 
-    // Initial Load & Auto-Generate Logic
-    useEffect(() => {
-        if (isOpen) {
-            fetchPreferences();
-            // Reset auto-load state on open
-            autoLoadRef.current = false;
-        }
-    }, [isOpen]);
-
-    useEffect(() => {
-        // Only auto-generate if they have used it before (smart cache load)
-        // AND if we haven't tried auto-loading yet in this session
-        if (isOpen && aiAllowed && lastAiUsage && !autoLoadRef.current && hasData) {
-            autoLoadRef.current = true;
-            handleGenerate(false);
-        }
-    }, [isOpen, aiAllowed, lastAiUsage, hasData]);
 
     const [userCountry, setUserCountry] = useState<string>('US'); // Default US
-
-    // ... imports at top should include getCurrencySymbol from currency.ts but let's just map locally for speed or import properly?
-    // Let's assume we can add the import.
 
     const fetchPreferences = async () => {
         try {
@@ -104,9 +84,81 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
         }
     };
 
+    const handleGenerate = async (force = false) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const url = force ? '/recommendations/insights?force_refresh=true' : '/recommendations/insights';
+            const res = await api.post(url);
+            if (res.data && (res.data.picks || res.data.strategy)) {
+                setData(res.data);
+                // Update local usage state if success
+                setLastAiUsage(new Date().toISOString());
+                // Save region to prevent re-generation on reload/reopen
+                localStorage.setItem('last_ai_region', userCountry);
+                if (activeTab === 'preferences') setActiveTab('picks');
+            } else {
+                setError("AI returned incomplete data. Please try again.");
+            }
+        } catch (e: any) {
+            console.error(e);
+            let msg = "Failed to generate insights. AI might be busy.";
+
+            // Extract Axios error message
+            if (e.response && e.response.data && e.response.data.detail) {
+                msg = e.response.data.detail;
+            } else if (e.message === "Network Error") {
+                msg = "Network Error: Please check if the backend is running.";
+            } else if (e.message && e.message.includes("timeout")) {
+                msg = "AI Timeout: The engine is taking too long. Please try again in 1 minute.";
+            }
+
+            setError(msg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Initial Load & Auto-Generate Logic
+    useEffect(() => {
+        if (isOpen) {
+            fetchPreferences();
+            // Reset auto-load state on open
+            autoLoadRef.current = false;
+        }
+    }, [isOpen]);
+
+
+
+    // Auto-Generate logic: Only if previously generated FOR THIS REGION or user explicitly clicked
+    useEffect(() => {
+        if (isOpen && aiAllowed && hasData && !autoLoadRef.current) {
+            const lastRegion = localStorage.getItem('last_ai_region');
+
+            // Only auto-generate if we've successfully generated for THIS country before
+            if (lastRegion === userCountry) {
+                autoLoadRef.current = true;
+                handleGenerate(false);
+            }
+        }
+    }, [isOpen, aiAllowed, hasData, userCountry]);
+
+    // ... imports at top should include getCurrencySymbol from currency.ts but let's just map locally for speed or import properly?
+    // Let's assume we can add the import.
+
+
+
     // Derived Currency Info
     const currencySymbol = COUNTRY_SYMBOL_MAP[userCountry] || '$';
     const currencyCode = COUNTRY_CURRENCY_MAP[userCountry] || 'USD';
+
+
+
+
+    // ... imports at top should include getCurrencySymbol from currency.ts but let's just map locally for speed or import properly?
+    // Let's assume we can add the import.
+
+
 
     const handleSavePreferences = async () => {
         setSavingPref(true);
@@ -140,38 +192,7 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
         }
     };
 
-    const handleGenerate = async (force = false) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const url = force ? '/recommendations/insights?force_refresh=true' : '/recommendations/insights';
-            const res = await api.post(url);
-            if (res.data && (res.data.picks || res.data.strategy)) {
-                setData(res.data);
-                // Update local usage state if success
-                setLastAiUsage(new Date().toISOString());
-                if (activeTab === 'preferences') setActiveTab('picks');
-            } else {
-                setError("AI returned incomplete data. Please try again.");
-            }
-        } catch (e: any) {
-            console.error(e);
-            let msg = "Failed to generate insights. AI might be busy.";
 
-            // Extract Axios error message
-            if (e.response && e.response.data && e.response.data.detail) {
-                msg = e.response.data.detail;
-            } else if (e.message === "Network Error") {
-                msg = "Network Error: Please check if the backend is running.";
-            } else if (e.message && e.message.includes("timeout")) {
-                msg = "AI Timeout: The engine is taking too long. Please try again in 1 minute.";
-            }
-
-            setError(msg);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const LANG_OPTIONS = ["English", "Spanish", "French", "German", "Japanese", "Korean", "Hindi", "Mandarin", "Italian"];
     const DEVICE_OPTIONS = ["Mobile/Tablet", "Laptop", "TV (1080p)", "4K Home Theater"];
@@ -372,109 +393,108 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                                     </div>
                                 ) : (
                                     <>
-                                        {activeTab === 'picks' && (
-                                            <>
-                                                {!data && !loading && (
-                                                    <div className={styles.loadingWrapper}>
-                                                        <Sparkles size={48} color={hasData ? "#ddd" : "#e5e7eb"} />
 
-                                                        {!hasData ? (
-                                                            // Empty State
-                                                            <>
-                                                                <h3 style={{ margin: '1rem 0 0.5rem 0', color: '#374151' }}>Build Your Profile</h3>
-                                                                <p style={{ maxWidth: 300 }}>
-                                                                    The AI needs data to work with. Please add active subscriptions or add movies/shows to your watchlist first.
-                                                                </p>
+                                        {/* Shared Pre-Generation State for Picks & Strategy */}
+                                        {(activeTab === 'picks' || activeTab === 'strategy') && !data && !loading && (
+                                            <div className={styles.loadingWrapper}>
+                                                <Sparkles size={48} color={hasData ? "#ddd" : "#e5e7eb"} />
 
-                                                            </>
-                                                        ) : (
-                                                            // Ready State
-                                                            <>
-                                                                <p>Ready to analyze your library. Click below to start.</p>
-                                                                <button className={styles.saveBtn} style={{ maxWidth: 200 }} onClick={() => handleGenerate(false)}>
-                                                                    Generate Insights
-                                                                </button>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                )}
-
-                                                {loading && (
-                                                    <div className={styles.loadingWrapper} style={{ gridColumn: '1 / -1', minHeight: '300px' }}>
-                                                        <RefreshCw className={styles.spin} size={48} color="#7c3aed" />
-                                                        <p>Analyzing 28,000+ titles and your watchlist...</p>
-                                                    </div>
-                                                )}
-
-                                                {data && !loading && (
+                                                {!hasData ? (
+                                                    // Empty State
                                                     <>
-                                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
-                                                            <h3 className={styles.sectionTitle}>Tap to Watch (On your services)</h3>
-                                                        </div>
+                                                        <h3 style={{ margin: '1rem 0 0.5rem 0', color: '#374151' }}>Build Your Profile</h3>
+                                                        <p style={{ maxWidth: 300 }}>
+                                                            The AI needs data to work with. Please add active subscriptions or add movies/shows to your watchlist first.
+                                                        </p>
 
-                                                        {data.picks.length === 0 ? (
-                                                            <div style={{
-                                                                display: 'flex',
-                                                                flexDirection: 'column',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                                padding: '3rem',
-                                                                background: 'white',
-                                                                borderRadius: '12px',
-                                                                border: '1px solid #e5e7eb',
-                                                                color: '#6b7280',
-                                                                textAlign: 'center'
-                                                            }}>
-                                                                <Film size={48} color="#e5e7eb" style={{ marginBottom: '1rem' }} />
-                                                                <h4 style={{ margin: '0 0 0.5rem 0', color: '#111827', fontSize: '1.1rem' }}>No perfect matches found</h4>
-                                                                <p style={{ margin: 0, maxWidth: '300px' }}>
-                                                                    Your preferences might be too strict. Try adding more languages or services to your profile.
-                                                                </p>
-                                                                <button
-                                                                    className={styles.saveBtn}
-                                                                    style={{ marginTop: '1.5rem', width: 'auto' }}
-                                                                    onClick={() => setActiveTab('preferences')}
-                                                                >
-                                                                    Adjust Profile
-                                                                </button>
-                                                            </div>
-                                                        ) : (
-                                                            <div className={styles.grid}>
-                                                                {data.picks.map((rec, idx) => {
-                                                                    const tmdbId = rec.tmdb_id || 0;
-                                                                    const existingItem = watchlist.find(w => w.tmdb_id === tmdbId || (w.tmdb_id === 0 && rec.title === 'Title needed'));
-
-                                                                    return (
-                                                                        <div key={idx} style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                                                            <MediaCard
-                                                                                item={{
-                                                                                    id: tmdbId,
-                                                                                    dbId: existingItem?.id,
-                                                                                    title: rec.title,
-                                                                                    overview: rec.overview || '',
-                                                                                    poster_path: rec.poster_path || '',
-                                                                                    vote_average: rec.vote_average || 0,
-                                                                                    media_type: rec.media_type || 'movie',
-                                                                                    status: existingItem?.status,
-                                                                                    user_rating: existingItem?.user_rating || 0
-                                                                                }}
-                                                                                showServiceBadge={rec.service}
-                                                                                customBadgeColor="#7c3aed"
-                                                                                aiReason={rec.reason}
-                                                                                existingStatus={existingItem?.status}
-                                                                                onAddSuccess={onWatchlistUpdate}
-                                                                                onStatusChange={() => onWatchlistUpdate?.()}
-                                                                                onRemove={existingItem ? () => confirmDelete(existingItem.id, rec.title) : undefined}
-                                                                            />
-                                                                        </div>
-                                                                    )
-                                                                })}
-                                                            </div>
-                                                        )}
                                                     </>
+                                                ) : (
+                                                    // Ready State
+                                                    <>
+                                                        <p>Ready to analyze your library. Click below to start.</p>
+                                                        <button className={styles.saveBtn} style={{ maxWidth: 200 }} onClick={() => handleGenerate(false)}>
+                                                            Generate Insights
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {activeTab === 'picks' && loading && (
+                                            <div className={styles.loadingWrapper} style={{ gridColumn: '1 / -1', minHeight: '300px' }}>
+                                                <RefreshCw className={styles.spin} size={48} color="#7c3aed" />
+                                                <p>Analyzing 28,000+ titles and your watchlist...</p>
+                                            </div>
+                                        )}
+
+                                        {activeTab === 'picks' && data && !loading && (
+                                            <>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
+                                                    <h3 className={styles.sectionTitle}>Tap to Watch (On your services)</h3>
+                                                </div>
+
+                                                {data.picks.length === 0 ? (
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        padding: '3rem',
+                                                        background: 'white',
+                                                        borderRadius: '12px',
+                                                        border: '1px solid #e5e7eb',
+                                                        color: '#6b7280',
+                                                        textAlign: 'center'
+                                                    }}>
+                                                        <Film size={48} color="#e5e7eb" style={{ marginBottom: '1rem' }} />
+                                                        <h4 style={{ margin: '0 0 0.5rem 0', color: '#111827', fontSize: '1.1rem' }}>No perfect matches found</h4>
+                                                        <p style={{ margin: 0, maxWidth: '300px' }}>
+                                                            Your preferences might be too strict. Try adding more languages or services to your profile.
+                                                        </p>
+                                                        <button
+                                                            className={styles.saveBtn}
+                                                            style={{ marginTop: '1.5rem', width: 'auto' }}
+                                                            onClick={() => setActiveTab('preferences')}
+                                                        >
+                                                            Adjust Profile
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className={styles.grid}>
+                                                        {data.picks.map((rec, idx) => {
+                                                            const tmdbId = rec.tmdb_id || 0;
+                                                            const existingItem = watchlist.find(w => w.tmdb_id === tmdbId || (w.tmdb_id === 0 && rec.title === 'Title needed'));
+
+                                                            return (
+                                                                <div key={idx} style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%' }}>
+                                                                    <MediaCard
+                                                                        item={{
+                                                                            id: tmdbId,
+                                                                            dbId: existingItem?.id,
+                                                                            title: rec.title,
+                                                                            overview: rec.overview || '',
+                                                                            poster_path: rec.poster_path || '',
+                                                                            vote_average: rec.vote_average || 0,
+                                                                            media_type: rec.media_type || 'movie',
+                                                                            status: existingItem?.status,
+                                                                            user_rating: existingItem?.user_rating || 0
+                                                                        }}
+                                                                        showServiceBadge={rec.service}
+                                                                        customBadgeColor="#7c3aed"
+                                                                        aiReason={rec.reason}
+                                                                        existingStatus={existingItem?.status}
+                                                                        onAddSuccess={onWatchlistUpdate}
+                                                                        onStatusChange={() => onWatchlistUpdate?.()}
+                                                                        onRemove={existingItem ? () => confirmDelete(existingItem.id, rec.title) : undefined}
+                                                                    />
+                                                                </div>
+                                                            )
+                                                        })}
+                                                    </div>
                                                 )}
                                             </>
                                         )}
+
 
                                         {activeTab === 'strategy' && (
                                             <>

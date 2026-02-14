@@ -2,6 +2,27 @@
 
 All notable changes to the Smart Subscription Manager project.
 
+## [1.5.0] - 2026-02-14
+
+### 🚀 Major Features
+-   **Smart Profile Persistence**:
+    -   **Regional Profiles**: User preferences (Budget, Household Size, Platform Selection) are now saved independently per region (US/IN).
+    -   **Clean Slate**: Switching to a new region provides a fresh start without inheriting unrelated settings from previous regions.
+-   **Enhanced Onboarding**:
+    -   **Google Sign-Up**: New users can now restartlessly sign up using their Google Account directly from the registration page.
+    -   **Streamlined Regions**: Region selection is now focused on supported territories (🇺🇸 US and 🇮🇳 IN).
+
+### ✨ UX Improvements
+-   **AI Insights**:
+    -   **Context-Aware Generation**: Validates data presence before generating insights to prevent empty results.
+    -   **Smart Strategy**: Added "Generate Insights" capability directly to the Strategy tab.
+    -   **Region Safety**: Prevents accidental auto-generation when switching regions until data is available.
+-   **Dark Mode Polish**: Fixed visibility issues for selected profile options (Language/Device pills) in dark themes.
+
+### 🐛 Bug Fixes
+-   **Budget Accuracy**: Resolved a mutation bug where budgets would drift (e.g., 500 -> 498) due to currency conversion rounding.
+-   **Dashboards**: Fixed data leakage where "Quick Watch" and "Stats" would show cached data from the wrong region.
+
 ## [1.4.0] - 2026-02-10
 
 ### 🚀 Major Features
