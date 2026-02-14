@@ -282,27 +282,14 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                     <div className={styles.content}>
                         {/* QUOTA EXCEEDED ERROR SCREEN */}
                         {data && data.warning === 'AI_QUOTA_EXCEEDED' ? (
-                            <div style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                padding: '4rem 2rem',
-                                textAlign: 'center',
-                                height: '100%'
-                            }}>
-                                <div style={{
-                                    background: '#fee2e2',
-                                    padding: '1.5rem',
-                                    borderRadius: '50%',
-                                    marginBottom: '1.5rem'
-                                }}>
+                            <div className={styles.stateContainer}>
+                                <div className={styles.stateIconWrapper}>
                                     <AlertTriangle size={48} color="#dc2626" />
                                 </div>
-                                <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111827', marginBottom: '0.5rem' }}>
+                                <h2 className={styles.stateTitle}>
                                     AI Service Temporarily Unavailable
                                 </h2>
-                                <p style={{ color: '#6b7280', maxWidth: '400px', marginBottom: '2rem', lineHeight: '1.6' }}>
+                                <p className={styles.stateDescription}>
                                     Our AI engine is currently experiencing high demand. Please try again later or check back tomorrow for fresh insights.
                                 </p>
                                 <button
@@ -316,61 +303,28 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                         ) : (
                             <>
                                 {error && (
-                                    <div style={{
-                                        background: '#fee2e2',
-                                        border: '1px solid #ef4444',
-                                        color: '#b91c1c',
-                                        padding: '1rem',
-                                        borderRadius: '8px',
-                                        marginBottom: '1rem',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem'
-                                    }}>
+                                    <div className={styles.errorState}>
                                         <AlertTriangle size={20} />
                                         <span>{error}</span>
                                     </div>
                                 )}
 
                                 {data && data.warning && (
-                                    <div style={{
-                                        background: '#fffbeb',
-                                        border: '1px solid #f59e0b',
-                                        color: '#b45309',
-                                        padding: '1rem',
-                                        borderRadius: '8px',
-                                        marginBottom: '1rem',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem'
-                                    }}>
+                                    <div className={styles.warningState}>
                                         <AlertTriangle size={20} />
                                         <span>{data.warning}</span>
                                     </div>
                                 )}
 
                                 {!aiAllowed ? (
-                                    <div style={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        padding: '4rem 2rem',
-                                        textAlign: 'center',
-                                        height: '100%'
-                                    }}>
-                                        <div style={{
-                                            background: '#f3f4f6',
-                                            padding: '1.5rem',
-                                            borderRadius: '50%',
-                                            marginBottom: '1.5rem'
-                                        }}>
+                                    <div className={styles.stateContainer}>
+                                        <div className={styles.stateIconWrapper}>
                                             <Sparkles size={48} color="#7c3aed" />
                                         </div>
-                                        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111827', marginBottom: '0.5rem' }}>
+                                        <h2 className={styles.stateTitle}>
                                             {accessStatus === 'requested' ? 'Access Requested' : 'Private Beta Access'}
                                         </h2>
-                                        <p style={{ color: '#6b7280', maxWidth: '400px', marginBottom: '2rem', lineHeight: '1.6' }}>
+                                        <p className={styles.stateDescription}>
                                             {accessStatus === 'requested'
                                                 ? "You've been added to the waitlist. We'll notify you when your profile is ready for analysis."
                                                 : "The AI Intelligence Center is currently in private beta. Request access to unlock personalized recommendations and spending strategy."}
@@ -402,8 +356,8 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                                                 {!hasData ? (
                                                     // Empty State
                                                     <>
-                                                        <h3 style={{ margin: '1rem 0 0.5rem 0', color: '#374151' }}>Build Your Profile</h3>
-                                                        <p style={{ maxWidth: 300 }}>
+                                                        <h3 className={styles.stateTitle} style={{ fontSize: '1.25rem', marginTop: '1rem' }}>Build Your Profile</h3>
+                                                        <p className={styles.loadingWrapper} style={{ maxWidth: 300 }}>
                                                             The AI needs data to work with. Please add active subscriptions or add movies/shows to your watchlist first.
                                                         </p>
 
@@ -434,21 +388,10 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                                                 </div>
 
                                                 {data.picks.length === 0 ? (
-                                                    <div style={{
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        padding: '3rem',
-                                                        background: 'white',
-                                                        borderRadius: '12px',
-                                                        border: '1px solid #e5e7eb',
-                                                        color: '#6b7280',
-                                                        textAlign: 'center'
-                                                    }}>
-                                                        <Film size={48} color="#e5e7eb" style={{ marginBottom: '1rem' }} />
-                                                        <h4 style={{ margin: '0 0 0.5rem 0', color: '#111827', fontSize: '1.1rem' }}>No perfect matches found</h4>
-                                                        <p style={{ margin: 0, maxWidth: '300px' }}>
+                                                    <div className={styles.stateContainer} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px', padding: '3rem' }}>
+                                                        <Film size={48} className={styles.helperText} style={{ marginBottom: '1rem' }} />
+                                                        <h4 className={styles.stateTitle} style={{ fontSize: '1.1rem' }}>No perfect matches found</h4>
+                                                        <p className={styles.stateDescription} style={{ marginBottom: '0' }}>
                                                             Your preferences might be too strict. Try adding more languages or services to your profile.
                                                         </p>
                                                         <button

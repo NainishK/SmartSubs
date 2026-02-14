@@ -822,3 +822,64 @@
         }
     }
 }
+
+/* Empty State */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 6rem 2rem;
+    background: var(--card);
+    border-radius: 16px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+    border: 1px solid var(--border);
+    margin-top: 1rem;
+    width: 100%;
+}
+
+.emptyIcon {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+    background: rgba(59, 130, 246, 0.1);
+    padding: 1.5rem;
+    border-radius: 50%;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.emptyTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--foreground);
+}
+
+.emptyText {
+    color: var(--muted-foreground);
+    max-width: 400px;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.emptyBtn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.emptyBtn:hover {
+    background: #0061d5;
+    transform: translateY(-2px);
+}

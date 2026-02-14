@@ -494,6 +494,12 @@
     gap: 1rem;
 }
 
+:global([data-theme='dark']) .emptyState {
+    background: var(--card);
+    border-color: var(--border);
+    color: var(--muted-foreground);
+}
+
 @media (max-width: 768px) {
     .aiBanner {
         /* Padding handled by mobile-first base */
@@ -540,6 +546,19 @@
     transform: translateY(-2px);
     box-shadow: 0 8px 16px -4px rgba(220, 38, 38, 0.15);
     border-color: #ef4444 !important;
+}
+
+:global([data-theme='dark']) .unusedItem {
+    background: var(--card) !important;
+    border-color: #991b1b !important;
+}
+
+:global([data-theme='dark']) .unusedItem .serviceName {
+    color: var(--foreground) !important;
+}
+
+:global([data-theme='dark']) .unusedItem .cardReason {
+    color: var(--muted-foreground) !important;
 }
 
 .unusedServiceInfo {

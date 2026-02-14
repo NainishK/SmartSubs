@@ -766,3 +766,87 @@
 .spin {
     animation: spin 1s linear infinite;
 }
+
+/* Empty/Beta/Quota States */
+.stateContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+    height: 100%;
+}
+
+.stateIconWrapper {
+    background: #f3f4f6;
+    padding: 1.5rem;
+    border-radius: 50%;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stateTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 0.5rem 0;
+}
+
+.stateDescription {
+    color: #6b7280;
+    max-width: 400px;
+    margin: 0 0 2rem 0;
+    line-height: 1.6;
+}
+
+.errorState {
+    background: #fee2e2;
+    border: 1px solid #ef4444;
+    color: #b91c1c;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.warningState {
+    background: #fffbeb;
+    border: 1px solid #f59e0b;
+    color: #b45309;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Dark Mode Overrides for States */
+:global([data-theme='dark']) .stateIconWrapper {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+:global([data-theme='dark']) .stateTitle {
+    color: white;
+}
+
+:global([data-theme='dark']) .stateDescription {
+    color: #94a3b8;
+}
+
+:global([data-theme='dark']) .errorState {
+    background: rgba(127, 29, 29, 0.2);
+    border-color: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+
+:global([data-theme='dark']) .warningState {
+    background: rgba(120, 53, 15, 0.2);
+    border-color: rgba(245, 158, 11, 0.2);
+    color: #fcd34d;
+}
