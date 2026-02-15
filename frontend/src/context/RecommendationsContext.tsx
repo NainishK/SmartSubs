@@ -40,6 +40,20 @@ export function RecommendationsProvider({ children }: { children: ReactNode }) {
             // @ts-ignore
             const response = await api.get(`/recommendations/dashboard?t=${Date.now()}`, { _silentAuth: true });
             setDashboardRecs(response.data);
+
+            // If dashboard is empty, the background refresh may not have finished yet.
+            // Retry once after a delay to pick up the results.
+            if (response.data.length === 0) {
+                setTimeout(async () => {
+                    try {
+                        // @ts-ignore
+                        const retry = await api.get(`/recommendations/dashboard?t=${Date.now()}`, { _silentAuth: true });
+                        if (retry.data.length > 0) {
+                            setDashboardRecs(retry.data);
+                        }
+                    } catch (e) { /* silent retry */ }
+                }, 5000);
+            }
         } catch (error) {
             console.error('Failed to fetch dashboard recommendations', error);
         } finally {

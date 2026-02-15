@@ -60,10 +60,7 @@ export default function WelcomePage() {
                         value={country}
                         options={[
                             { value: 'US', label: '🇺🇸 United States (US)' },
-                            { value: 'IN', label: '🇮🇳 India (IN)' },
-                            { value: 'GB', label: '🇬🇧 United Kingdom (GB)' },
-                            { value: 'CA', label: '🇨🇦 Canada (CA)' },
-                            { value: 'AU', label: '🇦🇺 Australia (AU)' }
+                            { value: 'IN', label: '🇮🇳 India (IN)' }
                         ]}
                         onChange={(val) => setCountry(val as string)}
                         forceLightMode={true}

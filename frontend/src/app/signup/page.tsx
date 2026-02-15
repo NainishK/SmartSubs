@@ -5,14 +5,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
 import { Loader2 } from 'lucide-react';
-import CustomSelect from '@/components/CustomSelect';
 import styles from '../login/login.module.css'; // Reuse login styles
 
 export default function SignupPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [country, setCountry] = useState('IN'); // Default to India
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [showLongWait, setShowLongWait] = useState(false);
@@ -39,7 +37,7 @@ export default function SignupPage() {
 
         // Step 1: Create User
         try {
-            await api.post('/users/', { email, password, country });
+            await api.post('/users/', { email, password });
         } catch (err: any) {
             setLoading(false);
             clearTimeout(waitTimer);
@@ -68,7 +66,8 @@ export default function SignupPage() {
             localStorage.setItem('token', response.data.access_token);
             // Clear timer before redirect (cleanliness)
             clearTimeout(waitTimer);
-            router.push('/dashboard');
+            // Redirect to welcome screen for region selection (same as OAuth flow)
+            router.push('/welcome');
         } catch (loginErr) {
             console.error('Auto-login failed:', loginErr);
             // User created but login failed. Redirect to login page with message.
@@ -141,17 +140,6 @@ export default function SignupPage() {
                         />
                     </div>
 
-                    <div className={styles.inputGroup}>
-                        <CustomSelect
-                            value={country}
-                            options={[
-                                { value: 'IN', label: '🇮🇳 India (IN)' },
-                                { value: 'US', label: '🇺🇸 United States (US)' }
-                            ]}
-                            onChange={(val) => setCountry(val as string)}
-                            forceLightMode={true}
-                        />
-                    </div>
 
                     {showLongWait && loading && (
                         <div style={{

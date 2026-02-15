@@ -67,41 +67,51 @@ def refresh_recommendations(db: Session, user_id: int, force: bool = False, cate
     If force is False, only refreshes if cache is missing or older than 24 hours.
     category: 'dashboard' or 'similar' (None = both)
     """
-    print(f"--- [REFRESH] Checking recommendations for user {user_id} (force={force}, cat={category}) ---")
+    # [FIX] Need user country to generate correct cache keys and content
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        print(f"[REFRESH] User {user_id} not found. Skipping.")
+        return
+
+    country = user.country or "US"
+    print(f"--- [REFRESH] Checking recommendations for user {user_id} ({country}) (force={force}, cat={category}) ---")
+    
     try:
         # 1. Refresh Dashboard (Trending/Watch Now)
         if category in [None, "dashboard"]:
+            cache_key = f"dashboard_{country}"
             should_refresh = force
             if not force:
                 cache_entry = db.query(models.RecommendationCache).filter(
                     models.RecommendationCache.user_id == user_id,
-                    models.RecommendationCache.category == "dashboard"
+                    models.RecommendationCache.category == cache_key
                 ).first()
                 if not cache_entry or not cache_entry.updated_at or \
-                   (datetime.now(cache_entry.updated_at.tzinfo) - cache_entry.updated_at > timedelta(hours=24)):
+                   (datetime.utcnow() - cache_entry.updated_at > timedelta(hours=24)):
                     should_refresh = True
             
             if should_refresh:
-                print(f"[REFRESH] Recalculating Dashboard for user {user_id}...")
-                dashboard_recs = calculate_dashboard_recommendations(db, user_id)
-                set_cached_data(db, user_id, "dashboard", dashboard_recs)
+                print(f"[REFRESH] Recalculating Dashboard ({country}) for user {user_id}...")
+                dashboard_recs = calculate_dashboard_recommendations(db, user_id, country)
+                set_cached_data(db, user_id, cache_key, dashboard_recs)
 
         # 2. Refresh Similar Content
         if category in [None, "similar"]:
+            cache_key = f"similar_{country}"
             should_refresh = force
             if not force:
                 cache_entry = db.query(models.RecommendationCache).filter(
                     models.RecommendationCache.user_id == user_id,
-                    models.RecommendationCache.category == "similar"
+                    models.RecommendationCache.category == cache_key
                 ).first()
                 if not cache_entry or not cache_entry.updated_at or \
-                   (datetime.now(cache_entry.updated_at.tzinfo) - cache_entry.updated_at > timedelta(hours=24)):
+                   (datetime.utcnow() - cache_entry.updated_at > timedelta(hours=24)):
                     should_refresh = True
             
             if should_refresh:
-                print(f"[REFRESH] Recalculating Similar Content for user {user_id}...")
-                similar_recs = calculate_similar_content(db, user_id)
-                set_cached_data(db, user_id, "similar", similar_recs)
+                print(f"[REFRESH] Recalculating Similar Content ({country}) for user {user_id}...")
+                similar_recs = calculate_similar_content(db, user_id, country)
+                set_cached_data(db, user_id, cache_key, similar_recs)
         
         print(f"--- [REFRESH] Completed for user {user_id} ---")
     except Exception as e:
@@ -290,6 +300,8 @@ def calculate_dashboard_recommendations(db: Session, user_id: int, country: str)
         count = 0 
         seen_trending_titles = set()
         
+        print(f"[DEBUG] Processing {len(combined_candidates)} candidates for Trending ({country}). ProviderStr: {provider_string}")
+
         for item in combined_candidates:
             if count >= 15: break
             tmdb_id = item.get("id")
@@ -298,6 +310,8 @@ def calculate_dashboard_recommendations(db: Session, user_id: int, country: str)
             if title in seen_trending_titles: continue
 
             providers = tmdb_client.get_watch_providers(item.get("media_type"), tmdb_id, region=country)
+            # print(f"[DEBUG] Checking {title} ({tmdb_id}): Providers: {list(providers.keys()) if providers else 'None'}") 
+
             matched_sub = None
             
             shuffled_subs = list(subscriptions)
@@ -306,6 +320,8 @@ def calculate_dashboard_recommendations(db: Session, user_id: int, country: str)
             
             if "flatrate" in providers:
                 flatrate_ids = [str(p["provider_id"]) for p in providers["flatrate"]]
+                # print(f"[DEBUG]   Flatrate IDs: {flatrate_ids}")
+                
                 for sub in shuffled_subs:
                     s_name = sub.service_name.lower().replace(" ", "")
                     # Simplified matching for speed logic ...
@@ -314,8 +330,10 @@ def calculate_dashboard_recommendations(db: Session, user_id: int, country: str)
                          if k.replace(" ", "") in s_name:
                              matched_ids_list = v.split("|")
                              break
+                    
                     if any(pid in flatrate_ids for pid in matched_ids_list):
                         matched_sub = sub.service_name
+                        # print(f"[DEBUG]   Matched Sub: {matched_sub}")
                         break
             
             if not matched_sub and not provider_string:
@@ -342,6 +360,9 @@ def calculate_dashboard_recommendations(db: Session, user_id: int, country: str)
                 })
                 seen_trending_titles.add(title)
                 count += 1
+            else:
+                 # print(f"[DEBUG]   No match for {title}")
+                 pass
 
     except Exception as e:
         print(f"Error fetching trending: {e}")

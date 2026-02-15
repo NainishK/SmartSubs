@@ -98,10 +98,9 @@ export default function RecommendationsPage() {
     const handleRefresh = async () => {
         setRefreshing(true);
         try {
-            // Only refresh similar content
-            await api.post('/recommendations/refresh?type=similar');
-            // Only fetch similar recs
-            await fetchSimilarRecs();
+            // Refresh both dashboard and similar content
+            await api.post('/recommendations/refresh');
+            await refreshRecommendations(true);
         } catch (error) {
             console.error(error);
         } finally {
