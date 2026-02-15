@@ -136,6 +136,8 @@
     margin-bottom: 1rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid #f5f5f5;
+    gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
 .serviceIdentity {
@@ -566,6 +568,7 @@
     align-items: center;
     gap: 0.75rem;
     flex-direction: row;
+    min-width: 0;
 }
 
 /* Scoped Green Badge - Compact */
@@ -585,6 +588,7 @@
     margin-left: auto;
     /* Push to right */
     display: inline-block;
+    flex-shrink: 0;
 }
 
 .unusedItem .serviceName {
@@ -593,6 +597,9 @@
     color: #1a1a1a !important;
     /* Dark Text */
     margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Fix text color for reason in white card */
