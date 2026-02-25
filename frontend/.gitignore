@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# PWA - generated service worker (build artifact)
+/public/sw.js
+/public/sw.js.map
+/public/serwist-worker-*.js
+/public/serwist-worker-*.js.map
