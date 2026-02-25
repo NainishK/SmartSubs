@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { Search, Bot, Wallet, Sparkles, TrendingUp } from 'lucide-react';
 import FeatureCarousel from '@/components/FeatureCarousel';
 import AppShowcaseStack from '@/components/landing/AppShowcaseStack';
+import AuthRedirect from '@/components/AuthRedirect';
 import styles from './page.module.css';
 
 export default function Home() {
@@ -22,6 +23,7 @@ export default function Home() {
 
   return (
     <main className={styles.main}>
+      <AuthRedirect />
       {/* Navigation */}
       <nav className={styles.nav}>
         <div className={styles.brand}>SmartSubs.</div>
