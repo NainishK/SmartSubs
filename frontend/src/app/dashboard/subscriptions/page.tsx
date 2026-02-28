@@ -396,15 +396,17 @@ export default function SubscriptionsPage() {
                                     <CustomSelect
                                         value={selectedServiceId}
                                         onChange={(val) => setSelectedServiceId(val === 'custom' ? 'custom' : Number(val))}
-                                        options={[
-                                            ...services
-                                                .filter(s => (s.category || 'OTT') === newSub.category)
-                                                .map(service => ({ value: service.id, label: service.name })),
-                                            { value: 'custom', label: 'Other (Custom)' }
-                                        ]}
-                                        placeholder="Select a service"
+                                        options={services
+                                            .filter(s => (s.category || 'OTT') === newSub.category)
+                                            .map(service => ({ value: service.id, label: service.name }))}
+                                        placeholder="Search for a service..."
                                         disabled={isEditing}
                                         required
+                                        searchable
+                                        onCustomAdd={(name) => {
+                                            setSelectedServiceId('custom');
+                                            setNewSub(prev => ({ ...prev, service_name: name }));
+                                        }}
                                     />
                                 </div>
 
