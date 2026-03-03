@@ -334,7 +334,6 @@ export default function MediaCard({
                                 disabled={adding || added || existingStatus !== undefined}
                             >
                                 {existingStatus ? <Check size={16} /> : added ? <Check size={16} /> : <Plus size={16} />}
-                                {(!existingStatus && !added) && <span className={styles.btnText}>Add</span>}
                             </button>
                         )}
                     </div>

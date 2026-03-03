@@ -11,8 +11,6 @@ import { ServiceIcon } from '@/components/ServiceIcon';
 import AIInsightsModal from '@/components/AIInsightsModal';
 import { formatCurrency } from '@/lib/currency';
 
-const TRENDING_VISIBLE = 4;
-
 import ConfirmationModal from '@/components/ConfirmationModal';
 
 // ... (imports)
@@ -29,6 +27,14 @@ export default function RecommendationsPage() {
     } = useRecommendations();
 
     const [watchlist, setWatchlist] = useState<Array<{ id: number; tmdb_id: number; status: string; user_rating?: number; title?: string }>>([]);
+    const [trendingVisible, setTrendingVisible] = useState(5);
+
+    useEffect(() => {
+        const handleResize = () => setTrendingVisible(window.innerWidth < 768 ? 4 : 5);
+        handleResize(); // Set initial
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     const [refreshing, setRefreshing] = useState(false);
     const [showAIModal, setShowAIModal] = useState(false);
     const [trendingIndex, setTrendingIndex] = useState(0);
@@ -87,7 +93,7 @@ export default function RecommendationsPage() {
 
     const handleNextTrending = () => {
         setTrendingIndex(prev =>
-            prev + TRENDING_VISIBLE < trendingRecs.length ? prev + 1 : prev
+            prev + trendingVisible < trendingRecs.length ? prev + 1 : prev
         );
     };
 
@@ -153,7 +159,7 @@ export default function RecommendationsPage() {
                             </button>
                             <button
                                 onClick={handleNextTrending}
-                                disabled={trendingIndex + TRENDING_VISIBLE >= trendingRecs.length}
+                                disabled={trendingIndex + trendingVisible >= trendingRecs.length}
                                 className={styles.carouselBtn}
                             >
                                 <ChevronRight size={20} />
@@ -161,7 +167,7 @@ export default function RecommendationsPage() {
                         </div>
                     </div>
                     <div className={styles.grid}>
-                        {trendingRecs.slice(trendingIndex, trendingIndex + TRENDING_VISIBLE).map((rec, index) => {
+                        {trendingRecs.slice(trendingIndex, trendingIndex + trendingVisible).map((rec, index) => {
                             const tmdbId = rec.tmdb_id || 0;
                             const existingItem = watchlist.find(w => w.tmdb_id === tmdbId || (w.tmdb_id === 0 && rec.items[0] === 'Title needed')); // Strict ID match preference
 
@@ -278,7 +284,7 @@ export default function RecommendationsPage() {
                     </div>
                 ) : similarRecs.length > 0 ? (
                     <div className={styles.grid}>
-                        {similarRecs.map((rec, index) => {
+                        {similarRecs.slice(0, 20).map((rec, index) => {
                             const item: MediaItem = {
                                 id: rec.tmdb_id || 0,
                                 title: rec.items[0],

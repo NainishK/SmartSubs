@@ -493,7 +493,7 @@ def calculate_similar_content(db: Session, user_id: int, country: str):
         
         count = 0
         for item in items:
-            if count >= 6: break 
+            if count >= 15: break 
             tmdb_id = item.get("id")
             if tmdb_id in recommended_ids: continue
             if any(w.tmdb_id == tmdb_id for w in watchlist): continue
@@ -580,12 +580,12 @@ def calculate_similar_content(db: Session, user_id: int, country: str):
         weight = (w.user_rating * 2) if w.user_rating else (5 if w.status == "watched" else 3)
         seeds.append((w, weight))
     seeds.sort(key=lambda x: x[1], reverse=True)
-    top_seeds = [s[0] for s in seeds[:6]]
+    top_seeds = [s[0] for s in seeds[:10]]
     random.shuffle(top_seeds)
     
     similar_recs = []
     for seed in top_seeds:
-        if len(similar_recs) >= 6: break
+        if len(similar_recs) >= 15: break
         
         sim_data = tmdb_client.get_similar(seed.media_type, seed.tmdb_id)
         candidates = [c for c in sim_data.get("results", []) if c.get("vote_average", 0) >= 6.0]
@@ -650,16 +650,16 @@ def calculate_similar_content(db: Session, user_id: int, country: str):
             unique_candidates.append(c)
             seen.add(c["tmdb_id"])
 
-    # --- Strategy C: Trending Fallback (Fill up to 10 items) ---
-    if len(unique_candidates) < 10:
+    # --- Strategy C: Trending Fallback (Fill up to 25 items) ---
+    if len(unique_candidates) < 35:
         print(f"[RECS] Low results ({len(unique_candidates)}), fetching global trending fallback...")
         try:
              # Fetch Trending (Global or Provider)
              trending_data = tmdb_client.discover_media("movie", sort_by="popularity.desc", watch_region=country, with_watch_providers=provider_string)
-             trending_items = trending_data.get("results", [])[:20]
+             trending_items = trending_data.get("results", [])[:30]
              
              for item in trending_items:
-                 if len(unique_candidates) >= 15: break
+                 if len(unique_candidates) >= 35: break
                  
                  tmdb_id = item.get("id")
                  if tmdb_id in seen: continue
