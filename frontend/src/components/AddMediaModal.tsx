@@ -287,7 +287,7 @@ export default function AddMediaModal({ isOpen, onClose, onAddSuccess, existingI
                         </div>
                     </div>
 
-                    <div className={styles.resultsList}>
+                    <div className={`${styles.resultsList} ${results.length > 0 ? styles.resultsListHasItems : ''}`}>
                         {loading && <div className={styles.noResults}>Searching...</div>}
 
                         {!loading && query && results.length === 0 && (
