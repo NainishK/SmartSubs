@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import styles from './MediaCard.module.css';
-import { Trash2, Plus, Check, Star, Tv, Film, Sparkles, Calendar } from 'lucide-react';
+import { Trash2, Plus, Check, Star, Tv, Film, Sparkles, Calendar, Zap } from 'lucide-react';
 import StarRating from './StarRating';
 import MediaDetailsModal from './MediaDetailsModal';
 import CustomSelect from '@/components/CustomSelect';
@@ -25,6 +25,7 @@ export interface MediaItem {
     added_at?: string; // Creation date
     current_season?: number;
     current_episode?: number;
+    original_language?: string;
 }
 
 interface MediaCardProps {
@@ -97,7 +98,8 @@ export default function MediaCard({
                 vote_average: item.vote_average,
                 overview: item.overview,
                 status: statusOverride || status,
-                genre_ids: item.genre_ids
+                genre_ids: item.genre_ids,
+                original_language: item.original_language
             });
             setDbId(response.data.id); // Capture DB ID
             setAdded(true);
@@ -205,10 +207,23 @@ export default function MediaCard({
                     </div>
 
                     <div className={styles.topBadges}>
-                        <span className={`${styles.typeBadge} ${item.media_type === 'tv' ? styles.typeTv : styles.typeMovie}`}>
-                            {item.media_type === 'tv' ? <Tv size={12} /> : <Film size={12} />}
-                            {item.media_type === 'tv' ? 'TV' : 'Movie'}
-                        </span>
+                        {(() => {
+                            const isAnime = item.original_language === 'ja' && item.genre_ids?.includes(16);
+                            if (isAnime) {
+                                return (
+                                    <span className={`${styles.typeBadge} ${styles.typeAnime}`}>
+                                        <Zap size={12} />
+                                        Anime
+                                    </span>
+                                );
+                            }
+                            return (
+                                <span className={`${styles.typeBadge} ${item.media_type === 'tv' ? styles.typeTv : styles.typeMovie}`}>
+                                    {item.media_type === 'tv' ? <Tv size={12} /> : <Film size={12} />}
+                                    {item.media_type === 'tv' ? 'TV' : 'Movie'}
+                                </span>
+                            );
+                        })()}
                     </div>
 
                     {(item.vote_average !== undefined && item.vote_average !== null) && (

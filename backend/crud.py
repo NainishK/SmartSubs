@@ -121,6 +121,10 @@ def create_watchlist_item(db: Session, item: schemas.WatchlistItemCreate, user_i
                 # Fetch Genres if missing
                 if not genre_ids_list and details.get('genres'):
                     genre_ids_list = [g['id'] for g in details['genres']]
+                
+                # Grab original_language for anime detection
+                if not item_data.get('original_language') and details.get('original_language'):
+                    item_data['original_language'] = details['original_language']
 
                 # Populate total seasons/episodes for TV
                 if item_data["media_type"] == "tv":

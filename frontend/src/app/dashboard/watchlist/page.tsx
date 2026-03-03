@@ -127,7 +127,8 @@ export default function WatchlistPage() {
                 added_at: item.added_at, // Pass creation date
                 available_on: item.available_on, // Use DB value if present
                 current_season: item.current_season,
-                current_episode: item.current_episode
+                current_episode: item.current_episode,
+                original_language: item.original_language
             }));
 
             setItems(transformed);

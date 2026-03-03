@@ -22,6 +22,7 @@ interface SearchResult {
     vote_average?: number;
     genre_ids?: number[];
     overview?: string;
+    original_language?: string;
 }
 
 // Minimal shape for our internal tracking of existing items in this modal
@@ -179,6 +180,7 @@ export default function AddMediaModal({ isOpen, onClose, onAddSuccess, existingI
                     overview: item.overview,
                     status: status,
                     genre_ids: item.genre_ids,
+                    original_language: item.original_language,
                     user_rating: rating
                 });
 

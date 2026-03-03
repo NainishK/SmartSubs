@@ -31,7 +31,8 @@ def run_migration():
             ("watchlist_items", "total_episodes", "INTEGER DEFAULT 0"),
             ("users", "google_id", "TEXT UNIQUE"),
             ("users", "avatar_url", "TEXT"),
-            ("subscriptions", "country", "TEXT DEFAULT 'US'")
+            ("subscriptions", "country", "TEXT DEFAULT 'US'"),
+            ("watchlist_items", "original_language", "TEXT"),
         ]
         
         for table, col, dtype in columns_to_add:

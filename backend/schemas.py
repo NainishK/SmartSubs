@@ -45,6 +45,7 @@ class WatchlistItemBase(BaseModel):
     status: str = "plan_to_watch"
     user_rating: Optional[int] = None # 1-10
     available_on: Optional[str] = None # Enriched field for UI badges
+    original_language: Optional[str] = None # e.g. "ja" for anime detection
 
 class WatchlistRatingUpdate(BaseModel):
     rating: int
@@ -64,6 +65,7 @@ class WatchlistItem(WatchlistItemBase):
     status: str
     added_at: datetime
     genre_ids: Optional[str] = None # Stored as string
+    original_language: Optional[str] = None
     
     current_season: Optional[int] = 0
     current_episode: Optional[int] = 0

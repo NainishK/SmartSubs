@@ -91,6 +91,11 @@
     /* Violet-600 */
 }
 
+.typeAnime {
+    background: rgba(236, 72, 153, 0.9);
+    /* Pink-500 */
+}
+
 .ratingBadge {
     position: absolute;
     top: 12px;

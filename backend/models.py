@@ -59,6 +59,7 @@ class WatchlistItem(Base):
     user_rating = Column(Integer, nullable=True) # 1-5 scale (or 1-10)
     available_on = Column(String, nullable=True) # Badge cache
     genre_ids = Column(String, nullable=True) # JSON string or comma-separated list of genre IDs
+    original_language = Column(String, nullable=True) # e.g. "ja" for Japanese (anime detection)
     status = Column(String, default="plan_to_watch") # plan_to_watch, watching, watched
     
     # Progress Tracking
