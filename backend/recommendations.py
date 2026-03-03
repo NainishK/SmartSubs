@@ -700,4 +700,4 @@ def calculate_similar_content(db: Session, user_id: int, country: str):
             print(f"[RECS] Error fetching trending fallback: {e}")
 
     random.shuffle(unique_candidates)
-    return unique_candidates[:12]
+    return unique_candidates[:25]
