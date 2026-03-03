@@ -21,7 +21,7 @@ export default function WatchlistPage() {
 
     // New Filter State
     const [searchQuery, setSearchQuery] = useState('');
-    const [typeFilter, setTypeFilter] = useState<'all' | 'movie' | 'tv'>('all');
+    const [typeFilter, setTypeFilter] = useState<'all' | 'movie' | 'tv' | 'anime'>('all');
     const [providerFilter, setProviderFilter] = useState<string>('all'); // New Provider Filter
     const [selectedGenres, setSelectedGenres] = useState<number[]>([]); // New Genre State
     const [sortField, setSortField] = useState<'date_added' | 'rating' | 'title'>('date_added');
@@ -180,8 +180,15 @@ export default function WatchlistPage() {
         // 1. Status Tab (Always apply first)
         if (activeTab !== 'all' && item.status !== activeTab) return false;
 
-        // 2. Type Filter
-        if (typeFilter !== 'all' && item.media_type !== typeFilter) return false;
+        // 2. Type Filter (anime is mutually exclusive with movie/tv)
+        const isAnime = item.original_language === 'ja' && item.genre_ids?.includes(16);
+        if (typeFilter === 'anime') {
+            if (!isAnime) return false;
+        } else if (typeFilter === 'movie') {
+            if (item.media_type !== 'movie' || isAnime) return false;
+        } else if (typeFilter === 'tv') {
+            if (item.media_type !== 'tv' || isAnime) return false;
+        }
 
         // 3. Genre Filter (AND Logic)
         if (selectedGenres.length > 0) {
@@ -347,7 +354,8 @@ export default function WatchlistPage() {
                         options={[
                             { value: 'all', label: 'All Types' },
                             { value: 'movie', label: 'Movies' },
-                            { value: 'tv', label: 'TV Shows' }
+                            { value: 'tv', label: 'TV Shows' },
+                            { value: 'anime', label: 'Anime' }
                         ]}
                         onChange={(val) => setTypeFilter(val as any)}
                         className={styles.customSelectWrapper}
@@ -357,7 +365,7 @@ export default function WatchlistPage() {
                         value={providerFilter}
                         options={[
                             { value: 'all', label: 'All Availability' },
-                            { value: 'available', label: 'Available Now' },
+                            { value: 'available', label: 'On My Services' },
                             { value: 'unavailable', label: 'Not on My Services' },
                             ...Array.from(new Set(items.map(i => i.available_on).filter(Boolean))).sort().map(p => ({
                                 value: p!, label: p!
