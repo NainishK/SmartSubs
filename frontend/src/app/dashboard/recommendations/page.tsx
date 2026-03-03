@@ -183,7 +183,9 @@ export default function RecommendationsPage() {
                                             vote_average: rec.vote_average || 0,
                                             media_type: rec.media_type || 'movie',
                                             user_rating: existingItem?.user_rating || 0,
-                                            status: existingItem?.status
+                                            status: existingItem?.status,
+                                            genre_ids: rec.genre_ids,
+                                            original_language: rec.original_language
                                         }}
                                         showServiceBadge={rec.service_name}
                                         customBadgeColor="#db2777"
@@ -291,7 +293,9 @@ export default function RecommendationsPage() {
                                 media_type: rec.media_type || 'movie',
                                 overview: rec.overview || '',
                                 poster_path: rec.poster_path,
-                                vote_average: rec.vote_average
+                                vote_average: rec.vote_average,
+                                genre_ids: rec.genre_ids,
+                                original_language: rec.original_language
                             };
                             const existingItem = watchlist.find(w => w.tmdb_id === item.id);
 

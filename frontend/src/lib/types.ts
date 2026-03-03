@@ -37,6 +37,8 @@ export interface Recommendation {
     poster_path?: string;
     vote_average?: number;
     overview?: string;
+    genre_ids?: number[];
+    original_language?: string;
     billing_cycle?: string;
 }
 

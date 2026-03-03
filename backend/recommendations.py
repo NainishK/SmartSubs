@@ -356,7 +356,9 @@ def calculate_dashboard_recommendations(db: Session, user_id: int, country: str)
                     "media_type": item.get("media_type"),
                     "poster_path": item.get("poster_path"),
                     "vote_average": item.get("vote_average"),
-                    "overview": item.get("overview")
+                    "overview": item.get("overview"),
+                    "original_language": item.get("original_language"),
+                    "genre_ids": item.get("genre_ids", [])
                 })
                 seen_trending_titles.add(title)
                 count += 1
@@ -520,7 +522,9 @@ def calculate_similar_content(db: Session, user_id: int, country: str):
                     "media_type": "movie",
                     "poster_path": item.get("poster_path"),
                     "vote_average": item.get("vote_average"),
-                    "overview": item.get("overview")
+                    "overview": item.get("overview"),
+                    "original_language": item.get("original_language"),
+                    "genre_ids": item.get("genre_ids", [])
                 })
                 recommended_ids.add(tmdb_id)
                 count += 1
@@ -571,7 +575,9 @@ def calculate_similar_content(db: Session, user_id: int, country: str):
                     "media_type": "movie",
                     "poster_path": item.get("poster_path"),
                     "vote_average": item.get("vote_average"),
-                    "overview": item.get("overview")
+                    "overview": item.get("overview"),
+                    "original_language": item.get("original_language"),
+                    "genre_ids": item.get("genre_ids", [])
                 })
 
     # --- Strategy B: Similar Content ---
@@ -618,7 +624,9 @@ def calculate_similar_content(db: Session, user_id: int, country: str):
                     "media_type": seed.media_type,
                     "poster_path": sim.get("poster_path"),
                     "vote_average": sim.get("vote_average"),
-                    "overview": sim.get("overview")
+                    "overview": sim.get("overview"),
+                    "original_language": sim.get("original_language"),
+                    "genre_ids": sim.get("genre_ids", [])
                 })
                 recommended_ids.add(sim_id)
                 break 
