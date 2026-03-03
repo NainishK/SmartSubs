@@ -479,6 +479,36 @@ select.input {
     box-shadow: 0 4px 12px rgba(0, 112, 243, 0.2);
 }
 
+.secondaryButton {
+    margin-top: 1rem;
+    padding: 0.85rem;
+    background: var(--muted);
+    color: var(--foreground);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.secondaryButton:hover {
+    background: var(--muted-foreground);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+:global([data-theme='dark']) .secondaryButton {
+    background: #2a303c;
+    border-color: #3b4252;
+}
+
+:global([data-theme='dark']) .secondaryButton:hover {
+    background: #3b4252;
+    color: #ffffff;
+}
+
 .loading {
     display: flex;
     justify-content: center;

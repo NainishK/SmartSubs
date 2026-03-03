@@ -155,6 +155,16 @@ export default function SubscriptionsPage() {
     const handleFormSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        // Manual validation for searchable select
+        if (!selectedServiceId) {
+            alert('Please select a service.');
+            return;
+        }
+        if (selectedServiceId === 'custom' && !newSub.service_name.trim()) {
+            alert('Please enter a custom service name.');
+            return;
+        }
+
         try {
             if (isEditing && editSubId) {
                 await api.put(`/subscriptions/${editSubId}`, { ...newSub, country: userCountry });
@@ -401,7 +411,6 @@ export default function SubscriptionsPage() {
                                             .map(service => ({ value: service.id, label: service.name }))}
                                         placeholder="Search for a service..."
                                         disabled={isEditing}
-                                        required
                                         searchable
                                         onCustomAdd={(name) => {
                                             setSelectedServiceId('custom');
@@ -420,7 +429,6 @@ export default function SubscriptionsPage() {
                                             onChange={(e) => setNewSub({ ...newSub, service_name: e.target.value })}
                                             required
                                             className={styles.input}
-                                            disabled={isEditing}
                                         />
                                     </div>
                                 )}

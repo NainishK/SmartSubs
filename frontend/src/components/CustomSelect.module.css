@@ -5,12 +5,12 @@
 
 .selectButton {
     width: 100%;
-    padding: 0.6rem 0.85rem;
+    padding: 0.8rem 1rem;
     border-radius: 14px;
     border: 1.5px solid var(--border);
     background: var(--input-bg);
     color: var(--foreground);
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-family: inherit;
     display: flex;
     justify-content: space-between;
@@ -127,7 +127,7 @@
 /* Searchable mode */
 .searchInputWrapper {
     width: 100%;
-    padding: 0.5rem 0.75rem;
+    padding: 0.8rem 1rem;
     border-radius: 14px;
     border: 1.5px solid var(--border);
     background: var(--input-bg);
@@ -159,9 +159,12 @@
     outline: none;
     background: transparent;
     color: var(--foreground);
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-family: inherit;
     min-width: 0;
+    padding: 0;
+    margin: 0;
+    line-height: inherit;
 }
 
 .searchInput::placeholder {

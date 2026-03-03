@@ -145,6 +145,9 @@ export default function CustomSelect({
                             if (!isOpen) setIsOpen(true);
                             if (selectedOption) setSearchQuery('');
                         }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') e.preventDefault();
+                        }}
                         disabled={disabled}
                         autoComplete="off"
                     />
