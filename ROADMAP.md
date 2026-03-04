@@ -21,7 +21,7 @@ Import and export your watchlist to/from various platforms and formats.
 - [ ] Import from AniList (GraphQL API, MAL→TMDB mapping)
 - [ ] Import from Trakt.tv (OAuth + API)
 
-📄 **Research:** [docs/watchlist-import-export.md](docs/watchlist-import-export.md)
+📄 **Research:** [docs/feature-research/watchlist-import-export.md](docs/feature-research/watchlist-import-export.md)
 
 ---
 
