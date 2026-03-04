@@ -19,8 +19,7 @@ const CATEGORIES = [
 export default function ReportIssueModal({ visible, onClose }: ReportIssueModalProps) {
     const [category, setCategory] = useState('bug');
     const [description, setDescription] = useState('');
-    const [screenshot, setScreenshot] = useState<string | null>(null);
-    const [screenshotName, setScreenshotName] = useState('');
+    const [screenshots, setScreenshots] = useState<{ base64: string; name: string }[]>([]);
     const [submitting, setSubmitting] = useState(false);
     const [result, setResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -29,7 +28,10 @@ export default function ReportIssueModal({ visible, onClose }: ReportIssueModalP
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Validate: only images, max 5MB
+        if (screenshots.length >= 3) {
+            setResult({ type: 'error', message: 'Maximum 3 screenshots allowed' });
+            return;
+        }
         if (!file.type.startsWith('image/')) {
             setResult({ type: 'error', message: 'Only image files are allowed' });
             return;
@@ -41,19 +43,16 @@ export default function ReportIssueModal({ visible, onClose }: ReportIssueModalP
 
         const reader = new FileReader();
         reader.onload = () => {
-            // Extract base64 data (remove the data:image/xxx;base64, prefix)
             const base64 = (reader.result as string).split(',')[1];
-            setScreenshot(base64);
-            setScreenshotName(file.name);
+            setScreenshots(prev => [...prev, { base64, name: file.name }]);
             setResult(null);
         };
         reader.readAsDataURL(file);
+        if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    const removeScreenshot = () => {
-        setScreenshot(null);
-        setScreenshotName('');
-        if (fileInputRef.current) fileInputRef.current.value = '';
+    const removeScreenshot = (index: number) => {
+        setScreenshots(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleSubmit = async () => {
@@ -64,9 +63,8 @@ export default function ReportIssueModal({ visible, onClose }: ReportIssueModalP
 
         try {
             const payload: any = { category, description };
-            if (screenshot) {
-                payload.screenshot = screenshot;
-                payload.screenshot_name = screenshotName;
+            if (screenshots.length > 0) {
+                payload.screenshots = screenshots.map(s => ({ base64: s.base64, name: s.name }));
             }
 
             const response = await api.post('/feedback/report', payload);
@@ -76,7 +74,7 @@ export default function ReportIssueModal({ visible, onClose }: ReportIssueModalP
             });
             setDescription('');
             setCategory('bug');
-            removeScreenshot();
+            setScreenshots([]);
         } catch (error: any) {
             setResult({
                 type: 'error',
@@ -91,7 +89,7 @@ export default function ReportIssueModal({ visible, onClose }: ReportIssueModalP
         setResult(null);
         setDescription('');
         setCategory('bug');
-        removeScreenshot();
+        setScreenshots([]);
         onClose();
     };
 
@@ -145,7 +143,7 @@ export default function ReportIssueModal({ visible, onClose }: ReportIssueModalP
                     <span className={styles.charCount}>{description.length}/2000</span>
                 </div>
 
-                {/* Screenshot Attachment */}
+                {/* Screenshot Attachments */}
                 <div className={styles.attachmentSection}>
                     <input
                         ref={fileInputRef}
@@ -154,21 +152,22 @@ export default function ReportIssueModal({ visible, onClose }: ReportIssueModalP
                         onChange={handleFileSelect}
                         style={{ display: 'none' }}
                     />
-                    {screenshot ? (
-                        <div className={styles.attachmentPreview}>
+                    {screenshots.map((s, i) => (
+                        <div key={i} className={styles.attachmentPreview}>
                             <Paperclip size={14} />
-                            <span className={styles.attachmentName}>{screenshotName}</span>
-                            <button className={styles.removeAttachment} onClick={removeScreenshot}>
+                            <span className={styles.attachmentName}>{s.name}</span>
+                            <button className={styles.removeAttachment} onClick={() => removeScreenshot(i)}>
                                 <Trash2 size={14} />
                             </button>
                         </div>
-                    ) : (
+                    ))}
+                    {screenshots.length < 3 && (
                         <button
                             className={styles.attachBtn}
                             onClick={() => fileInputRef.current?.click()}
                         >
                             <Paperclip size={16} />
-                            Attach Screenshot
+                            {screenshots.length === 0 ? 'Attach Screenshot' : 'Add Another'}
                         </button>
                     )}
                 </div>

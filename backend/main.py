@@ -935,8 +935,7 @@ def report_issue(
     
     category = payload.get("category", "other")
     description = payload.get("description", "").strip()
-    screenshot_b64 = payload.get("screenshot")  # base64 encoded image
-    screenshot_name = payload.get("screenshot_name", "screenshot.png")
+    screenshots = payload.get("screenshots", [])  # [{base64, name}, ...]
     
     if not description:
         raise HTTPException(status_code=400, detail="Description is required")
@@ -959,35 +958,44 @@ def report_issue(
     if not github_pat:
         raise HTTPException(status_code=500, detail="GitHub integration not configured")
     
-    # Upload screenshot if provided
+    # Upload screenshots if provided
     screenshot_md = ""
-    if screenshot_b64:
-        try:
-            # Upload to .feedback/ folder in repo
-            ext = screenshot_name.split('.')[-1] if '.' in screenshot_name else 'png'
-            unique_name = f"{uuid.uuid4().hex[:8]}_{screenshot_name}"
-            file_path = f".feedback/{unique_name}"
-            
-            upload_resp = req.put(
-                f"https://api.github.com/repos/{github_repo}/contents/{file_path}",
-                headers=gh_headers,
-                json={
-                    "message": f"Upload feedback screenshot: {unique_name}",
-                    "content": screenshot_b64
-                },
-                timeout=15
-            )
-            
-            if upload_resp.status_code in [200, 201]:
-                # Get the raw URL for the uploaded file
-                download_url = upload_resp.json().get("content", {}).get("download_url", "")
-                if download_url:
-                    screenshot_md = f"\n\n### Screenshot\n![Screenshot]({download_url})\n"
-                    logger.info(f"Screenshot uploaded: {file_path}")
-            else:
-                logger.warning(f"Screenshot upload failed: {upload_resp.status_code}")
-        except Exception as e:
-            logger.warning(f"Screenshot upload failed: {e}")
+    if screenshots:
+        uploaded_images = []
+        for sc in screenshots[:3]:  # Max 3
+            try:
+                sc_name = sc.get("name", "screenshot.png")
+                sc_b64 = sc.get("base64", "")
+                if not sc_b64:
+                    continue
+                    
+                unique_name = f"{uuid.uuid4().hex[:8]}_{sc_name}"
+                file_path = f".feedback/{unique_name}"
+                
+                upload_resp = req.put(
+                    f"https://api.github.com/repos/{github_repo}/contents/{file_path}",
+                    headers=gh_headers,
+                    json={
+                        "message": f"Upload feedback screenshot: {unique_name}",
+                        "content": sc_b64
+                    },
+                    timeout=15
+                )
+                
+                if upload_resp.status_code in [200, 201]:
+                    download_url = upload_resp.json().get("content", {}).get("download_url", "")
+                    if download_url:
+                        uploaded_images.append(download_url)
+                        logger.info(f"Screenshot uploaded: {file_path}")
+                else:
+                    logger.warning(f"Screenshot upload failed: {upload_resp.status_code}")
+            except Exception as e:
+                logger.warning(f"Screenshot upload failed: {e}")
+        
+        if uploaded_images:
+            screenshot_md = "\n\n### Screenshots\n"
+            for url in uploaded_images:
+                screenshot_md += f"![Screenshot]({url})\n"
     
     # Build issue title and body
     title = f"[{category.upper()}] User Report from {current_user.email}"
