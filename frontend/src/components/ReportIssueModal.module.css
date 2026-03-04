@@ -115,7 +115,7 @@
     padding: 0.875rem 1rem;
     border: 1px solid var(--border);
     border-radius: 12px;
-    background: var(--background);
+    background: var(--card);
     color: var(--foreground);
     font-family: inherit;
     font-size: 0.95rem;
@@ -141,6 +141,69 @@
     right: 0.75rem;
     font-size: 0.75rem;
     color: var(--muted-foreground);
+}
+
+/* Attachment */
+.attachmentSection {
+    margin-bottom: 1.5rem;
+}
+
+.attachBtn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--muted-foreground);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    justify-content: center;
+}
+
+.attachBtn:hover {
+    border-color: var(--muted-foreground);
+    color: var(--foreground);
+    background: var(--accent);
+}
+
+.attachmentPreview {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 10px;
+    background: rgba(16, 185, 129, 0.05);
+    color: #10b981;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.attachmentName {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.removeAttachment {
+    background: none;
+    border: none;
+    color: var(--muted-foreground);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: color 0.2s;
+    display: flex;
+}
+
+.removeAttachment:hover {
+    color: #ef4444;
 }
 
 /* Result Messages */

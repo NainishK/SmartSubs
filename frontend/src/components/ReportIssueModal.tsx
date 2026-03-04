@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { X, Bug, Lightbulb, MessageSquare, Send, CheckCircle, AlertCircle } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { X, Bug, Lightbulb, MessageSquare, Send, CheckCircle, AlertCircle, Paperclip, Trash2 } from 'lucide-react';
 import api from '@/lib/api';
 import styles from './ReportIssueModal.module.css';
 
@@ -19,8 +19,42 @@ const CATEGORIES = [
 export default function ReportIssueModal({ visible, onClose }: ReportIssueModalProps) {
     const [category, setCategory] = useState('bug');
     const [description, setDescription] = useState('');
+    const [screenshot, setScreenshot] = useState<string | null>(null);
+    const [screenshotName, setScreenshotName] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [result, setResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate: only images, max 5MB
+        if (!file.type.startsWith('image/')) {
+            setResult({ type: 'error', message: 'Only image files are allowed' });
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            setResult({ type: 'error', message: 'Image must be under 5MB' });
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            // Extract base64 data (remove the data:image/xxx;base64, prefix)
+            const base64 = (reader.result as string).split(',')[1];
+            setScreenshot(base64);
+            setScreenshotName(file.name);
+            setResult(null);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const removeScreenshot = () => {
+        setScreenshot(null);
+        setScreenshotName('');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
 
     const handleSubmit = async () => {
         if (!description.trim()) return;
@@ -29,13 +63,20 @@ export default function ReportIssueModal({ visible, onClose }: ReportIssueModalP
         setResult(null);
 
         try {
-            const response = await api.post('/feedback/report', { category, description });
+            const payload: any = { category, description };
+            if (screenshot) {
+                payload.screenshot = screenshot;
+                payload.screenshot_name = screenshotName;
+            }
+
+            const response = await api.post('/feedback/report', payload);
             setResult({
                 type: 'success',
                 message: `Issue #${response.data.issue_number} created successfully! Thank you for your feedback.`
             });
             setDescription('');
             setCategory('bug');
+            removeScreenshot();
         } catch (error: any) {
             setResult({
                 type: 'error',
@@ -50,6 +91,7 @@ export default function ReportIssueModal({ visible, onClose }: ReportIssueModalP
         setResult(null);
         setDescription('');
         setCategory('bug');
+        removeScreenshot();
         onClose();
     };
 
@@ -101,6 +143,34 @@ export default function ReportIssueModal({ visible, onClose }: ReportIssueModalP
                         maxLength={2000}
                     />
                     <span className={styles.charCount}>{description.length}/2000</span>
+                </div>
+
+                {/* Screenshot Attachment */}
+                <div className={styles.attachmentSection}>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileSelect}
+                        style={{ display: 'none' }}
+                    />
+                    {screenshot ? (
+                        <div className={styles.attachmentPreview}>
+                            <Paperclip size={14} />
+                            <span className={styles.attachmentName}>{screenshotName}</span>
+                            <button className={styles.removeAttachment} onClick={removeScreenshot}>
+                                <Trash2 size={14} />
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            className={styles.attachBtn}
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            <Paperclip size={16} />
+                            Attach Screenshot
+                        </button>
+                    )}
                 </div>
 
                 {/* Result Message */}

@@ -929,11 +929,14 @@ def report_issue(
     payload: dict,
     current_user: models.User = Depends(dependencies.get_current_user)
 ):
-    """Create a GitHub Issue from user feedback"""
+    """Create a GitHub Issue from user feedback, with optional screenshot"""
     import requests as req
+    import uuid
     
     category = payload.get("category", "other")
     description = payload.get("description", "").strip()
+    screenshot_b64 = payload.get("screenshot")  # base64 encoded image
+    screenshot_name = payload.get("screenshot_name", "screenshot.png")
     
     if not description:
         raise HTTPException(status_code=400, detail="Description is required")
@@ -946,6 +949,46 @@ def report_issue(
     }
     label = label_map.get(category, "feedback")
     
+    github_pat = settings.GITHUB_PAT
+    github_repo = settings.GITHUB_REPO
+    gh_headers = {
+        "Authorization": f"token {github_pat}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    
+    if not github_pat:
+        raise HTTPException(status_code=500, detail="GitHub integration not configured")
+    
+    # Upload screenshot if provided
+    screenshot_md = ""
+    if screenshot_b64:
+        try:
+            # Upload to .feedback/ folder in repo
+            ext = screenshot_name.split('.')[-1] if '.' in screenshot_name else 'png'
+            unique_name = f"{uuid.uuid4().hex[:8]}_{screenshot_name}"
+            file_path = f".feedback/{unique_name}"
+            
+            upload_resp = req.put(
+                f"https://api.github.com/repos/{github_repo}/contents/{file_path}",
+                headers=gh_headers,
+                json={
+                    "message": f"Upload feedback screenshot: {unique_name}",
+                    "content": screenshot_b64
+                },
+                timeout=15
+            )
+            
+            if upload_resp.status_code in [200, 201]:
+                # Get the raw URL for the uploaded file
+                download_url = upload_resp.json().get("content", {}).get("download_url", "")
+                if download_url:
+                    screenshot_md = f"\n\n### Screenshot\n![Screenshot]({download_url})\n"
+                    logger.info(f"Screenshot uploaded: {file_path}")
+            else:
+                logger.warning(f"Screenshot upload failed: {upload_resp.status_code}")
+        except Exception as e:
+            logger.warning(f"Screenshot upload failed: {e}")
+    
     # Build issue title and body
     title = f"[{category.upper()}] User Report from {current_user.email}"
     body = f"""### Category
@@ -953,27 +996,17 @@ def report_issue(
 
 ### Description
 {description}
-
+{screenshot_md}
 ---
 **Reported by:** {current_user.email}
 **Country:** {current_user.country or 'Not set'}
 **Submitted at:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}
 """
     
-    # Create GitHub Issue
-    github_pat = settings.GITHUB_PAT
-    github_repo = settings.GITHUB_REPO
-    
-    if not github_pat:
-        raise HTTPException(status_code=500, detail="GitHub integration not configured")
-    
     try:
         response = req.post(
             f"https://api.github.com/repos/{github_repo}/issues",
-            headers={
-                "Authorization": f"token {github_pat}",
-                "Accept": "application/vnd.github.v3+json"
-            },
+            headers=gh_headers,
             json={
                 "title": title,
                 "body": body,
