@@ -8,3 +8,4 @@ dist/
 build/
 *.log
 *.db
+.feedback/
