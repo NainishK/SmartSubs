@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     
     # Frontend Settings
     FRONTEND_URL: str = "http://localhost:3000"
+    
+    # GitHub Issues (Bug Reporting)
+    GITHUB_PAT: str = ""
+    GITHUB_REPO: str = "NainishK/SmartSubs"
 
 
 

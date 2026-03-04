@@ -32,4 +32,6 @@ _Add future feature ideas below._
 ---
 
 ## ✅ Shipped
-_Move completed roadmap items here._
+
+- **In-App Bug Reporting** — Report Issue button in profile page, creates GitHub Issues via API (category + description)
+- **Anime Badge & Filter** — Japanese animation titles show ⚡ ANIME badge, mutually exclusive filter in watchlist

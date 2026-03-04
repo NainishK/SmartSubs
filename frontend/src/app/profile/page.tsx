@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import Link from 'next/link';
 import styles from './profile.module.css';
-import { ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertCircle, Bug } from 'lucide-react';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import ReportIssueModal from '@/components/ReportIssueModal';
 import CustomSelect from '@/components/CustomSelect';
 import { useRecommendations } from '@/context/RecommendationsContext';
 
@@ -24,6 +25,7 @@ export default function Profile() {
     const [message, setMessage] = useState('');
     const [saving, setSaving] = useState(false);
     const [isDisconnectModalOpen, setIsDisconnectModalOpen] = useState(false);
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const router = useRouter();
     // Safely get context (might be undefined if outside provider, but we expect it to be inside dashboard if linked)
     let refreshRecommendations: ((force?: boolean) => Promise<void>) | undefined;
@@ -188,6 +190,16 @@ export default function Profile() {
                             {message}
                         </div>
                     )}
+
+                    {/* Report Issue */}
+                    <button
+                        type="button"
+                        className={styles.reportBtn}
+                        onClick={() => setIsReportModalOpen(true)}
+                    >
+                        <Bug size={18} />
+                        Report an Issue
+                    </button>
                 </form>
             </div>
 
@@ -199,6 +211,11 @@ export default function Profile() {
                 message="Are you sure you want to disconnect your Google account? You will need to use your password to login next time."
                 confirmLabel="Disconnect"
                 isDangerous={true}
+            />
+
+            <ReportIssueModal
+                visible={isReportModalOpen}
+                onClose={() => setIsReportModalOpen(false)}
             />
         </div>
     );

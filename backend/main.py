@@ -924,6 +924,75 @@ def get_media_details(media_type: str, tmdb_id: int, db: Session = Depends(get_d
     import tmdb_client
     return tmdb_client.get_details(media_type, tmdb_id)
 
+@app.post("/feedback/report")
+def report_issue(
+    payload: dict,
+    current_user: models.User = Depends(dependencies.get_current_user)
+):
+    """Create a GitHub Issue from user feedback"""
+    import requests as req
+    
+    category = payload.get("category", "other")
+    description = payload.get("description", "").strip()
+    
+    if not description:
+        raise HTTPException(status_code=400, detail="Description is required")
+    
+    # Map category to GitHub label
+    label_map = {
+        "bug": "bug",
+        "feature": "enhancement",
+        "other": "feedback"
+    }
+    label = label_map.get(category, "feedback")
+    
+    # Build issue title and body
+    title = f"[{category.upper()}] User Report from {current_user.email}"
+    body = f"""### Category
+**{category.capitalize()}**
+
+### Description
+{description}
+
+---
+**Reported by:** {current_user.email}
+**Country:** {current_user.country or 'Not set'}
+**Submitted at:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}
+"""
+    
+    # Create GitHub Issue
+    github_pat = settings.GITHUB_PAT
+    github_repo = settings.GITHUB_REPO
+    
+    if not github_pat:
+        raise HTTPException(status_code=500, detail="GitHub integration not configured")
+    
+    try:
+        response = req.post(
+            f"https://api.github.com/repos/{github_repo}/issues",
+            headers={
+                "Authorization": f"token {github_pat}",
+                "Accept": "application/vnd.github.v3+json"
+            },
+            json={
+                "title": title,
+                "body": body,
+                "labels": [label]
+            },
+            timeout=10
+        )
+        
+        if response.status_code == 201:
+            issue_data = response.json()
+            logger.info(f"GitHub Issue #{issue_data['number']} created by {current_user.email}")
+            return {"message": "Issue reported successfully", "issue_number": issue_data["number"]}
+        else:
+            logger.error(f"GitHub API error: {response.status_code} {response.text}")
+            raise HTTPException(status_code=500, detail="Failed to create issue")
+    except Exception as e:
+        logger.error(f"Failed to report issue: {e}")
+        raise HTTPException(status_code=500, detail="Failed to report issue")
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
