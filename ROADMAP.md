@@ -28,6 +28,10 @@ Import and export your watchlist to/from various platforms and formats.
 ## 💡 Ideas / Backlog
 
 _Add future feature ideas below._
+- Colored theme for statuses (Plan to Watch, Watching, Watched, Paused, Dropped)
+- Advanced search filters for the 'Add New Media' search modal
+- Visual indicators for active filters (e.g. badges/chips) with easy 'Clear All' functionality
+- Non-AI Based Subscribe Suggestions (Algorithmically suggest services that unlock the most missing watchlist items)
 
 ---
 
