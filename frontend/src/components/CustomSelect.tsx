@@ -38,7 +38,7 @@ export default function CustomSelect({
     const containerRef = useRef<HTMLDivElement>(null);
     const listRef = useRef<HTMLUListElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
-    const [dropdownStyles, setDropdownStyles] = useState<{ top: number, left: number, width: number }>({ top: 0, left: 0, width: 0 });
+    const [dropdownStyles, setDropdownStyles] = useState<{ top?: number, bottom?: number, left: number, width: number }>({ left: 0, width: 0 });
 
     const selectedOption = options.find(opt => opt.value === value);
 
@@ -54,11 +54,24 @@ export default function CustomSelect({
     useEffect(() => {
         if (isOpen && containerRef.current) {
             const rect = containerRef.current.getBoundingClientRect();
-            setDropdownStyles({
-                top: rect.bottom + window.scrollY + 4,
-                left: rect.left + window.scrollX,
-                width: rect.width
-            });
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const requiredHeight = 260; // Max height in CSS is 250px + some padding
+
+            if (spaceBelow < requiredHeight && rect.top > spaceBelow) {
+                // Not enough space below, and more space above -> render above
+                setDropdownStyles({
+                    bottom: window.innerHeight - rect.top + 4,
+                    left: rect.left,
+                    width: rect.width
+                });
+            } else {
+                // Render below
+                setDropdownStyles({
+                    top: rect.bottom + 4,
+                    left: rect.left,
+                    width: rect.width
+                });
+            }
         }
     }, [isOpen]);
 
@@ -175,8 +188,9 @@ export default function CustomSelect({
                     role="listbox"
                     ref={listRef}
                     style={{
-                        position: 'absolute',
-                        top: dropdownStyles.top,
+                        position: 'fixed',
+                        top: dropdownStyles.top !== undefined ? dropdownStyles.top : 'auto',
+                        bottom: dropdownStyles.bottom !== undefined ? dropdownStyles.bottom : 'auto',
                         left: dropdownStyles.left,
                         minWidth: dropdownStyles.width,
                         width: 'max-content',
