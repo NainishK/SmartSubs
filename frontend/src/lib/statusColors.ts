@@ -72,7 +72,7 @@ export function getStatusConfig(status: string): StatusConfig {
 /** "All" tab config — uses default primary blue */
 export const ALL_TAB_CONFIG = {
     label: 'All',
-    color: '#3b82f6',
+    color: '#6366f1',
     icon: Layers,
 };
 
