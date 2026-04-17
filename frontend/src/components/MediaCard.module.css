@@ -201,11 +201,11 @@
 
 .statusCustomSelect button {
     width: 100%;
-    padding: 0.6rem 0.5rem;
-    /* Reduced padding to fit 'Plan to Watch' */
+    padding: 0.5rem 0.75rem;
     border: 1px solid var(--border);
     border-radius: 8px;
     font-size: 0.825rem;
+    letter-spacing: normal;
     color: var(--foreground);
     background: var(--input-bg);
     cursor: pointer;

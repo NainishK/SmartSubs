@@ -3,6 +3,7 @@ import { X, Search, Plus, Check, Clapperboard, CalendarClock, CheckCircle, Chevr
 import api from '@/lib/api';
 import styles from './AddMediaModal.module.css';
 import StarRating from './StarRating';
+import { getStatusConfig, STATUS_COLORS } from '@/lib/statusColors';
 
 interface AddMediaModalProps {
     isOpen: boolean;
@@ -226,17 +227,7 @@ export default function AddMediaModal({ isOpen, onClose, onAddSuccess, existingI
         }
     };
 
-    // Helpers to get status color/icon
-    const getStatusConfig = (status: string) => {
-        switch (status) {
-            case 'watching': return { label: 'Watching', color: '#3b82f6', icon: Clapperboard };
-            case 'watched': return { label: 'Watched', color: '#10b981', icon: CheckCircle };
-            case 'plan_to_watch': return { label: 'Plan to Watch', color: '#f59e0b', icon: CalendarClock };
-            case 'paused': return { label: 'Paused', color: '#6b7280', icon: PauseCircle };
-            case 'dropped': return { label: 'Dropped', color: '#ef4444', icon: XCircle };
-            default: return { label: 'Add', color: '#2563eb', icon: Plus };
-        }
-    };
+
 
     if (!isOpen) return null;
 
@@ -382,41 +373,19 @@ export default function AddMediaModal({ isOpen, onClose, onAddSuccess, existingI
                                                         </div>
                                                     ) : (
                                                         <>
-                                                            <button
-                                                                className={styles.dropdownItem}
-                                                                onClick={() => handleStatusSelect(item, 'watching')}
-                                                            >
-                                                                <Clapperboard size={16} className="text-blue-500" />
-                                                                <span className={styles.dropdownLabel}>Watching</span>
-                                                            </button>
-                                                            <button
-                                                                className={styles.dropdownItem}
-                                                                onClick={() => handleStatusSelect(item, 'plan_to_watch')}
-                                                            >
-                                                                <CalendarClock size={16} className="text-amber-500" />
-                                                                <span className={styles.dropdownLabel}>Plan to Watch</span>
-                                                            </button>
-                                                            <button
-                                                                className={styles.dropdownItem}
-                                                                onClick={() => handleStatusSelect(item, 'watched')}
-                                                            >
-                                                                <CheckCircle size={16} className="text-green-500" />
-                                                                <span className={styles.dropdownLabel}>Watched</span>
-                                                            </button>
-                                                            <button
-                                                                className={styles.dropdownItem}
-                                                                onClick={() => handleStatusSelect(item, 'paused')}
-                                                            >
-                                                                <PauseCircle size={16} className="text-gray-500" />
-                                                                <span className={styles.dropdownLabel}>Paused</span>
-                                                            </button>
-                                                            <button
-                                                                className={styles.dropdownItem}
-                                                                onClick={() => handleStatusSelect(item, 'dropped')}
-                                                            >
-                                                                <XCircle size={16} className="text-red-500" />
-                                                                <span className={styles.dropdownLabel}>Dropped</span>
-                                                            </button>
+                                                            {Object.entries(STATUS_COLORS).map(([key, config]) => {
+                                                                const Icon = config.icon;
+                                                                return (
+                                                                    <button
+                                                                        key={key}
+                                                                        className={styles.dropdownItem}
+                                                                        onClick={() => handleStatusSelect(item, key as any)}
+                                                                    >
+                                                                        <Icon size={16} style={{ color: config.color }} />
+                                                                        <span className={styles.dropdownLabel}>{config.label}</span>
+                                                                    </button>
+                                                                );
+                                                            })}
 
                                                             {existing && (
                                                                 <>

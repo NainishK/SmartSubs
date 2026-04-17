@@ -197,17 +197,19 @@ export default function CustomSelect({
                         zIndex: 9999
                     }}
                 >
-                    {filteredOptions.map((option) => (
-                        <li
-                            key={option.value}
-                            className={`${styles.option} ${option.value === value ? styles.selected : ''}`}
-                            onClick={() => handleSelect(option.value)}
-                            role="option"
-                            aria-selected={option.value === value}
-                        >
-                            {option.label}
-                        </li>
-                    ))}
+                    {filteredOptions.map((option) => {
+                        return (
+                            <li
+                                key={option.value}
+                                className={`${styles.option} ${option.value === value ? styles.selected : ''}`}
+                                onClick={() => handleSelect(option.value)}
+                                role="option"
+                                aria-selected={option.value === value}
+                            >
+                                {option.label}
+                            </li>
+                        );
+                    })}
                     {showCustomOption && (
                         <li
                             className={`${styles.option} ${styles.customOption}`}

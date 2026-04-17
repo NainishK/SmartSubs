@@ -8,6 +8,7 @@ import ConfirmationModal from '@/components/ConfirmationModal';
 import AddMediaModal from '@/components/AddMediaModal';
 import { Plus, Search, Clapperboard, CalendarClock, CheckCircle, LayoutGrid, List, Layers, ArrowUp, ArrowDown, PauseCircle, XCircle, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import styles from './watchlist.module.css';
+import { STATUS_COLORS, ALL_TAB_CONFIG } from '@/lib/statusColors';
 import GenreFilter from './GenreFilter';
 import CustomSelect from '@/components/CustomSelect';
 
@@ -244,12 +245,12 @@ export default function WatchlistPage() {
     };
 
     const tabs = [
-        { id: 'all', label: 'All', icon: <Layers size={16} /> },
-        { id: 'watching', label: 'Watching', icon: <Clapperboard size={16} /> },
-        { id: 'plan_to_watch', label: 'Plan to Watch', icon: <CalendarClock size={16} /> },
-        { id: 'watched', label: 'Watched', icon: <CheckCircle size={16} /> },
-        { id: 'paused', label: 'Paused', icon: <PauseCircle size={16} /> },
-        { id: 'dropped', label: 'Dropped', icon: <XCircle size={16} /> }
+        { id: 'all', label: 'All', icon: <Layers size={16} />, color: ALL_TAB_CONFIG.color },
+        { id: 'watching', label: 'Watching', icon: <Clapperboard size={16} />, color: STATUS_COLORS.watching.color },
+        { id: 'plan_to_watch', label: 'Plan to Watch', icon: <CalendarClock size={16} />, color: STATUS_COLORS.plan_to_watch.color },
+        { id: 'watched', label: 'Watched', icon: <CheckCircle size={16} />, color: STATUS_COLORS.watched.color },
+        { id: 'paused', label: 'Paused', icon: <PauseCircle size={16} />, color: STATUS_COLORS.paused.color },
+        { id: 'dropped', label: 'Dropped', icon: <XCircle size={16} />, color: STATUS_COLORS.dropped.color }
     ];
 
 
@@ -277,17 +278,24 @@ export default function WatchlistPage() {
                 {/* Mobile Custom Dropdown - REPLACES <select> */}
                 {isMobile ? (
                     <div className={styles.customDropdownContainer}>
-                        <button
-                            className={`${styles.dropdownTrigger} ${isDropdownOpen ? styles.dropdownTriggerOpen : ''}`}
-                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                        >
-                            <span className={styles.triggerContent}>
-                                {tabs.find(t => t.id === activeTab)?.icon}
-                                {tabs.find(t => t.id === activeTab)?.label}
-                                <span className={styles.triggerCount}>({getTabCount(activeTab)})</span>
-                            </span>
-                            <ChevronDown size={18} className={styles.triggerChevron} />
-                        </button>
+                        {(() => {
+                            const activeTabConfig = tabs.find(t => t.id === activeTab);
+                            const triggerColor = activeTabConfig?.color || undefined;
+                            return (
+                                <button
+                                    className={`${styles.dropdownTrigger} ${isDropdownOpen ? styles.dropdownTriggerOpen : ''}`}
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    style={triggerColor ? { borderColor: triggerColor, color: triggerColor } : undefined}
+                                >
+                                    <span className={styles.triggerContent}>
+                                        {activeTabConfig?.icon}
+                                        {activeTabConfig?.label}
+                                        <span className={styles.triggerCount}>({getTabCount(activeTab)})</span>
+                                    </span>
+                                    <ChevronDown size={18} className={styles.triggerChevron} />
+                                </button>
+                            );
+                        })()}
 
                         {isDropdownOpen && (
                             <div className={styles.dropdownMenu}>
@@ -299,8 +307,9 @@ export default function WatchlistPage() {
                                             setActiveTab(tab.id);
                                             setIsDropdownOpen(false);
                                         }}
+                                        style={activeTab === tab.id && tab.color ? { backgroundColor: `${tab.color}15`, color: tab.color } : undefined}
                                     >
-                                        <span className={styles.tabIcon}>{tab.icon}</span>
+                                        <span className={styles.tabIcon} style={tab.color ? { color: tab.color } : undefined}>{tab.icon}</span>
                                         <span className={styles.itemLabel}>{tab.label}</span>
                                         <span className={styles.itemCount}>{getTabCount(tab.id)}</span>
                                     </button>
@@ -311,17 +320,33 @@ export default function WatchlistPage() {
                 ) : (
                     /* Desktop Tabs */
                     <div className={styles.tabs}>
-                        {tabs.map(tab => (
-                            <button
-                                key={tab.id}
-                                className={`${styles.tab} ${activeTab === tab.id ? styles.tabActive : ''}`}
-                                onClick={() => setActiveTab(tab.id)}
-                            >
-                                <span className={styles.tabIcon}>{tab.icon}</span>
-                                {tab.label}
-                                <span className={styles.tabCount}>{getTabCount(tab.id)}</span>
-                            </button>
-                        ))}
+                        {tabs.map(tab => {
+                            const isActive = activeTab === tab.id;
+                            const tabColor = tab.color || undefined;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    className={`${styles.tab} ${isActive ? styles.tabActive : ''}`}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    style={isActive && tabColor ? {
+                                        color: tabColor,
+                                        borderBottomColor: tabColor,
+                                    } as React.CSSProperties : undefined}
+                                >
+                                    <span className={styles.tabIcon} style={tabColor ? { color: tabColor } : undefined}>{tab.icon}</span>
+                                    {tab.label}
+                                    <span
+                                        className={styles.tabCount}
+                                        style={isActive && tabColor ? {
+                                            backgroundColor: `${tabColor}1a`,
+                                            color: tabColor
+                                        } : undefined}
+                                    >
+                                        {getTabCount(tab.id)}
+                                    </span>
+                                </button>
+                            );
+                        })}
                     </div>
                 )}
             </div>
