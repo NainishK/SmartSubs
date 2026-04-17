@@ -336,6 +336,7 @@ export default function MediaCard({
                                 onChange={(val) => handleStatusChange(val as string)}
                                 disabled={added || (existingStatus !== undefined && !onStatusChange)}
                                 className={styles.statusCustomSelect}
+                                indicatorColor={status && STATUS_COLORS[status] ? STATUS_COLORS[status].color : undefined}
                             />
                         </div>
 

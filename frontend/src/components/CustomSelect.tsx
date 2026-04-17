@@ -19,6 +19,7 @@ interface CustomSelectProps {
     forceLightMode?: boolean;
     searchable?: boolean;
     onCustomAdd?: (name: string) => void;
+    indicatorColor?: string;
 }
 
 export default function CustomSelect({
@@ -32,6 +33,7 @@ export default function CustomSelect({
     forceLightMode = false,
     searchable = false,
     onCustomAdd,
+    indicatorColor,
 }: CustomSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -174,6 +176,7 @@ export default function CustomSelect({
                     disabled={disabled}
                     aria-haspopup="listbox"
                     aria-expanded={isOpen}
+                    style={indicatorColor ? { borderLeft: `3px solid ${indicatorColor}` } : undefined}
                 >
                     <span className={!selectedOption ? styles.placeholder : ''}>
                         {selectedOption ? selectedOption.label : placeholder}
