@@ -8,6 +8,7 @@ import StarRating from './StarRating';
 import MediaDetailsModal from './MediaDetailsModal';
 import CustomSelect from '@/components/CustomSelect';
 import { GENRES } from '@/lib/genres';
+import { STATUS_COLORS } from '@/lib/statusColors';
 
 export interface MediaItem {
     id: number; // TMDB ID (usually)
@@ -321,13 +322,17 @@ export default function MediaCard({
                         <div className={styles.statusSelectWrapper} onClick={(e) => e.stopPropagation()}>
                             <CustomSelect
                                 value={status}
-                                options={[
-                                    { value: 'plan_to_watch', label: 'Plan to Watch' },
-                                    { value: 'watching', label: 'Watching' },
-                                    { value: 'paused', label: 'Paused' },
-                                    { value: 'dropped', label: 'Dropped' },
-                                    { value: 'watched', label: 'Watched' }
-                                ]}
+                                options={Object.entries(STATUS_COLORS).map(([key, config]) => {
+                                    const Icon = config.icon;
+                                    return {
+                                        value: key,
+                                        label: (
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <Icon size={14} style={{ color: config.color, flexShrink: 0 }} /> {config.label}
+                                            </span>
+                                        )
+                                    };
+                                })}
                                 onChange={(val) => handleStatusChange(val as string)}
                                 disabled={added || (existingStatus !== undefined && !onStatusChange)}
                                 className={styles.statusCustomSelect}

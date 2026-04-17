@@ -94,6 +94,11 @@
     font-weight: 500;
 }
 
+/* Force icon colors to white when option is selected */
+.option.selected * {
+    color: inherit !important;
+}
+
 .option.selected:hover {
     background-color: var(--primary);
     /* Keep primary even on hover */
