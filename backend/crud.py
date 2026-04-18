@@ -288,6 +288,17 @@ def update_watchlist_item_status(db: Session, item_id: int, user_id: int, status
         db.refresh(db_item)
     return db_item
 
+def update_watchlist_item_notes(db: Session, item_id: int, user_id: int, notes: str | None):
+    db_item = db.query(models.WatchlistItem).filter(
+        models.WatchlistItem.id == item_id, 
+        models.WatchlistItem.user_id == user_id
+    ).first()
+    if db_item:
+        db_item.notes = notes
+        db.commit()
+        db.refresh(db_item)
+    return db_item
+
 def update_user_ai_usage(db: Session, user_id: int):
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if user:

@@ -61,6 +61,7 @@ class WatchlistItem(Base):
     genre_ids = Column(String, nullable=True) # JSON string or comma-separated list of genre IDs
     original_language = Column(String, nullable=True) # e.g. "ja" for Japanese (anime detection)
     status = Column(String, default="plan_to_watch") # plan_to_watch, watching, watched
+    notes = Column(String, nullable=True) # Personal notes
     
     # Progress Tracking
     current_season = Column(Integer, default=0)

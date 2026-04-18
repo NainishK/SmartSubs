@@ -25,6 +25,8 @@ interface MediaDetailsModalProps {
     currentSeason?: number;
     currentEpisode?: number;
     onProgressChange?: (season: number, episode: number) => void;
+    notes?: string;
+    onNotesChange?: (notes: string) => void;
 }
 
 interface Provider {
@@ -59,11 +61,18 @@ interface MediaDetails {
 
 export default function MediaDetailsModal({
     visible, onClose, mediaType, tmdbId, initialData, addedAt, userRating, onRate,
-    dbId, currentSeason = 0, currentEpisode = 0, onProgressChange
+    dbId, currentSeason = 0, currentEpisode = 0, onProgressChange, 
+    notes = "", onNotesChange
 }: MediaDetailsModalProps) {
     const [details, setDetails] = useState<MediaDetails | null>(null);
     const [providers, setProviders] = useState<ProvidersData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isEditingNotes, setIsEditingNotes] = useState(false);
+    const [tempNotes, setTempNotes] = useState(notes);
+
+    useEffect(() => {
+        setTempNotes(notes || "");
+    }, [notes, visible]);
 
     useEffect(() => {
         if (visible && tmdbId) {
@@ -291,6 +300,55 @@ export default function MediaDetailsModal({
                                 </p>
                             )}
                         </div>
+
+                        {/* Notes Section */}
+                        {onNotesChange && (
+                            <div className={styles.providersSection} style={{ marginTop: '1.5rem' }}>
+                                <div className={styles.sectionTitle} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                                    PERSONAL NOTES
+                                    <button 
+                                        className={styles.notesEditBtn}
+                                        onClick={() => {
+                                            if (isEditingNotes) {
+                                                onNotesChange(tempNotes);
+                                            }
+                                            setIsEditingNotes(!isEditingNotes);
+                                        }}
+                                        style={{ 
+                                            background: 'none', border: 'none', color: 'var(--primary)', 
+                                            fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600 
+                                        }}
+                                    >
+                                        {isEditingNotes ? 'Save' : notes ? 'Edit Note' : 'Add Note'}
+                                    </button>
+                                </div>
+                                {isEditingNotes ? (
+                                    <textarea
+                                        value={tempNotes}
+                                        onChange={(e) => setTempNotes(e.target.value)}
+                                        placeholder="Add your personal notes here..."
+                                        className={styles.notesTextarea}
+                                        style={{
+                                            width: '100%', minHeight: '80px', padding: '0.75rem',
+                                            borderRadius: '8px', border: '1px solid var(--border)',
+                                            background: 'var(--input-bg)', color: 'var(--foreground)',
+                                            fontSize: '0.9rem', resize: 'vertical', marginTop: '0.5rem',
+                                            fontFamily: 'inherit'
+                                        }}
+                                    />
+                                ) : (
+                                    notes ? (
+                                        <p className={styles.synopsis} style={{ fontStyle: 'italic', color: 'var(--muted-foreground)', marginBottom: 0 }}>
+                                            {notes}
+                                        </p>
+                                    ) : (
+                                        <p style={{ fontStyle: 'italic', color: 'var(--muted-foreground)', fontSize: '0.9rem', margin: 0 }}>
+                                            No personal notes added yet.
+                                        </p>
+                                    )
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

@@ -27,6 +27,7 @@ export interface MediaItem {
     current_season?: number;
     current_episode?: number;
     original_language?: string;
+    notes?: string;
 }
 
 interface MediaCardProps {
@@ -57,6 +58,7 @@ export default function MediaCard({
     const [status, setStatus] = useState(existingStatus || 'plan_to_watch');
     const [userRating, setUserRating] = useState(item.user_rating || 0);
     const [dbId, setDbId] = useState<number | undefined>(item.dbId);
+    const [notes, setNotes] = useState(item.notes || "");
     const [adding, setAdding] = useState(false);
     const [added, setAdded] = useState(false);
     const [error, setError] = useState('');
@@ -66,8 +68,9 @@ export default function MediaCard({
         setStatus(existingStatus || 'plan_to_watch');
         setUserRating(item.user_rating || 0);
         setDbId(item.dbId);
+        setNotes(item.notes || "");
         setProgress({ season: item.current_season || 0, episode: item.current_episode || 0 });
-    }, [existingStatus, item.user_rating, item.dbId, item.current_season, item.current_episode]);
+    }, [existingStatus, item.user_rating, item.dbId, item.current_season, item.current_episode, item.notes]);
 
     const [progress, setProgress] = useState({
         season: item.current_season || 0,
@@ -84,6 +87,19 @@ export default function MediaCard({
             });
         } catch (e) {
             console.error("Progress update failed", e);
+        }
+    };
+
+    const handleNotesChange = async (newNotes: string) => {
+        if (!dbId) return;
+        setNotes(newNotes); // Optimistic
+        try {
+            await api.put(`/watchlist/${dbId}/notes`, {
+                notes: newNotes
+            });
+        } catch (e) {
+            console.error("Notes update failed", e);
+            // Optionally revert: setNotes(notes) if we passed oldNotes down
         }
     };
 
@@ -381,6 +397,8 @@ export default function MediaCard({
                 currentSeason={progress.season}
                 currentEpisode={progress.episode}
                 onProgressChange={handleProgressChange}
+                notes={notes}
+                onNotesChange={handleNotesChange}
             />
         </>
     );

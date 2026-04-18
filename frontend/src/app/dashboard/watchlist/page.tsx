@@ -129,7 +129,8 @@ export default function WatchlistPage() {
                 available_on: item.available_on, // Use DB value if present
                 current_season: item.current_season,
                 current_episode: item.current_episode,
-                original_language: item.original_language
+                original_language: item.original_language,
+                notes: item.notes
             }));
 
             setItems(transformed);
