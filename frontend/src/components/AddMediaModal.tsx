@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Search, Plus, Check, Clapperboard, CalendarClock, CheckCircle, ChevronDown, Trash2, Star, PauseCircle, XCircle } from 'lucide-react';
+import { X, Search, Plus, Check, Clapperboard, CalendarClock, CheckCircle, ChevronDown, Trash2, Star, PauseCircle, XCircle, Film, Tv, Zap, Layers } from 'lucide-react';
 import api from '@/lib/api';
 import styles from './AddMediaModal.module.css';
 import StarRating from './StarRating';
@@ -39,6 +39,7 @@ export default function AddMediaModal({ isOpen, onClose, onAddSuccess, existingI
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<SearchResult[]>([]);
     const [loading, setLoading] = useState(false);
+    const [searchFilter, setSearchFilter] = useState<'all' | 'movie' | 'tv' | 'anime'>('all');
 
     // Map TMDB_ID -> ExistingItemState
     const [existingMap, setExistingMap] = useState<Map<number, ExistingItemState>>(new Map());
@@ -278,6 +279,34 @@ export default function AddMediaModal({ isOpen, onClose, onAddSuccess, existingI
                                 </button>
                             )}
                         </div>
+                        <div className={styles.filterRow}>
+                            {[
+                                { key: 'all' as const, label: 'All', icon: Layers },
+                                { key: 'movie' as const, label: 'Movies', icon: Film },
+                                { key: 'tv' as const, label: 'TV Shows', icon: Tv },
+                                { key: 'anime' as const, label: 'Anime', icon: Zap },
+                            ].map(chip => {
+                                const count = results.length === 0 ? null
+                                    : chip.key === 'all'
+                                        ? results.length
+                                        : chip.key === 'movie'
+                                            ? results.filter(r => r.media_type === 'movie').length
+                                            : chip.key === 'tv'
+                                                ? results.filter(r => r.media_type === 'tv' && !(r.original_language === 'ja' && r.genre_ids?.includes(16))).length
+                                                : results.filter(r => r.original_language === 'ja' && r.genre_ids?.includes(16)).length;
+                                return (
+                                    <button
+                                        key={chip.key}
+                                        className={`${styles.filterChip} ${searchFilter === chip.key ? styles.filterChipActive : ''}`}
+                                        onClick={() => setSearchFilter(chip.key)}
+                                    >
+                                        <chip.icon size={13} />
+                                        {chip.label}
+                                        {count !== null && <span className={styles.filterChipCount}>{count}</span>}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
 
                     <div className={`${styles.resultsList} ${results.length > 0 ? styles.resultsListHasItems : ''}`}>
@@ -287,7 +316,16 @@ export default function AddMediaModal({ isOpen, onClose, onAddSuccess, existingI
                             <div className={styles.noResults}>No results found for "{query}"</div>
                         )}
 
-                        {!loading && results.map(item => {
+                        {!loading && results
+                            .filter(item => {
+                                if (searchFilter === 'all') return true;
+                                const isAnime = item.original_language === 'ja' && item.genre_ids?.includes(16);
+                                if (searchFilter === 'anime') return isAnime;
+                                if (searchFilter === 'movie') return item.media_type === 'movie';
+                                if (searchFilter === 'tv') return item.media_type === 'tv' && !isAnime;
+                                return true;
+                            })
+                            .map(item => {
                             const year = (item.release_date || item.first_air_date || '').split('-')[0];
                             const existing = existingMap.get(item.id);
                             const isDropdownOpen = openDropdownId === item.id;
