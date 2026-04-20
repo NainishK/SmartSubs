@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '@/lib/api';
 import styles from './MediaCard.module.css';
 import { Trash2, Plus, Check, Star, Tv, Film, Sparkles, Calendar, Zap } from 'lucide-react';
@@ -64,6 +64,23 @@ export default function MediaCard({
     const [error, setError] = useState('');
     const [showRatingPopover, setShowRatingPopover] = useState(false);
     const [showModal, setShowModal] = useState(false);
+    
+    const ratingRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (ratingRef.current && !ratingRef.current.contains(event.target as Node)) {
+                setShowRatingPopover(false);
+            }
+        };
+
+        if (showRatingPopover) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showRatingPopover]);
 
     useEffect(() => {
         setStatus(existingStatus || 'plan_to_watch');
@@ -204,7 +221,10 @@ export default function MediaCard({
 
     return (
         <>
-            <div className={`${styles.card} ${isList ? styles.cardList : ''}`}>
+            <div 
+                className={`${styles.card} ${isList ? styles.cardList : ''}`}
+                style={{ zIndex: showRatingPopover ? 50 : 1, position: showRatingPopover ? 'relative' : undefined }}
+            >
                 {/* Poster Section (Image First) */}
                 <div
                     className={styles.posterContainer}
@@ -280,6 +300,7 @@ export default function MediaCard({
                                         className={styles.metaRating} 
                                         onClick={(e) => { e.stopPropagation(); setShowRatingPopover(!showRatingPopover); }}
                                         style={{ position: 'relative', cursor: 'pointer', zIndex: showRatingPopover ? 10 : 1 }}
+                                        ref={ratingRef}
                                     >
                                         <Star size={14} fill={userRating > 0 ? "#fbbf24" : "none"} color={userRating > 0 ? "#fbbf24" : "#9ca3af"} />
                                         <span className={styles.metaRatingText}>
@@ -287,40 +308,33 @@ export default function MediaCard({
                                         </span>
                                         
                                         {showRatingPopover && (
-                                            <>
-                                                {/* Invisible backdrop to close popover when clicking outside within the card */}
-                                                <div 
-                                                    style={{ position: 'fixed', inset: 0, zIndex: 10 }} 
-                                                    onClick={(e) => { e.stopPropagation(); setShowRatingPopover(false); }}
+                                            <div 
+                                                className={styles.ratingPopover} 
+                                                onClick={(e) => e.stopPropagation()}
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: '100%',
+                                                    left: 0,
+                                                    marginTop: '8px',
+                                                    background: 'var(--card)',
+                                                    border: '1px solid var(--border)',
+                                                    borderRadius: '8px',
+                                                    padding: '12px',
+                                                    zIndex: 20,
+                                                    boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    gap: '6px',
+                                                    width: 'max-content'
+                                                }}
+                                            >
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted-foreground)' }}>YOUR RATING</span>
+                                                <StarRating 
+                                                    rating={userRating || 0} 
+                                                    onRatingChange={(r) => { handleRate(r); setShowRatingPopover(false); }} 
+                                                    maxStars={10} 
                                                 />
-                                                <div 
-                                                    className={styles.ratingPopover} 
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: '100%',
-                                                        left: 0,
-                                                        marginTop: '8px',
-                                                        background: 'var(--card)',
-                                                        border: '1px solid var(--border)',
-                                                        borderRadius: '8px',
-                                                        padding: '12px',
-                                                        zIndex: 20,
-                                                        boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        gap: '6px',
-                                                        minWidth: '200px'
-                                                    }}
-                                                >
-                                                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted-foreground)' }}>YOUR RATING</span>
-                                                    <StarRating 
-                                                        rating={userRating || 0} 
-                                                        onRatingChange={(r) => { handleRate(r); setShowRatingPopover(false); }} 
-                                                        maxStars={10} 
-                                                    />
-                                                </div>
-                                            </>
+                                            </div>
                                         )}
                                     </div>
                                     <span className={styles.metaDivider}>•</span>
