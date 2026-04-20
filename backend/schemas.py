@@ -46,6 +46,10 @@ class WatchlistItemBase(BaseModel):
     user_rating: Optional[int] = None # 1-10
     available_on: Optional[str] = None # Enriched field for UI badges
     original_language: Optional[str] = None # e.g. "ja" for anime detection
+    notes: Optional[str] = None
+
+class WatchlistNoteUpdate(BaseModel):
+    notes: Optional[str] = None
 
 class WatchlistRatingUpdate(BaseModel):
     rating: int

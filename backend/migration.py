@@ -33,6 +33,7 @@ def run_migration():
             ("users", "avatar_url", "TEXT"),
             ("subscriptions", "country", "TEXT DEFAULT 'US'"),
             ("watchlist_items", "original_language", "TEXT"),
+            ("watchlist_items", "notes", "TEXT"),
         ]
         
         for table, col, dtype in columns_to_add:
