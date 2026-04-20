@@ -391,12 +391,12 @@ export default function MediaCard({
                 }}
                 addedAt={item.added_at}
                 userRating={userRating}
-                onRate={handleRate}
+                onRate={(dbId && status !== 'plan_to_watch') ? handleRate : undefined}
                 // Progress
                 dbId={dbId}
                 currentSeason={progress.season}
                 currentEpisode={progress.episode}
-                onProgressChange={handleProgressChange}
+                onProgressChange={(dbId && status !== 'plan_to_watch') ? handleProgressChange : undefined}
                 notes={notes}
                 onNotesChange={dbId ? handleNotesChange : undefined}
             />
