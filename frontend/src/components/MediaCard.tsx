@@ -62,6 +62,7 @@ export default function MediaCard({
     const [adding, setAdding] = useState(false);
     const [added, setAdded] = useState(false);
     const [error, setError] = useState('');
+    const [showRatingPopover, setShowRatingPopover] = useState(false);
     const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
@@ -275,11 +276,52 @@ export default function MediaCard({
                             {/* User Rating - Now inside Meta Row for sorting/layout */}
                             {(existingStatus && status !== 'plan_to_watch') && (
                                 <>
-                                    <div className={styles.metaRating}>
+                                    <div 
+                                        className={styles.metaRating} 
+                                        onClick={(e) => { e.stopPropagation(); setShowRatingPopover(!showRatingPopover); }}
+                                        style={{ position: 'relative', cursor: 'pointer', zIndex: showRatingPopover ? 10 : 1 }}
+                                    >
                                         <Star size={14} fill={userRating > 0 ? "#fbbf24" : "none"} color={userRating > 0 ? "#fbbf24" : "#9ca3af"} />
                                         <span className={styles.metaRatingText}>
                                             {userRating > 0 ? userRating : 'Rate'}
                                         </span>
+                                        
+                                        {showRatingPopover && (
+                                            <>
+                                                {/* Invisible backdrop to close popover when clicking outside within the card */}
+                                                <div 
+                                                    style={{ position: 'fixed', inset: 0, zIndex: 10 }} 
+                                                    onClick={(e) => { e.stopPropagation(); setShowRatingPopover(false); }}
+                                                />
+                                                <div 
+                                                    className={styles.ratingPopover} 
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: '100%',
+                                                        left: 0,
+                                                        marginTop: '8px',
+                                                        background: 'var(--card)',
+                                                        border: '1px solid var(--border)',
+                                                        borderRadius: '8px',
+                                                        padding: '12px',
+                                                        zIndex: 20,
+                                                        boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        gap: '6px',
+                                                        minWidth: '200px'
+                                                    }}
+                                                >
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted-foreground)' }}>YOUR RATING</span>
+                                                    <StarRating 
+                                                        rating={userRating || 0} 
+                                                        onRatingChange={(r) => { handleRate(r); setShowRatingPopover(false); }} 
+                                                        maxStars={10} 
+                                                    />
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                     <span className={styles.metaDivider}>•</span>
                                 </>
