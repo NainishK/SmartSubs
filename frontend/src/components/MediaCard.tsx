@@ -398,7 +398,7 @@ export default function MediaCard({
                 currentEpisode={progress.episode}
                 onProgressChange={handleProgressChange}
                 notes={notes}
-                onNotesChange={handleNotesChange}
+                onNotesChange={dbId ? handleNotesChange : undefined}
             />
         </>
     );
