@@ -26,7 +26,10 @@ export default function RecommendationsPage() {
         fetchSimilarData: fetchSimilarRecs
     } = useRecommendations();
 
-    const [watchlist, setWatchlist] = useState<Array<{ id: number; tmdb_id: number; status: string; user_rating?: number; title?: string }>>([]);
+    const [watchlist, setWatchlist] = useState<Array<{ 
+        id: number; tmdb_id: number; status: string; user_rating?: number; title?: string;
+        current_season?: number; current_episode?: number; notes?: string;
+    }>>([]);
     const [trendingVisible, setTrendingVisible] = useState(5);
 
     useEffect(() => {
@@ -67,7 +70,10 @@ export default function RecommendationsPage() {
                 tmdb_id: item.tmdb_id,
                 status: item.status,
                 user_rating: item.user_rating,
-                title: item.title
+                title: item.title,
+                current_season: item.current_season,
+                current_episode: item.current_episode,
+                notes: item.notes
             })));
         } catch (error) {
             console.error('Failed to fetch watchlist', error);
@@ -185,7 +191,10 @@ export default function RecommendationsPage() {
                                             user_rating: existingItem?.user_rating || 0,
                                             status: existingItem?.status,
                                             genre_ids: rec.genre_ids,
-                                            original_language: rec.original_language
+                                            original_language: rec.original_language,
+                                            current_season: existingItem?.current_season,
+                                            current_episode: existingItem?.current_episode,
+                                            notes: existingItem?.notes
                                         }}
                                         showServiceBadge={rec.service_name}
                                         customBadgeColor="#db2777"
@@ -298,6 +307,15 @@ export default function RecommendationsPage() {
                                 original_language: rec.original_language
                             };
                             const existingItem = watchlist.find(w => w.tmdb_id === item.id);
+
+                            if (existingItem) {
+                                item.dbId = existingItem.id;
+                                item.user_rating = existingItem.user_rating;
+                                item.status = existingItem.status;
+                                item.current_season = existingItem.current_season;
+                                item.current_episode = existingItem.current_episode;
+                                item.notes = existingItem.notes;
+                            }
 
                             return (
                                 <div key={index} className={styles.recommendationItem}>

@@ -203,72 +203,74 @@ export default function MediaDetailsModal({
                         </div>
 
                         {/* Rating & Progress Section */}
-                        <div className={styles.ratingProgressBox}>
-                            {/* User Rating */}
-                            {onRate && (
-                                <div className={styles.ratingBlock}>
-                                    <span className={styles.label}>YOUR RATING</span>
-                                    <StarRating rating={userRating || 0} onRatingChange={onRate} maxStars={10} />
-                                </div>
-                            )}
+                        {(onRate || (mediaType === 'tv' && onProgressChange)) && (
+                            <div className={styles.ratingProgressBox}>
+                                {/* User Rating */}
+                                {onRate && (
+                                    <div className={styles.ratingBlock}>
+                                        <span className={styles.label}>YOUR RATING</span>
+                                        <StarRating rating={userRating || 0} onRatingChange={onRate} maxStars={10} />
+                                    </div>
+                                )}
 
-                            {/* Separator */}
-                            {(onRate && mediaType === 'tv' && onProgressChange) && (
-                                <div className={styles.ratingSeparator}></div>
-                            )}
+                                {/* Separator */}
+                                {(onRate && mediaType === 'tv' && onProgressChange) && (
+                                    <div className={styles.ratingSeparator}></div>
+                                )}
 
-                            {/* Progress Tracking (TV Only) */}
-                            {(mediaType === 'tv' && onProgressChange) && (
-                                <div className={styles.progressBlock}>
-                                    <span className={styles.label}>PROGRESS</span>
-                                    <div className={styles.progressControls}>
+                                {/* Progress Tracking (TV Only) */}
+                                {(mediaType === 'tv' && onProgressChange) && (
+                                    <div className={styles.progressBlock}>
+                                        <span className={styles.label}>PROGRESS</span>
+                                        <div className={styles.progressControls}>
 
-                                        {/* Season Control */}
-                                        <div className={styles.controlGroup}>
-                                            <span className={styles.controlLabel}>S</span>
-                                            <button className={styles.incButton} onClick={() => updateProgress(-1, 0)}><Minus size={14} /></button>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                value={currentSeason}
-                                                onChange={(e) => onProgressChange(parseInt(e.target.value) || 0, currentEpisode)}
-                                                className={`${styles.noSpinner} ${styles.numberInput}`}
-                                            />
-                                            <button className={styles.incButton} onClick={() => updateProgress(1, 0)}><Plus size={14} /></button>
+                                            {/* Season Control */}
+                                            <div className={styles.controlGroup}>
+                                                <span className={styles.controlLabel}>S</span>
+                                                <button className={styles.incButton} onClick={() => updateProgress(-1, 0)}><Minus size={14} /></button>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    value={currentSeason}
+                                                    onChange={(e) => onProgressChange(parseInt(e.target.value) || 0, currentEpisode)}
+                                                    className={`${styles.noSpinner} ${styles.numberInput}`}
+                                                />
+                                                <button className={styles.incButton} onClick={() => updateProgress(1, 0)}><Plus size={14} /></button>
+                                            </div>
+
+                                            {/* Episode Control */}
+                                            <div className={styles.controlGroup}>
+                                                <span className={styles.controlLabel}>E</span>
+                                                <button className={styles.incButton} onClick={() => updateProgress(0, -1)}><Minus size={14} /></button>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    value={currentEpisode}
+                                                    onChange={(e) => onProgressChange(currentSeason, parseInt(e.target.value) || 0)}
+                                                    className={`${styles.noSpinner} ${styles.numberInput}`}
+                                                />
+                                                <button className={styles.incButton} onClick={() => updateProgress(0, 1)}><Plus size={14} /></button>
+
+                                                {(() => {
+                                                    const currentSeasonData = details?.seasons?.find(s => s.season_number === currentSeason);
+                                                    if (currentSeasonData) {
+                                                        return (
+                                                            <span className={styles.totalEpisodes}>
+                                                                / {currentSeasonData.episode_count}
+                                                            </span>
+                                                        );
+                                                    }
+                                                    return null;
+                                                })()}
+                                            </div>
                                         </div>
-
-                                        {/* Episode Control */}
-                                        <div className={styles.controlGroup}>
-                                            <span className={styles.controlLabel}>E</span>
-                                            <button className={styles.incButton} onClick={() => updateProgress(0, -1)}><Minus size={14} /></button>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                value={currentEpisode}
-                                                onChange={(e) => onProgressChange(currentSeason, parseInt(e.target.value) || 0)}
-                                                className={`${styles.noSpinner} ${styles.numberInput}`}
-                                            />
-                                            <button className={styles.incButton} onClick={() => updateProgress(0, 1)}><Plus size={14} /></button>
-
-                                            {(() => {
-                                                const currentSeasonData = details?.seasons?.find(s => s.season_number === currentSeason);
-                                                if (currentSeasonData) {
-                                                    return (
-                                                        <span className={styles.totalEpisodes}>
-                                                            / {currentSeasonData.episode_count}
-                                                        </span>
-                                                    );
-                                                }
-                                                return null;
-                                            })()}
+                                        <div className={styles.totalSeasons}>
+                                            Total: {details?.number_of_seasons || 0} Seasons
                                         </div>
                                     </div>
-                                    <div className={styles.totalSeasons}>
-                                        Total: {details?.number_of_seasons || 0} Seasons
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+                                )}
+                            </div>
+                        )}
 
                         <div className={styles.sectionTitle}>SYNOPSIS</div>
                         <p className={styles.synopsis}>
