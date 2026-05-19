@@ -69,6 +69,9 @@ export default function MediaDetailsModal({
     const [loading, setLoading] = useState(true);
     const [isEditingNotes, setIsEditingNotes] = useState(false);
     const [tempNotes, setTempNotes] = useState(notes);
+    
+    // Enforce Season 1 as the default minimum instead of Specials Season 0
+    const activeSeason = currentSeason === 0 ? 1 : currentSeason;
 
     useEffect(() => {
         setTempNotes(notes || "");
@@ -130,8 +133,17 @@ export default function MediaDetailsModal({
 
     const updateProgress = (seasonDelta: number, episodeDelta: number) => {
         if (!onProgressChange) return;
-        const newSeason = Math.max(0, currentSeason + seasonDelta);
-        const newEpisode = Math.max(0, currentEpisode + episodeDelta);
+        
+        // Enforce Season bounds based on TMDB details (min season is 1)
+        const maxSeasons = details?.number_of_seasons || 999;
+        const newSeason = Math.max(1, Math.min(maxSeasons, activeSeason + seasonDelta));
+        
+        // Enforce Episode bounds based on the target season's episode count
+        const targetSeason = seasonDelta !== 0 ? newSeason : activeSeason;
+        const currentSeasonData = details?.seasons?.find(s => s.season_number === targetSeason);
+        const maxEpisodes = currentSeasonData ? currentSeasonData.episode_count : 999;
+        const newEpisode = Math.max(0, Math.min(maxEpisodes, currentEpisode + episodeDelta));
+        
         onProgressChange(newSeason, newEpisode);
     };
 
@@ -227,32 +239,45 @@ export default function MediaDetailsModal({
                                             {/* Season Control */}
                                             <div className={styles.controlGroup}>
                                                 <span className={styles.controlLabel}>S</span>
-                                                <button className={styles.incButton} onClick={() => updateProgress(-1, 0)}><Minus size={14} /></button>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    value={currentSeason}
-                                                    onChange={(e) => onProgressChange(parseInt(e.target.value) || 0, currentEpisode)}
-                                                    className={`${styles.noSpinner} ${styles.numberInput}`}
-                                                />
-                                                <button className={styles.incButton} onClick={() => updateProgress(1, 0)}><Plus size={14} /></button>
+                                                <div className={styles.capsule}>
+                                                    <button className={styles.incButton} onClick={() => updateProgress(-1, 0)}><Minus size={12} /></button>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        value={activeSeason}
+                                                        onChange={(e) => {
+                                                            const val = parseInt(e.target.value) || 1;
+                                                            const maxS = details?.number_of_seasons || 999;
+                                                            onProgressChange(Math.max(1, Math.min(maxS, val)), currentEpisode);
+                                                        }}
+                                                        className={`${styles.noSpinner} ${styles.numberInput}`}
+                                                    />
+                                                    <button className={styles.incButton} onClick={() => updateProgress(1, 0)}><Plus size={12} /></button>
+                                                </div>
                                             </div>
 
                                             {/* Episode Control */}
                                             <div className={styles.controlGroup}>
                                                 <span className={styles.controlLabel}>E</span>
-                                                <button className={styles.incButton} onClick={() => updateProgress(0, -1)}><Minus size={14} /></button>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    value={currentEpisode}
-                                                    onChange={(e) => onProgressChange(currentSeason, parseInt(e.target.value) || 0)}
-                                                    className={`${styles.noSpinner} ${styles.numberInput}`}
-                                                />
-                                                <button className={styles.incButton} onClick={() => updateProgress(0, 1)}><Plus size={14} /></button>
+                                                <div className={styles.capsule}>
+                                                    <button className={styles.incButton} onClick={() => updateProgress(0, -1)}><Minus size={12} /></button>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={currentEpisode}
+                                                        onChange={(e) => {
+                                                            const val = parseInt(e.target.value) || 0;
+                                                            const currentSeasonData = details?.seasons?.find(s => s.season_number === activeSeason);
+                                                            const maxE = currentSeasonData ? currentSeasonData.episode_count : 999;
+                                                            onProgressChange(activeSeason, Math.max(0, Math.min(maxE, val)));
+                                                        }}
+                                                        className={`${styles.noSpinner} ${styles.numberInput}`}
+                                                    />
+                                                    <button className={styles.incButton} onClick={() => updateProgress(0, 1)}><Plus size={12} /></button>
+                                                </div>
 
                                                 {(() => {
-                                                    const currentSeasonData = details?.seasons?.find(s => s.season_number === currentSeason);
+                                                    const currentSeasonData = details?.seasons?.find(s => s.season_number === activeSeason);
                                                     if (currentSeasonData) {
                                                         return (
                                                             <span className={styles.totalEpisodes}>

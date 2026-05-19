@@ -29,8 +29,20 @@ else:
         
     connect_args = {} # Postgres does not need check_same_thread
 
+# Pool settings for cloud Postgres (Neon/Render)
+# pool_pre_ping: Tests connection before use - catches stale SSL connections after cold starts
+# pool_recycle: Recycles connections every 5 min - prevents SSL timeouts
+# pool_size/max_overflow: Keep small for free-tier resource limits
+pool_args = {
+    "pool_pre_ping": True,
+    "pool_recycle": 300,
+    "pool_size": 3,
+    "max_overflow": 5,
+}
+
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args=connect_args
+    SQLALCHEMY_DATABASE_URL, connect_args=connect_args,
+    **pool_args if "postgresql" in SQLALCHEMY_DATABASE_URL else {}
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

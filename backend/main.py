@@ -515,7 +515,11 @@ def check_watch_availability(item_ids: list[int], background_tasks: BackgroundTa
     
     availability_map = {}
     
-    # print(f"DEBUG: Checking {len(items)} items against subs: {[s.service_name for s in subs]}")
+    # Fetch actual watchlist items from the provided IDs
+    items = db.query(models.WatchlistItem).filter(
+        models.WatchlistItem.id.in_(item_ids),
+        models.WatchlistItem.user_id == current_user.id
+    ).all()
     
     import concurrent.futures
     import time
@@ -555,7 +559,6 @@ def check_watch_availability(item_ids: list[int], background_tasks: BackgroundTa
                     if matched_sub: break
             
             if matched_sub:
-    # print(f"DEBUG: Availability check took {time.time() - start_time:.2f}s for {len(items)} items")
                 return item.tmdb_id, matched_sub
         except Exception as e:
             print(f"Availability check failed for {item.tmdb_id}: {e}")
