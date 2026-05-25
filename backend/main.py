@@ -1018,14 +1018,17 @@ def get_subscription_coverage(
         coverage_pct = round((total_covered / total_watchlist * 100) if total_watchlist > 0 else 0)
         type_count = sum(1 for v in breakdown.values() if v["count"] > 0)
 
-        # Cost-aware Value Score (combines content utility and normalized cost)
-        title_score = min(coverage_pct, 100) * 0.45
-        hour_score = min((total_hours / 200) * 100, 100) * 0.40
-        variety_bonus = 15 if type_count >= 2 else 0
-        raw_utility = title_score + hour_score + variety_bonus
+        # Value Score: hours-primary, coverage secondary, capped at 100
+        # Hours are the real measure of entertainment value — cap at 300h
+        hour_score = min((total_hours / 300) * 55, 55)
+        # Coverage % is secondary — max 25 pts (100% coverage = 25 pts)
+        title_score = min(coverage_pct * 0.25, 25)
+        # Variety bonus for services spanning multiple content types
+        variety_bonus = 20 if type_count >= 2 else 0
+        raw_utility = hour_score + title_score + variety_bonus  # max = 100
 
         cost_usd = monthly_cost / 83.0 if country == "IN" else monthly_cost
-        cost_penalty = min(cost_usd * 1.2, 30.0)
+        cost_penalty = min(cost_usd * 1.5, 20.0)
 
         value_score = round(max(10, raw_utility - cost_penalty))
 

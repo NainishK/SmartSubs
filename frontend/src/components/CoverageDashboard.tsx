@@ -324,21 +324,27 @@ export default function CoverageDashboard({ userCountry }: CoverageDashboardProp
                                 {isUnused ? (
                                     <span className={styles.unusedBadge}>0%</span>
                                 ) : (
-                                    <span
-                                        className={styles.coveragePctBadge}
-                                        style={{
-                                            color:
-                                                svc.coverage_pct >= 50 ? '#22c55e' :
-                                                svc.coverage_pct >= 20 ? '#f59e0b' : '#ef4444',
-                                            borderColor:
-                                                svc.coverage_pct >= 50 ? 'rgba(34,197,94,0.3)' :
-                                                svc.coverage_pct >= 20 ? 'rgba(245,158,11,0.3)' : 'rgba(239,68,68,0.3)',
-                                            background:
-                                                svc.coverage_pct >= 50 ? 'rgba(34,197,94,0.06)' :
-                                                svc.coverage_pct >= 20 ? 'rgba(245,158,11,0.06)' : 'rgba(239,68,68,0.06)'
-                                        }}
-                                    >
-                                        {svc.coverage_pct}%
+                                    <span className={styles.infoTooltipContainer} style={{ marginLeft: 0 }}>
+                                        <span
+                                            className={styles.coveragePctBadge}
+                                            style={{
+                                                color:
+                                                    svc.coverage_pct >= 50 ? '#22c55e' :
+                                                    svc.coverage_pct >= 20 ? '#f59e0b' : '#ef4444',
+                                                borderColor:
+                                                    svc.coverage_pct >= 50 ? 'rgba(34,197,94,0.3)' :
+                                                    svc.coverage_pct >= 20 ? 'rgba(245,158,11,0.3)' : 'rgba(239,68,68,0.3)',
+                                                background:
+                                                    svc.coverage_pct >= 50 ? 'rgba(34,197,94,0.06)' :
+                                                    svc.coverage_pct >= 20 ? 'rgba(245,158,11,0.06)' : 'rgba(239,68,68,0.06)'
+                                            }}
+                                        >
+                                            {svc.coverage_pct}%
+                                        </span>
+                                        <span className={styles.infoTooltip} style={{ right: 0, left: 'auto', transform: 'none' }}>
+                                            <strong>Watchlist Coverage</strong><br />
+                                            {svc.total_covered} of your {summary.total_watchlist} watchlist titles are available on {svc.name}.
+                                        </span>
                                     </span>
                                 )}
                             </div>
@@ -346,14 +352,14 @@ export default function CoverageDashboard({ userCountry }: CoverageDashboardProp
                             {/* Coverage Visual Bar */}
                             {!isUnused && (
                                 <>
-                                    <CoverageBar pct={svc.coverage_pct} />
+                                    <CoverageBar pct={svc.value_score} />
                                     <p className={styles.coverageCaption}>
                                         <span>Value Score: <strong>{svc.value_score} / 100</strong></span>
                                         <span className={styles.infoTooltipContainer}>
                                             <HelpCircle size={13} className={styles.infoIcon} />
                                             <span className={styles.infoTooltip}>
                                                 <strong>Value Score Formula:</strong><br />
-                                                Calculated from Watchlist Coverage (45%), Total Hours (40%), and Genre Variety (15%), offset by normalized regional cost. Higher score indicates greater value!
+                                                Hours of content (55%), Watchlist Coverage (25%), Content Variety (20%), minus a cost penalty. Services with 200+ hours of your watchlist content score well regardless of platform size.
                                             </span>
                                         </span>
                                     </p>
