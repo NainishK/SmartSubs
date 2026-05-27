@@ -50,9 +50,29 @@ interface OrphanedItem {
     genre_ids?: number[];
 }
 
+interface SuggestedService {
+    name: string;
+    logo_url: string | null;
+    count: number;
+    est_hours: number;
+    coverage_pct: number;
+    breakdown: {
+        movie: { count: number; est_hours: number };
+        tv:    { count: number; est_hours: number };
+        anime: { count: number; est_hours: number };
+        other: { count: number; est_hours: number };
+    };
+    titles: string[];
+    cheapest_plan: { cost: number; currency: string; billing_cycle: string } | null;
+    value_score: number;
+    cost_per_title: number | null;
+    cost_per_hour: number | null;
+}
+
 interface CoverageData {
     services: ServiceCoverage[];
     orphaned_items: OrphanedItem[];
+    suggested_services: SuggestedService[];
     summary: {
         total_monthly_cost: number;
         total_covered: number;
@@ -417,6 +437,136 @@ export default function CoverageDashboard({ userCountry }: CoverageDashboardProp
                     );
                 })}
             </div>
+
+            {/* ── Consider Adding ── */}
+            {data.suggested_services && data.suggested_services.length > 0 && (
+                <div className={styles.section}>
+                    <h3 className={styles.sectionHeading}>
+                        <Search size={16} />
+                        Consider Adding
+                    </h3>
+                    <p className={styles.sectionSubtext}>
+                        These services cover the most unwatched titles from your watchlist that you don&apos;t currently subscribe to.
+                    </p>
+                    <div className={styles.suggestedGrid}>
+                        {data.suggested_services.slice(0, 4).map(svc => (
+                            <div key={svc.name} className={styles.serviceCard}>
+
+                                {/* Header — identical to subscribed card */}
+                                <div className={styles.serviceCardHeader}>
+                                    <div className={styles.serviceIdentity}>
+                                        {svc.logo_url ? (
+                                            <img src={svc.logo_url} alt={svc.name} className={styles.serviceLogo} />
+                                        ) : (
+                                            <div className={styles.serviceLogoFallback} style={{ background: '#4f46e5' }}>
+                                                {svc.name.substring(0, 2).toUpperCase()}
+                                            </div>
+                                        )}
+                                        <div>
+                                            <h4 className={styles.serviceName}>{svc.name}</h4>
+                                            <p className={styles.serviceCost}>
+                                                {svc.cheapest_plan ? (
+                                                    <>
+                                                        <span>{formatCurrency(svc.cheapest_plan.cost, userCountry)}</span>
+                                                        {svc.cheapest_plan.billing_cycle === 'yearly' ? (
+                                                            <span className={styles.yearlyBadge}>Yearly</span>
+                                                        ) : (
+                                                            <span className={styles.monthlyBadge}>Monthly</span>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <span style={{ color: 'var(--muted-foreground)', fontSize: '0.75rem' }}>Price unavailable</span>
+                                                )}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span className={styles.infoTooltipContainer} style={{ marginLeft: 0 }}>
+                                        <span
+                                            className={styles.coveragePctBadge}
+                                            style={{
+                                                color: svc.coverage_pct >= 20 ? '#f59e0b' : '#ef4444',
+                                                borderColor: svc.coverage_pct >= 20 ? 'rgba(245,158,11,0.3)' : 'rgba(239,68,68,0.3)',
+                                                background: svc.coverage_pct >= 20 ? 'rgba(245,158,11,0.06)' : 'rgba(239,68,68,0.06)'
+                                            }}
+                                        >
+                                            {svc.coverage_pct}%
+                                        </span>
+                                        <span className={styles.infoTooltip} style={{ right: 0, left: 'auto', transform: 'none' }}>
+                                            <strong>Watchlist Coverage</strong><br />
+                                            {svc.count} of your {summary.total_watchlist} watchlist titles are on {svc.name}.
+                                        </span>
+                                    </span>
+                                </div>
+
+                                {/* Progress bar + Value Score */}
+                                <CoverageBar pct={svc.value_score} />
+                                <p className={styles.coverageCaption}>
+                                    <span>Value Score: <strong>{svc.value_score} / 100</strong></span>
+                                    <span className={styles.infoTooltipContainer}>
+                                        <HelpCircle size={13} className={styles.infoIcon} />
+                                        <span className={styles.infoTooltip}>
+                                            <strong>Projected Value Score</strong><br />
+                                            Estimated based on hours of content, watchlist coverage, and the cheapest available plan cost.
+                                        </span>
+                                    </span>
+                                </p>
+
+                                {/* Type breakdown */}
+                                <div className={styles.typeBreakdown}>
+                                    {(['movie', 'tv', 'anime', 'other'] as const).map(ct => {
+                                        const bd = svc.breakdown[ct];
+                                        if (!bd || bd.count === 0) return null;
+                                        const meta = TYPE_META[ct];
+                                        return (
+                                            <div key={ct} className={styles.typeRow}>
+                                                <span className={styles.typeIconChip}
+                                                    style={{ color: meta.color, background: meta.bg }}>
+                                                    {meta.icon}
+                                                </span>
+                                                <span className={styles.typeLabel}>{bd.count} {meta.label}</span>
+                                                <span className={styles.typeHours}>{formatHrs(bd.est_hours)}</span>
+                                            </div>
+                                        );
+                                    })}
+                                    <div className={styles.typeDivider} />
+                                    <div className={styles.typeRowTotal}>
+                                        <span className={styles.typeTotalLabel}>{svc.count} titles</span>
+                                        <span className={styles.typeTotalHours}>{formatHrs(svc.est_hours)} total</span>
+                                    </div>
+                                </div>
+
+                                {/* Efficiency pills */}
+                                {(svc.cost_per_title !== null || svc.cost_per_hour !== null) && (
+                                    <div className={styles.efficiencyRow}>
+                                        {svc.cost_per_title !== null && (
+                                            <span className={styles.efficiencyPill}>
+                                                {formatCurrency(svc.cost_per_title, userCountry)}/title
+                                            </span>
+                                        )}
+                                        {svc.cost_per_hour !== null && (
+                                            <span className={styles.efficiencyPill}>
+                                                {formatCurrency(svc.cost_per_hour, userCountry)}/hr
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Available titles */}
+                                {svc.titles.length > 0 && (
+                                    <div className={styles.suggestedTitles}>
+                                        {svc.titles.map(t => (
+                                            <span key={t} className={styles.suggestedTitleTag}>{t}</span>
+                                        ))}
+                                        {svc.count > svc.titles.length && (
+                                            <span className={styles.suggestedTitleMore}>+{svc.count - svc.titles.length} more</span>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

@@ -1086,6 +1086,109 @@ def get_subscription_coverage(
                 "genre_ids": item.genre_ids,
             })
 
+    # --- Suggested Services (unsubscribed services covering watchlist items) ---
+    # Build a map: service_name -> { count, hours, titles, types, breakdown }
+    from collections import defaultdict
+    suggested_map = defaultdict(lambda: {
+        "count": 0, "hours": 0.0, "titles": [], "types": set(),
+        "breakdown": {
+            "movie": {"count": 0, "est_hours": 0.0},
+            "tv":    {"count": 0, "est_hours": 0.0},
+            "anime": {"count": 0, "est_hours": 0.0},
+            "other": {"count": 0, "est_hours": 0.0},
+        }
+    })
+
+    subscribed_names_lower = {s.service_name.lower() for s in subs}
+
+    for item in watchlist:
+        if not item.available_on:
+            continue
+        raw_services = [s.strip() for s in item.available_on.split(",") if s.strip()]
+        for svc_name in raw_services:
+            svc_lower = svc_name.lower()
+            if any(sub_n in svc_lower or svc_lower in sub_n for sub_n in subscribed_names_lower):
+                continue
+            ct = classified[item.id]["type"]
+            hrs = classified[item.id]["hours"]
+            suggested_map[svc_name]["count"] += 1
+            suggested_map[svc_name]["hours"] = round(suggested_map[svc_name]["hours"] + hrs, 1)
+            suggested_map[svc_name]["types"].add(ct)
+            suggested_map[svc_name]["breakdown"][ct]["count"] += 1
+            suggested_map[svc_name]["breakdown"][ct]["est_hours"] = round(
+                suggested_map[svc_name]["breakdown"][ct]["est_hours"] + hrs, 1
+            )
+            if item.title not in suggested_map[svc_name]["titles"]:
+                suggested_map[svc_name]["titles"].append(item.title)
+
+    # Fetch logos and cheapest plan for suggested services
+    suggested_services = []
+    for svc_name, info in sorted(suggested_map.items(), key=lambda x: -x[1]["count"]):
+        if info["count"] < 1:
+            continue
+        logo_url = None
+        cheapest_plan = None
+        service_record = db.query(models.Service).filter(
+            models.Service.name == svc_name,
+        ).order_by(
+            # Prefer exact country match
+            desc(models.Service.country == country)
+        ).first()
+        if service_record:
+            logo_url = service_record.logo_url
+            # Find the cheapest monthly-equivalent plan for this service in user's country
+            plans = db.query(models.Plan).filter(
+                models.Plan.service_id == service_record.id,
+                models.Plan.country == country,
+            ).all()
+            if not plans:
+                # Fallback to any country
+                plans = db.query(models.Plan).filter(
+                    models.Plan.service_id == service_record.id,
+                ).all()
+            if plans:
+                def monthly_equiv(p):
+                    return p.cost / 12 if p.billing_cycle and p.billing_cycle.lower() == "yearly" else p.cost
+                best = min(plans, key=monthly_equiv)
+                cheapest_plan = {
+                    "cost": best.cost,
+                    "currency": best.currency,
+                    "billing_cycle": best.billing_cycle,
+                }
+
+        # Compute projected value score using same formula as active subscriptions
+        s_coverage_pct = round((info["count"] / total_watchlist * 100) if total_watchlist > 0 else 0)
+        s_total_hours = info["hours"]
+        s_type_count = len(info["types"])
+        s_hour_score = min((s_total_hours / 300) * 55, 55)
+        s_title_score = min(s_coverage_pct * 0.25, 25)
+        s_variety_bonus = 20 if s_type_count >= 2 else 0
+        s_raw_utility = s_hour_score + s_title_score + s_variety_bonus
+        s_monthly_cost = 0.0
+        if cheapest_plan:
+            s_monthly_cost = (cheapest_plan["cost"] / 12
+                              if cheapest_plan["billing_cycle"] and cheapest_plan["billing_cycle"].lower() == "yearly"
+                              else cheapest_plan["cost"])
+        s_cost_usd = s_monthly_cost / 83.0 if country == "IN" else s_monthly_cost
+        s_cost_penalty = min(s_cost_usd * 1.5, 20.0)
+        s_value_score = round(max(10, s_raw_utility - s_cost_penalty))
+        s_cost_per_title = round(s_monthly_cost / info["count"], 2) if info["count"] > 0 and s_monthly_cost > 0 else None
+        s_cost_per_hour = round(s_monthly_cost / s_total_hours, 2) if s_total_hours > 0 and s_monthly_cost > 0 else None
+
+        suggested_services.append({
+            "name": svc_name,
+            "logo_url": logo_url,
+            "count": info["count"],
+            "est_hours": info["hours"],
+            "coverage_pct": s_coverage_pct,
+            "breakdown": info["breakdown"],
+            "titles": info["titles"][:5],
+            "cheapest_plan": cheapest_plan,
+            "value_score": s_value_score,
+            "cost_per_title": s_cost_per_title,
+            "cost_per_hour": s_cost_per_hour,
+        })
+
     # --- Summary ---
     total_monthly_cost = round(sum(get_monthly_cost(s) for s in subs), 2)
     total_covered = sum(
@@ -1103,6 +1206,7 @@ def get_subscription_coverage(
     return {
         "services": services_data,
         "orphaned_items": orphaned,
+        "suggested_services": suggested_services,
         "summary": {
             "total_monthly_cost": total_monthly_cost,
             "total_covered": total_covered,
