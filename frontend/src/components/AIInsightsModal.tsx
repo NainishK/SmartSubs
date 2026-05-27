@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './AIInsightsModal.module.css';
-import { Sparkles, X, Settings, TrendingUp, DollarSign, Check, XCircle, Film, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Sparkles, X, TrendingUp, DollarSign, Check, XCircle, Film, RefreshCw, AlertTriangle, ExternalLink } from 'lucide-react';
 import api from '../lib/api';
+import Link from 'next/link';
 import { AIUnifiedResponse, UserPreferences, AIRecommendation } from '../lib/types';
 import MediaCard from './MediaCard';
 import ConfirmationModal from './ConfirmationModal';
@@ -15,7 +16,7 @@ interface AIInsightsModalProps {
 }
 
 const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watchlist = [], onWatchlistUpdate }) => {
-    const [activeTab, setActiveTab] = useState<'picks' | 'strategy' | 'preferences'>('picks');
+    const [activeTab, setActiveTab] = useState<'picks' | 'strategy'>('picks');
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<AIUnifiedResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -96,7 +97,6 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                 setLastAiUsage(new Date().toISOString());
                 // Save region to prevent re-generation on reload/reopen
                 localStorage.setItem('last_ai_region', userCountry);
-                if (activeTab === 'preferences') setActiveTab('picks');
             } else {
                 setError("AI returned incomplete data. Please try again.");
             }
@@ -257,24 +257,24 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                                 <TrendingUp size={18} /> Smart Strategy
                             </button>
                             <button
-                                className={`${styles.tabBtn} ${activeTab === 'preferences' ? styles.activeTab : ''} ${styles.profileTab}`}
-                                onClick={() => setActiveTab('preferences')}
-                            >
-                                <Settings size={18} /> My Profile
-                                {(!preferences.target_budget || !preferences.household_size) && (
-                                    <span className={styles.notificationDot} />
-                                )}
-                            </button>
-                            <button
-                                className={`${styles.tabBtn} ${styles.refreshTab}`}
-                                onClick={() => hasData && !loading && handleGenerate(true)}
+                                className={`${styles.tabBtn}`}
+                                onClick={() => handleGenerate(true)}
                                 disabled={!hasData || loading}
-                                title={loading ? "Analyzing Library..." : "Refresh Intelligence"}
+                                title={loading ? 'Analyzing Library...' : 'Refresh Intelligence'}
                                 style={{ opacity: loading ? 0.7 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
                             >
                                 <RefreshCw size={18} className={loading ? styles.spin : ''} />
                                 {loading && <span style={{ marginLeft: '6px', fontSize: '0.9rem' }}>Refreshing...</span>}
                             </button>
+                            <Link
+                                href="/profile"
+                                className={styles.tabBtn}
+                                style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none', fontSize: '0.82rem', opacity: 0.75 }}
+                                onClick={onClose}
+                                title="Edit viewing preferences"
+                            >
+                                <ExternalLink size={14} /> Preferences
+                            </Link>
                         </div>
                     )}
 
@@ -394,13 +394,14 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                                                         <p className={styles.stateDescription} style={{ marginBottom: '0' }}>
                                                             Your preferences might be too strict. Try adding more languages or services to your profile.
                                                         </p>
-                                                        <button
+                                                        <Link
+                                                            href="/profile"
                                                             className={styles.saveBtn}
-                                                            style={{ marginTop: '1.5rem', width: 'auto' }}
-                                                            onClick={() => setActiveTab('preferences')}
+                                                            style={{ marginTop: '1.5rem', width: 'auto', textDecoration: 'none', display: 'inline-flex', justifyContent: 'center', alignItems: 'center' }}
+                                                            onClick={onClose}
                                                         >
                                                             Adjust Profile
-                                                        </button>
+                                                        </Link>
                                                     </div>
                                                 ) : (
                                                     <div className={styles.grid}>
@@ -500,8 +501,8 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                                                                                         user_rating: existingItem?.user_rating || 0
                                                                                     }}
                                                                                     aiReason={gap.reason}
-                                                                                    showServiceBadge={gap.service} // Expected service
-                                                                                    customBadgeColor="#f59e0b" // Amber for missing
+                                                                                    showServiceBadge={gap.service}
+                                                                                    customBadgeColor="#f59e0b"
                                                                                     existingStatus={existingItem?.status}
                                                                                     onAddSuccess={onWatchlistUpdate}
                                                                                     onStatusChange={() => onWatchlistUpdate?.()}
@@ -516,96 +517,6 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                                                     </>
                                                 )}
                                             </>
-                                        )}
-
-                                        {activeTab === 'preferences' && (
-                                            <div className={styles.formSection}>
-                                                <h3 className={styles.sectionTitle} style={{ marginBottom: '1.5rem' }}>Enhance AI Accuracy</h3>
-
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-                                                    <div className={styles.formGroup}>
-                                                        <label className={styles.label}>Household</label>
-                                                        <select
-                                                            className={styles.select}
-                                                            value={preferences.household_size || 'Solo'}
-                                                            onChange={(e) => setPreferences({ ...preferences, household_size: e.target.value })}
-                                                        >
-                                                            <option value="Solo">Just Me</option>
-                                                            <option value="Couple">Couple</option>
-                                                            <option value="Family">Family / Shared</option>
-                                                        </select>
-                                                    </div>
-                                                    <div className={styles.formGroup}>
-                                                        <label className={styles.label}>Viewing Style</label>
-                                                        <select
-                                                            className={styles.select}
-                                                            value={preferences.viewing_style || 'Casual'}
-                                                            onChange={(e) => setPreferences({ ...preferences, viewing_style: e.target.value })}
-                                                        >
-                                                            {STYLE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                                        </select>
-                                                    </div>
-                                                </div>
-
-                                                <div className={styles.formGroup}>
-                                                    <label className={styles.label}>Target Monthly Budget ({currencySymbol})</label>
-                                                    <input
-                                                        type="number"
-                                                        className={styles.input}
-                                                        placeholder={`e.g. 50`}
-                                                        value={preferences.target_budget || ''}
-                                                        onChange={(e) => setPreferences({ ...preferences, target_budget: parseInt(e.target.value) || undefined })}
-                                                    />
-                                                    <p className={styles.helperText}>Calculations will respect your region's currency ({currencyCode}).</p>
-                                                </div>
-
-                                                {/* Languages */}
-                                                <div className={styles.formGroup}>
-                                                    <label className={styles.label}>Preferred Languages</label>
-                                                    <div className={styles.pillContainer}>
-                                                        {LANG_OPTIONS.map(lang => (
-                                                            <button
-                                                                key={lang}
-                                                                className={`${styles.pill} ${preferences.languages?.includes(lang) ? styles.pillActive : ''}`}
-                                                                onClick={() => handleTogglePill('languages', lang)}
-                                                            >
-                                                                {lang}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                {/* Devices */}
-                                                <div className={styles.formGroup}>
-                                                    <label className={styles.label}>Primary Devices</label>
-                                                    <div className={styles.pillContainer}>
-                                                        {DEVICE_OPTIONS.map(dev => (
-                                                            <button
-                                                                key={dev}
-                                                                className={`${styles.pill} ${preferences.devices?.includes(dev) ? styles.pillActive : ''}`}
-                                                                onClick={() => handleTogglePill('devices', dev)}
-                                                            >
-                                                                {dev}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                <div className={styles.formGroup}>
-                                                    <label className={styles.label}>Deal Breakers (Comma separated)</label>
-                                                    <input
-                                                        type="text"
-                                                        className={styles.input}
-                                                        placeholder="e.g. Horror, Reality TV, Anime"
-                                                        value={preferences.deal_breakers?.join(', ') || ''}
-                                                        onChange={(e) => setPreferences({ ...preferences, deal_breakers: e.target.value.split(',').map(s => s.trim()) })}
-                                                    />
-                                                </div>
-
-                                                <button className={styles.saveBtn} onClick={handleSavePreferences} disabled={savingPref}>
-                                                    {savingPref ? 'Saving...' : 'Save Preferences'}
-                                                </button>
-                                            </div>
                                         )}
                                     </>
                                 )}

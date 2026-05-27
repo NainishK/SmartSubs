@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
-import { PlusCircle, Info, Sparkles, TrendingUp, Wallet, Search } from 'lucide-react';
-import MediaCard from '@/components/MediaCard'; // Import MediaCard
+import { PlusCircle, Info, Sparkles, TrendingUp, Wallet, Search, BarChart2 } from 'lucide-react';
+import MediaCard from '@/components/MediaCard';
 import styles from './dashboard.module.css';
 import { useRecommendations } from '@/context/RecommendationsContext';
 import { formatCurrency } from '@/lib/currency';
-import { WatchlistItem } from '@/lib/types'; // Import WatchlistItem type
+import { WatchlistItem } from '@/lib/types';
+import CoverageDashboard from '@/components/CoverageDashboard';
 
 interface DashboardStats {
     total_cost: number;
@@ -199,7 +200,7 @@ export default function DashboardOverview() {
 
             {/* Spending Breakdown */}
             {spendingDist.length > 0 && (
-                <div className={styles.spendingSection}>
+                <div className={styles.spendingSection} style={{ marginBottom: '2rem' }}>
                     <h2 className={styles.sectionTitle}>Spending Breakdown</h2>
                     <div className={styles.progressBarContainer}>
                         {spendingDist.map((item, index) => (
@@ -224,6 +225,16 @@ export default function DashboardOverview() {
                     </div>
                 </div>
             )}
+
+            {/* Coverage Dashboard */}
+            <div style={{ marginBottom: '2rem' }}>
+                <h2 className={styles.sectionTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '1.25rem' }}>
+                    <BarChart2 size={20} color="#6366f1" />
+                    <span>Coverage Dashboard</span>
+                </h2>
+                <CoverageDashboard userCountry={user?.country || 'IN'} />
+            </div>
+
 
 
             {/* Quick Watch Recommendations (Rows) */}

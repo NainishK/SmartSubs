@@ -65,6 +65,27 @@ export default function MediaCard({
     const [showRatingPopover, setShowRatingPopover] = useState(false);
     const [showModal, setShowModal] = useState(false);
     
+    // Defensive check: robustly parse genre_ids in case they are returned as string or serialized array
+    const parsedGenreIds = (() => {
+        const raw = item.genre_ids;
+        if (!raw) return [];
+        if (Array.isArray(raw)) return raw;
+        if (typeof raw === 'string') {
+            try {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) return parsed.map(Number);
+            } catch {
+                // fallback
+            }
+            return (raw as string)
+                .replace(/[\[\]]/g, '')
+                .split(',')
+                .map((s: string) => Number(s.trim()))
+                .filter((n: number) => !isNaN(n));
+        }
+        return [];
+    })();
+
     const ratingRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -205,7 +226,7 @@ export default function MediaCard({
     const isList = layout === 'list';
 
     // Metadata Logic
-    const genreNames = item.genre_ids
+    const genreNames = parsedGenreIds
         ?.map(id => GENRES[id])
         .filter(Boolean)
         .slice(0, 3) // Show max 3 genres
@@ -246,7 +267,7 @@ export default function MediaCard({
 
                     <div className={styles.topBadges}>
                         {(() => {
-                            const isAnime = item.original_language === 'ja' && item.genre_ids?.includes(16);
+                            const isAnime = item.original_language === 'ja' && parsedGenreIds.includes(16);
                             if (isAnime) {
                                 return (
                                     <span className={`${styles.typeBadge} ${styles.typeAnime}`}>
