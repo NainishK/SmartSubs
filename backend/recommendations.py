@@ -226,7 +226,21 @@ def calculate_dashboard_recommendations(db: Session, user_id: int, country: str)
             if potential_services:
                 target_sub = min(potential_services, key=lambda s: len(service_watch_list[s.service_name]))
                 useful_subscriptions.add(target_sub.id)
-                service_watch_list[target_sub.service_name].append(item.title)
+                service_watch_list[target_sub.service_name].append({
+                    "id": item.tmdb_id, # Frontend MediaItem expects id to be TMDB ID
+                    "dbId": item.id,     # Database ID for actions
+                    "title": item.title,
+                    "media_type": item.media_type,
+                    "poster_path": item.poster_path,
+                    "vote_average": item.vote_average,
+                    "status": item.status,
+                    "user_rating": item.user_rating,
+                    "current_season": item.current_season,
+                    "current_episode": item.current_episode,
+                    "total_seasons": item.total_seasons,
+                    "total_episodes": item.total_episodes,
+                    "notes": item.notes,
+                })
                 seen_items.add(item.title)
 
     for service_name, items in service_watch_list.items():
