@@ -130,7 +130,22 @@ def get_dashboard_recommendations(db: Session, user_id: int):
     
     cached = get_cached_data(db, user_id, f"dashboard_{country}")
     if cached:
-        return cached
+        # Self-healing: if cached items contain legacy string formats, invalidate and recalculate!
+        has_legacy_format = False
+        for rec in cached:
+            if rec.get("type") == "watch_now":
+                for item in rec.get("items", []):
+                    if isinstance(item, str):
+                        has_legacy_format = True
+                        break
+            if has_legacy_format:
+                break
+        
+        if not has_legacy_format:
+            return cached
+        else:
+            print(f"[CACHE] Detected legacy string-formatted items in production cache for user {user_id}. Self-healing...")
+            clear_user_cache(db, user_id)
 
     recs = calculate_dashboard_recommendations(db, user_id, country)
     
