@@ -145,7 +145,68 @@ def calculate_dashboard_recommendations(db: Session, user_id: int, country: str)
     # 1. Get User's Watchlist
     watchlist_query = db.query(models.WatchlistItem).filter(models.WatchlistItem.user_id == user_id).all()
     exclude_ids = {item.tmdb_id for item in watchlist_query}
-    watchlist = [item for item in watchlist_query if item.status in ['plan_to_watch', 'watching']]
+    
+    # TV metadata auto-repair for legacy entries (to enable progress bars and accurate math)
+    for item in watchlist_query:
+        if item.media_type == "tv" and (not item.total_episodes or item.total_episodes == 0):
+            try:
+                details = tmdb_client.get_details("tv", item.tmdb_id)
+                if details:
+                    item.total_seasons = details.get("number_of_seasons", 0)
+                    item.total_episodes = details.get("number_of_episodes", 0)
+                    db.commit()
+            except Exception as e:
+                print(f"[REPAIR] Failed to enrich TV details for {item.title}: {e}")
+
+    # Filter watchlist for active content (plan_to_watch, watching, paused, and in-progress watched)
+    raw_watchlist = []
+    for item in watchlist_query:
+        if item.status in ['plan_to_watch', 'watching', 'paused']:
+            raw_watchlist.append(item)
+        elif item.status == 'watched':
+            # Include completed status ONLY if they have active progress they haven't finished (e.g. rewatching or partial progress)
+            is_finished = (item.total_episodes and item.total_episodes > 0 and 
+                           item.current_episode and item.current_episode >= item.total_episodes)
+            if not is_finished:
+                raw_watchlist.append(item)
+                
+    # Upgraded Dynamic Priority Scoring: Put active progress first, and closest to finish at the absolute top!
+    def get_watchlist_priority_score(item):
+        score = 0
+        
+        # A. Started Content Primary Boost (+100,000): Any started show goes above unstarted ones
+        if item.current_episode and item.current_episode > 0:
+            score += 100000
+            
+            # Completion gravity: bubble items nearing completion (+10,000 maximum boost)
+            if item.total_episodes and item.total_episodes > 0:
+                progress_ratio = item.current_episode / item.total_episodes
+                score += progress_ratio * 10000
+            else:
+                # Baseline for unknown total episodes
+                score += 2000
+                
+        # B. Status Secondary Boost: tie-breaker favoring watching over paused over plan_to_watch
+        if item.status == "watching":
+            score += 5000
+        elif item.status == "paused":
+            score += 2000
+        elif item.status == "plan_to_watch":
+            score += 1000
+            
+        # C. Quality Ratings: personal user ratings or TMDB scores (+1,000 maximum boost)
+        if item.user_rating:
+            score += item.user_rating * 100 # e.g. User rating 10 = +1000 pts
+        elif item.vote_average:
+            score += item.vote_average * 20 # e.g. TMDB community 8.5 = +170 pts
+            
+        # D. Freshness tie-breaker: favor most recently added database entries (+10 maximum)
+        if item.id:
+            score += item.id * 0.01
+            
+        return score
+        
+    watchlist = sorted(raw_watchlist, key=get_watchlist_priority_score, reverse=True)
     
     # 2. Get User's Active OTT Subscriptions
     subscriptions = db.query(models.Subscription).filter(
@@ -226,6 +287,47 @@ def calculate_dashboard_recommendations(db: Session, user_id: int, country: str)
             if potential_services:
                 target_sub = min(potential_services, key=lambda s: len(service_watch_list[s.service_name]))
                 useful_subscriptions.add(target_sub.id)
+                
+                # Precise TV season-specific progress & absolute counts calculations
+                current_season_episodes = 0
+                absolute_progress = 0
+                progress_pct = 0
+                if item.media_type == "tv":
+                    try:
+                        details = tmdb_client.get_details("tv", item.tmdb_id)
+                        if details and "seasons" in details:
+                            curr_s_num = item.current_season or 1
+                            for s in details["seasons"]:
+                                s_num = s.get("season_number")
+                                ep_count = s.get("episode_count") or 0
+                                
+                                # Skip specials/Season 0 from regular progress counts
+                                if s_num == 0:
+                                    continue
+                                    
+                                if s_num < curr_s_num:
+                                    absolute_progress += ep_count
+                                elif s_num == curr_s_num:
+                                    current_season_episodes = ep_count
+                                    absolute_progress += item.current_episode or 0
+                            
+                            total_eps = item.total_episodes or 0
+                            if total_eps > 0:
+                                progress_pct = min(100, round((absolute_progress / total_eps) * 100))
+                            elif current_season_episodes > 0:
+                                progress_pct = min(100, round((item.current_episode / current_season_episodes) * 100))
+                    except Exception as e:
+                        print(f"[RECS_PROGRESS] TV metrics failed for {item.title}: {e}")
+
+                # Local seasons cache extraction
+                seasons_info = []
+                if item.media_type == "tv" and details and "seasons" in details:
+                    seasons_info = [
+                        {"season_number": s.get("season_number"), "episode_count": s.get("episode_count") or 0}
+                        for s in details.get("seasons", [])
+                        if s.get("season_number", 0) > 0 # Exclude specials
+                    ]
+
                 service_watch_list[target_sub.service_name].append({
                     "id": item.tmdb_id, # Frontend MediaItem expects id to be TMDB ID
                     "dbId": item.id,     # Database ID for actions
@@ -240,6 +342,11 @@ def calculate_dashboard_recommendations(db: Session, user_id: int, country: str)
                     "total_seasons": item.total_seasons,
                     "total_episodes": item.total_episodes,
                     "notes": item.notes,
+                    # Precise TV fields
+                    "current_season_episodes": current_season_episodes,
+                    "absolute_episode_progress": absolute_progress,
+                    "progress_pct": progress_pct,
+                    "seasons": seasons_info
                 })
                 seen_items.add(item.title)
 

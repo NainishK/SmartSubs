@@ -73,9 +73,23 @@ export default function DashboardOverview() {
         e.stopPropagation(); // Stop opening the modal
         if (!item.dbId) return;
 
-        const newEp = (item.current_episode || 0) + 1;
-        if (item.total_episodes && item.total_episodes > 0 && newEp > item.total_episodes) {
-            return; // Cap at total episodes
+        let newSeason = item.current_season || 1;
+        let newEp = (item.current_episode || 0) + 1;
+        let newSeasonEpisodes = item.current_season_episodes || 0;
+
+        // Season Rollover Logic
+        if (newSeasonEpisodes > 0 && newEp > newSeasonEpisodes) {
+            const nextSeason = newSeason + 1;
+            const nextSeasonInfo = item.seasons?.find((s: any) => s.season_number === nextSeason);
+            if (nextSeasonInfo) {
+                newSeason = nextSeason;
+                newEp = 1;
+                newSeasonEpisodes = nextSeasonInfo.episode_count || 0;
+            } else {
+                return; // Cap at absolute end of the series
+            }
+        } else if (item.total_episodes > 0 && (item.absolute_episode_progress || 0) >= item.total_episodes) {
+            return; // Cap at total show episodes if seasons list isn't present
         }
 
         // Optimistic UI Update
@@ -83,7 +97,21 @@ export default function DashboardOverview() {
             ...rec,
             items: rec.items.map((i: any) => {
                 if (typeof i !== 'string' && i.dbId === item.dbId) {
-                    return { ...i, current_episode: newEp };
+                    const delta = (newSeason !== i.current_season) 
+                        ? 1 // Simple +1 increment across season boundaries
+                        : newEp - (i.current_episode || 0);
+                    const newAbsoluteProgress = (i.absolute_episode_progress || 0) + delta;
+                    const newProgressPct = i.total_episodes > 0 
+                        ? Math.min(100, Math.round((newAbsoluteProgress / i.total_episodes) * 100))
+                        : i.progress_pct;
+                    return { 
+                        ...i, 
+                        current_season: newSeason,
+                        current_episode: newEp,
+                        current_season_episodes: newSeasonEpisodes,
+                        absolute_episode_progress: newAbsoluteProgress,
+                        progress_pct: newProgressPct
+                    };
                 }
                 return i;
             })
@@ -91,12 +119,11 @@ export default function DashboardOverview() {
 
         try {
             await api.put(`/watchlist/${item.dbId}/progress`, {
-                current_season: item.current_season || 1,
+                current_season: newSeason,
                 current_episode: newEp
             });
         } catch (err) {
             console.error("Failed to update progress", err);
-            // Revert state if error
             if (dashboardRecs) {
                 setLocalWatchNowRecs(dashboardRecs.filter(r => r.type === 'watch_now').slice(0, 3));
             }
@@ -107,14 +134,47 @@ export default function DashboardOverview() {
         e.stopPropagation(); // Stop opening the modal
         if (!item.dbId) return;
 
-        const newEp = Math.max(0, (item.current_episode || 0) - 1);
+        let newSeason = item.current_season || 1;
+        let newEp = (item.current_episode || 0) - 1;
+        let newSeasonEpisodes = item.current_season_episodes || 0;
+
+        // Season Rollback Logic
+        if (newEp < 1) {
+            if (newSeason > 1) {
+                const prevSeason = newSeason - 1;
+                const prevSeasonInfo = item.seasons?.find((s: any) => s.season_number === prevSeason);
+                if (prevSeasonInfo) {
+                    newSeason = prevSeason;
+                    newEp = prevSeasonInfo.episode_count || 0;
+                    newSeasonEpisodes = prevSeasonInfo.episode_count || 0;
+                } else {
+                    return; // Cap rollback
+                }
+            } else {
+                newEp = 0; // Cap at 0 episodes of season 1
+            }
+        }
 
         // Optimistic UI Update
         setLocalWatchNowRecs(prev => prev.map(rec => ({
             ...rec,
             items: rec.items.map((i: any) => {
                 if (typeof i !== 'string' && i.dbId === item.dbId) {
-                    return { ...i, current_episode: newEp };
+                    const delta = (newSeason !== i.current_season) 
+                        ? -1 // Simple -1 decrement across season boundaries
+                        : newEp - (i.current_episode || 0);
+                    const newAbsoluteProgress = Math.max(0, (i.absolute_episode_progress || 0) + delta);
+                    const newProgressPct = i.total_episodes > 0 
+                        ? Math.min(100, Math.round((newAbsoluteProgress / i.total_episodes) * 100))
+                        : i.progress_pct;
+                    return { 
+                        ...i, 
+                        current_season: newSeason,
+                        current_episode: newEp,
+                        current_season_episodes: newSeasonEpisodes,
+                        absolute_episode_progress: newAbsoluteProgress,
+                        progress_pct: newProgressPct
+                    };
                 }
                 return i;
             })
@@ -122,12 +182,11 @@ export default function DashboardOverview() {
 
         try {
             await api.put(`/watchlist/${item.dbId}/progress`, {
-                current_season: item.current_season || 1,
+                current_season: newSeason,
                 current_episode: newEp
             });
         } catch (err) {
             console.error("Failed to update progress", err);
-            // Revert state if error
             if (dashboardRecs) {
                 setLocalWatchNowRecs(dashboardRecs.filter(r => r.type === 'watch_now').slice(0, 3));
             }
@@ -427,10 +486,12 @@ export default function DashboardOverview() {
 
                                          const titleText = item.title || item.name || 'Untitled';
                                          const isTv = item.media_type === 'tv';
-                                         const hasProgress = isTv && item.total_episodes > 0;
-                                         const progressPct = hasProgress 
-                                             ? Math.min(100, Math.round(((item.current_episode || 0) / item.total_episodes) * 100))
-                                             : 0;
+                                         const hasProgress = isTv && (item.total_episodes > 0 || item.current_season_episodes > 0);
+                                         const progressPct = item.progress_pct !== undefined 
+                                             ? item.progress_pct 
+                                             : (hasProgress && item.total_episodes > 0 
+                                                 ? Math.min(100, Math.round(((item.current_episode || 0) / item.total_episodes) * 100))
+                                                 : 0);
 
                                          return (
                                              <div 
@@ -488,7 +549,7 @@ export default function DashboardOverview() {
                                                              <button 
                                                                  className={styles.compactStepperButton}
                                                                  onClick={(e) => handleQuickDecrementEpisode(e, item)}
-                                                                 disabled={!item.current_episode || item.current_episode === 0}
+                                                                 disabled={(item.current_season || 1) === 1 && (item.current_episode === 0 || !item.current_episode)}
                                                                  title="Previous Episode"
                                                              >
                                                                  <Minus size={10} strokeWidth={2.5} />
@@ -497,9 +558,13 @@ export default function DashboardOverview() {
                                                              <div className={styles.compactProgressInfo} style={{ textAlign: 'center', alignItems: 'center' }}>
                                                                  <span className={styles.compactProgressCount}>
                                                                      S{item.current_season || 1} · E{item.current_episode || 0}
-                                                                     {item.total_episodes > 0 && ` / E${item.total_episodes}`}
+                                                                     {item.current_season_episodes > 0 
+                                                                         ? ` / E${item.current_season_episodes}` 
+                                                                         : item.total_episodes > 0 
+                                                                             ? ` / E${item.total_episodes}` 
+                                                                             : ''}
                                                                  </span>
-                                                                 {item.total_episodes > 0 && (
+                                                                 {hasProgress && (
                                                                      <div className={styles.compactProgressBarTrack} title={`${progressPct}% watched`}>
                                                                          <div 
                                                                              className={styles.compactProgressBarFill} 
@@ -512,7 +577,7 @@ export default function DashboardOverview() {
                                                              <button 
                                                                  className={styles.compactStepperButton}
                                                                  onClick={(e) => handleQuickIncrementEpisode(e, item)}
-                                                                 disabled={item.total_episodes > 0 && item.current_episode >= item.total_episodes}
+                                                                 disabled={item.total_episodes > 0 && (item.absolute_episode_progress || 0) >= item.total_episodes}
                                                                  title="Next Episode"
                                                              >
                                                                  <Plus size={10} strokeWidth={2.5} />
