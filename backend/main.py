@@ -620,6 +620,8 @@ def update_watchlist_status(
     db_item = crud.update_watchlist_item_status(db, item_id=item_id, user_id=current_user.id, status=status)
     if db_item is None:
         raise HTTPException(status_code=404, detail="Item not found")
+    import recommendations
+    recommendations.clear_user_cache(db, current_user.id)
     return db_item
 
 @app.put("/watchlist/{item_id}/rating", response_model=schemas.WatchlistItem)
@@ -632,6 +634,8 @@ def update_watchlist_rating(
     db_item = crud.update_watchlist_item_rating(db, item_id=item_id, user_id=current_user.id, rating=update.rating)
     if db_item is None:
         raise HTTPException(status_code=404, detail="Item not found")
+    import recommendations
+    recommendations.clear_user_cache(db, current_user.id)
     return db_item
 
 @app.put("/watchlist/{item_id}/notes", response_model=schemas.WatchlistItem)
@@ -644,6 +648,8 @@ def update_watchlist_notes(
     db_item = crud.update_watchlist_item_notes(db, item_id=item_id, user_id=current_user.id, notes=update.notes)
     if db_item is None:
         raise HTTPException(status_code=404, detail="Item not found")
+    import recommendations
+    recommendations.clear_user_cache(db, current_user.id)
     return db_item
 
 @app.put("/watchlist/{item_id}/progress", response_model=schemas.WatchlistItem)
@@ -662,6 +668,8 @@ def update_watchlist_progress(
     )
     if db_item is None:
         raise HTTPException(status_code=404, detail="Item not found")
+    import recommendations
+    recommendations.clear_user_cache(db, current_user.id)
     return db_item
 
 @app.get("/recommendations")

@@ -467,3 +467,222 @@
         padding: 4px 10px;
     }
 }
+
+/* Premium Visual Quick Watch Dashboard Styles */
+.quickWatchContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+/* Compact Quick Watch Item */
+.quickWatchItemCompact {
+    display: flex;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px;
+    align-items: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    min-height: 90px;
+}
+
+.quickWatchItemCompact:hover {
+    transform: translateX(4px);
+    border-color: rgba(99, 102, 241, 0.4);
+    background: rgba(99, 102, 241, 0.03);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+}
+
+:global(.dark) .quickWatchItemCompact {
+    background: rgba(15, 23, 42, 0.3);
+}
+
+:global(.dark) .quickWatchItemCompact:hover {
+    background: rgba(15, 23, 42, 0.5);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+/* Mini Poster left */
+.miniPosterWrapper {
+    width: 50px;
+    height: 75px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.miniPosterImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.miniPosterFallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--muted-foreground);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Details right */
+.compactDetails {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0; /* Important for ellipsis */
+    gap: 4px;
+}
+
+.compactHeaderRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.compactTitle {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--foreground);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.compactPlayBtn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(99, 102, 241, 0.1);
+    color: #6366f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.compactPlayBtn:hover {
+    background: #6366f1;
+    color: white;
+    transform: scale(1.1);
+}
+
+.compactMetaRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+}
+
+.compactType {
+    color: var(--muted-foreground);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.65rem;
+    letter-spacing: 0.5px;
+}
+
+.compactRating {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+/* Progress area */
+.compactProgressSection {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 6px;
+}
+
+:global(.dark) .compactProgressSection {
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.compactProgressInfo {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.compactProgressCount {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--foreground);
+}
+
+.compactProgressBarTrack {
+    height: 3px;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 1.5px;
+    width: 100%;
+    margin-top: 2px;
+    overflow: hidden;
+}
+
+.compactProgressBarFill {
+    height: 100%;
+    background: #6366f1;
+    border-radius: 1.5px;
+    transition: width 0.3s ease;
+}
+
+.compactStepperButton {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(99, 102, 241, 0.08);
+    color: #6366f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.compactStepperButton:hover:not(:disabled) {
+    background: #6366f1;
+    color: white;
+    border-color: #6366f1;
+    transform: scale(1.1);
+}
+
+.compactStepperButton:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    border-color: var(--border);
+    color: var(--muted-foreground);
+    background: transparent;
+}
+
+.compactMovieBadge {
+    font-size: 0.75rem;
+    color: var(--muted-foreground);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+}
