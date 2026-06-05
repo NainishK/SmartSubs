@@ -73,6 +73,12 @@
   gap: 2rem;
 }
 
+.navCenter {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .navLink {
   color: #94a3b8;
   transition: color 0.3s ease;
@@ -152,6 +158,29 @@
   display: flex;
   gap: 1rem;
   justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Feature highlight pills below subtitle */
+.featurePills {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 2rem;
+}
+
+.featurePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 99px;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-weight: 500;
 }
 
 .primaryBtn {
@@ -175,14 +204,32 @@
   border-radius: 12px;
   font-weight: 600;
   transition: all 0.2s;
+  color: #94a3b8;
+  font-size: 0.9rem;
 }
 
 .secondaryBtn:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.2);
+  color: white;
 }
 
-/* --- Features Zig-Zag --- */
+.ghostBtn {
+  padding: 1rem 2.5rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  transition: all 0.2s;
+}
+
+.ghostBtn:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+/* ── Features Zig-Zag ── */
 .features {
   padding: 8rem 2rem;
   max-width: 1200px;
@@ -190,6 +237,126 @@
   display: flex;
   flex-direction: column;
   gap: 8rem;
+}
+
+/* ── Explore Section ── */
+.exploreSection {
+  background: rgba(255,255,255,0.02);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding: 4rem 2rem 3.5rem;
+}
+
+.exploreInner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.exploreHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 1.75rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.exploreTitle {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.3rem;
+}
+
+.exploreSubtitle {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.searchRow {
+  margin-bottom: 1.25rem;
+}
+
+/* Genre filter pills */
+.genrePills {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.genrePill {
+  padding: 0.4rem 1rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 99px;
+  color: #94a3b8;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.genrePill:hover {
+  background: rgba(255,255,255,0.08);
+  color: white;
+}
+
+.genreActive {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #818cf8;
+}
+
+/* ── Join CTA Banner ── */
+.joinBanner {
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.12) 0%, rgba(124, 58, 237, 0.12) 100%);
+  border-top: 1px solid rgba(99, 102, 241, 0.15);
+  border-bottom: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+.joinInner {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.joinTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.4rem;
+}
+
+.joinSubtitle {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.joinBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.9rem 2rem;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  border-radius: 12px;
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.joinBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -8px rgba(99, 102, 241, 0.5);
 }
 
 .featureRow {
@@ -432,18 +599,21 @@
   position: absolute;
   bottom: 40px;
   right: -30px;
-  /* Slight overlap for depth, but grounded */
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(239, 68, 68, 0.1);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 0.8rem 1.2rem;
-  border-radius: 12px;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 0.65rem 1.25rem;
+  border-radius: 99px;
   display: flex;
   align-items: center;
-  gap: 1rem;
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+  gap: 0.5rem;
+  box-shadow: 0 8px 24px -4px rgba(239, 68, 68, 0.15);
   z-index: 10;
   transition: transform 0.3s ease;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fca5a5;
+  white-space: nowrap;
 }
 
 .browserWindow:hover .floatingBadge {
