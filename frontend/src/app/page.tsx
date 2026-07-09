@@ -13,7 +13,7 @@ import LandingSearch from '@/components/landing/LandingSearch';
 import { PublicMediaItem } from '@/lib/publicTypes';
 import styles from './page.module.css';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '');
 
 const GENRES = [
     { label: 'All', value: '' },
