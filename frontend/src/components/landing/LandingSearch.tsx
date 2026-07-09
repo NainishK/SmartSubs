@@ -7,7 +7,7 @@ import PublicMediaModal from './PublicMediaModal';
 import styles from './LandingSearch.module.css';
 
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w92';
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '');
 
 interface Props {
     region: string;
