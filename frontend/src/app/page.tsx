@@ -75,9 +75,17 @@ export default function Home() {
         const params = new URLSearchParams({ region });
         if (genre) params.set('genre', genre);
         fetch(`${API_BASE}/public/trending?${params}`)
-            .then(r => r.json())
+            .then(r => {
+                if (!r.ok) {
+                    throw new Error(`HTTP error! status: ${r.status}`);
+                }
+                return r.json();
+            })
             .then(data => setTrendingItems(Array.isArray(data) ? data : []))
-            .catch(() => setTrendingItems([]))
+            .catch(err => {
+                console.error("Home error fetching trending items from:", `${API_BASE}/public/trending`, err);
+                setTrendingItems([]);
+            })
             .finally(() => setTrendingLoading(false));
     }, [region, genre, regionReady]);
 

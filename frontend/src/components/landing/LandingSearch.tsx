@@ -34,9 +34,13 @@ export default function LandingSearch({ region }: Props) {
                 const res = await fetch(
                     `${API_BASE}/public/search?q=${encodeURIComponent(query)}&region=${region}`
                 );
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
                 const data = await res.json();
                 setResults(Array.isArray(data) ? data : []);
-            } catch {
+            } catch (err) {
+                console.error("LandingSearch error querying backend API at:", `${API_BASE}/public/search`, err);
                 setResults([]);
             } finally {
                 setLoading(false);
