@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
+import { usePathname } from "next/navigation";
+
 type Theme = "dark" | "light" | "system";
 
 type ThemeProviderProps = {
@@ -28,6 +30,7 @@ export function ThemeProvider({
     storageKey = "vite-ui-theme",
     ...props
 }: ThemeProviderProps) {
+    const pathname = usePathname();
     const [theme, setTheme] = useState<Theme>(() => {
         if (typeof window !== "undefined") {
             return (localStorage.getItem(storageKey) as Theme) || defaultTheme;
@@ -45,6 +48,14 @@ export function ThemeProvider({
             root.setAttribute("data-theme", targetTheme);
         };
 
+        // Public landing and authentication pages are dark-only.
+        // Force 'dark' theme on html root to set appropriate body backgrounds.
+        const isDarkOnlyPage = ["/", "/login", "/signup"].includes(pathname || "");
+        if (isDarkOnlyPage) {
+            applyTheme("dark");
+            return;
+        }
+
         if (theme === "system") {
             const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
             const handleChange = (e: MediaQueryListEvent) => {
@@ -59,7 +70,7 @@ export function ThemeProvider({
         }
 
         applyTheme(theme);
-    }, [theme]);
+    }, [theme, pathname]);
 
     const value = {
         theme,

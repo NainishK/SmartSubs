@@ -81,9 +81,13 @@
   --ring: #60a5fa;
 }
 
+html, body {
+  min-height: 100%;
+  background: var(--background);
+}
+
 body {
   color: var(--foreground);
-  background: var(--background);
   font-family: var(--font-geist-sans),
     Inter,
     -apple-system,
