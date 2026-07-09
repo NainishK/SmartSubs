@@ -114,11 +114,31 @@ def generate_unified_insights(user_history: list, user_ratings: list, active_sub
     # Context
     history_text = "\n".join([f"- {h['title']} ({h['status']})" for h in user_history[-20:]])
     ratings_text = "\n".join([f"- {r['title']}: {r['rating']}/10" for r in user_ratings])
-    # Parse active_subs (Handle both string list and rich object list)
+    # Parse active_subs (Handle both string list and rich object list) - deduplicate by name
+    seen_sub_names = set()
+    deduped_subs = []
     if active_subs and isinstance(active_subs[0], dict):
-        subs_text = ", ".join([f"{s['name']} ({s.get('cost')} {s.get('currency')}/{s.get('billing')})" for s in active_subs])
+        for s in active_subs:
+            if s['name'] not in seen_sub_names:
+                seen_sub_names.add(s['name'])
+                deduped_subs.append(s)
+        subs_text = ", ".join([f"{s['name']}" for s in deduped_subs])
     else:
-        subs_text = ", ".join(active_subs)
+        for s in active_subs:
+            if s not in seen_sub_names:
+                seen_sub_names.add(s)
+                deduped_subs.append(s)
+        subs_text = ", ".join(deduped_subs)
+    
+    # Build a list of well-known streaming services the user does NOT have
+    all_known_services = [
+        "Apple TV+", "HBO Max", "Max", "Paramount+", "Peacock", "Hulu", "Disney+",
+        "Mubi", "Shudder", "AMC+", "BritBox", "Starz", "Showtime", "ESPN+",
+        "Lionsgate Play", "SonyLiv", "AltBalaji", "Eros Now"
+    ]
+    not_on_subs = [svc for svc in all_known_services if svc.lower().replace(" ", "").replace("+", "") not in {n.lower().replace(" ", "").replace("+", "") for n in seen_sub_names}]
+    not_subscribed_text = ", ".join(not_on_subs) if not_on_subs else "other streaming services"
+    
     pref_text = json.dumps(preferences, indent=2)
     dropped_text = "\n".join([f"- {d['title']}" for d in dropped_history])
     deal_breakers_text = ", ".join(deal_breakers)
@@ -145,9 +165,9 @@ def generate_unified_insights(user_history: list, user_ratings: list, active_sub
     - Repetitive/Ignored Content (Avoid these, user has skipped them multiple times): {ignored_text}
     
     Task: Provide a 3-part comprehensive report in STRICT JSON format:
-    1. "picks": 20 Hidden Gems/Matches. Priority to active subs. (We will filter best 6).
+    1. "picks": 35 Hidden Gems/Matches. Priority to active subs. Diverse mix of genres. (We will filter best 6).
     2. "strategy": 1-3 Financial Actions (Cancel/Add). ALL monetary values must be in {currency}.
-    3. "gaps": 8 specific titles they are missing out on. (We will filter best 4).
+    3. "gaps": 25 specific titles they are MISSING OUT on. These MUST be from services the user does NOT subscribe to: {not_subscribed_text}. Do NOT suggest anything from: {subs_text}. The goal is to show compelling content that could justify subscribing to a new service. Diverse mix of genres. (We will filter best 3).
     
     IMPORTANT RULES:
     1. Use CANONICAL TITLES only (e.g. "Severance", NOT "Severance Season 2").
@@ -217,92 +237,69 @@ def generate_unified_insights(user_history: list, user_ratings: list, active_sub
             p["_country"] = country
 
         # Enrich all picks in parallel to avoid sequential network delays
-        # Using 4 workers to prevent TMDB connection drop/rate limiting
         import concurrent.futures
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
             list(executor.map(_enrich_item, data["picks"]))
 
-        # Validated Enrichment: Only keep items that successfully found a match and poster
-        # AND are not already in the user's watchlist (Hard Filter)
-        matched_recs = []
-        unmatched_recs = []
-        seen_ids = set() # To prevent duplicates within the picks list itself
-        
-        user_sub_names = []
-        if active_subs:
-            if isinstance(active_subs[0], dict):
-                user_sub_names = [s['name'] for s in active_subs]
-            else:
-                user_sub_names = active_subs
-        
+        valid_picks = []
+        seen_ids = set()
+
         for r in data["picks"]:
             # Check 1: Must have ID and Poster
             if not r.get("tmdb_id") or not r.get("poster_path"):
-                 continue
-                  
-            # Check 2: Must NOT be in Watchlist (Plan to Watch, Watching, etc.)
-            if r.get("tmdb_id") in watchlist_ids:
-                 logger.info(f"Skipping Duplicate Recommendation: {r.get('title')} (ID: {r.get('tmdb_id')}) because it's in watchlist.")
-                 continue
-            
-            # Check 3: Check for Hard Banned (Ignored) items
-            if str(r.get("tmdb_id")) in ignored_ids:
-                 logger.info(f"Skipping Ignored Item (Hard Filter): {r.get('title')} (ID: {r.get('tmdb_id')}).")
-                 continue
-
-            # Check 4: Must not be a duplicate within the current list of picks
-            if r.get("tmdb_id") in seen_ids:
-                logger.info(f"Skipping Duplicate Recommendation: {r.get('title')} (ID: {r.get('tmdb_id')}) because it's already picked.")
                 continue
 
-            # Check 5: Match watch providers if user has active subs
-            providers = r.get("providers", [])
-            if user_sub_names and providers:
-                if _is_provider_match(user_sub_names, providers):
-                    matched_recs.append(r)
-                else:
-                    unmatched_recs.append(r)
-            else:
-                unmatched_recs.append(r)
-                
+            # Check 2: Must NOT be in Watchlist
+            if r.get("tmdb_id") in watchlist_ids:
+                logger.info(f"Skipping Pick: {r.get('title')} - in watchlist")
+                continue
+
+            # Check 3: Must not be ignored
+            if str(r.get("tmdb_id")) in ignored_ids:
+                logger.info(f"Skipping Pick: {r.get('title')} - ignored")
+                continue
+
+            # Check 4: No duplicate within picks
+            if r.get("tmdb_id") in seen_ids:
+                continue
+
+            valid_picks.append(r)
             seen_ids.add(r.get("tmdb_id"))
-            
-        # Re-assemble picks: prioritize matched ones
-        logger.info(f"Subscription Filter: {len(matched_recs)} matched, {len(unmatched_recs)} unmatched.")
-        
-        # If we have at least 3 matched recommendations, strictly use only matched ones.
-        # Otherwise, merge and show matched first, fallback to unmatched so tab isn't empty.
-        if len(matched_recs) >= 3:
-            data["picks"] = matched_recs[:6]
-        else:
-            data["picks"] = (matched_recs + unmatched_recs)[:6]
+
+        logger.info(f"Curator Picks: {len(valid_picks)} valid after filtering.")
+        data["picks"] = valid_picks[:6]
             
     # Enrich Gaps and Filter Bad Ones
     if "gaps" in data:
+        # Pass country temporarily so the map executor can pick it up
+        for g in data["gaps"]:
+            g["_country"] = country
+
         # Enrich all gaps in parallel
-        # Using 3 workers to keep requests gentle
         import concurrent.futures
-        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             list(executor.map(_enrich_item, data["gaps"]))
 
         valid_gaps = []
         seen_ids = set()
+
         for gap in data["gaps"]:
             tmdb_id = gap.get("tmdb_id")
-            if tmdb_id and gap.get("poster_path"):
-                 # Filter Out Watchlist/Ignored items for GAPS too
-                 if tmdb_id in watchlist_ids:
-                     logger.info(f"Skipping Gap Item {gap.get('title')} (ID: {tmdb_id}) - Already in Watchlist")
-                     continue
-                 if str(tmdb_id) in ignored_ids:
-                      logger.info(f"Skipping Gap Item {gap.get('title')} (ID: {tmdb_id}) - Ignored")
-                      continue
+            if not tmdb_id or not gap.get("poster_path"):
+                continue
+            if tmdb_id in watchlist_ids:
+                logger.info(f"Skipping Gap: {gap.get('title')} - in watchlist")
+                continue
+            if str(tmdb_id) in ignored_ids:
+                logger.info(f"Skipping Gap: {gap.get('title')} - ignored")
+                continue
+            if tmdb_id not in seen_ids:
+                valid_gaps.append(gap)
+                seen_ids.add(tmdb_id)
 
-                 if tmdb_id not in seen_ids:
-                    valid_gaps.append(gap)
-                    seen_ids.add(tmdb_id)
+        logger.info(f"Missing Out: {len(valid_gaps)} valid gaps after filtering.")
         data["gaps"] = valid_gaps[:3]
-            
+
     return data
 
 def _enrich_item(item):

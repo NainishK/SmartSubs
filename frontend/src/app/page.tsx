@@ -36,7 +36,8 @@ export default function Home() {
     const discoveryImages = [
         { src: '/screenshots/search.png', alt: 'Smart Search UI' },
         { src: '/screenshots/watchlist.png', alt: 'Unified Watchlist' },
-        { src: '/screenshots/watchlist_item_details.png', alt: 'Watchlist Details' },
+        { src: '/screenshots/watchlist_item_details1.png', alt: 'Watchlist Details' },
+        { src: '/screenshots/watchlist_item_details2.png', alt: 'Watchlist Details' },
         { src: '/screenshots/recommendations1.png', alt: 'Top Recommendations' },
         { src: '/screenshots/recommendations2.png', alt: 'More Recommendations' },
     ];
