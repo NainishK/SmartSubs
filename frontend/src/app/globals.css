@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   /* Light Mode (Default) */
   --background: #f8fafc;
   /* Slate-50 */
@@ -42,6 +43,7 @@
 }
 
 [data-theme='dark'] {
+  color-scheme: dark;
   /* Dark Mode - Better Stack High Contrast */
   --background: linear-gradient(to bottom, #181b2a, #0b0c14);
   /* User's exact gradient spec */
