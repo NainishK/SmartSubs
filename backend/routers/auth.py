@@ -44,7 +44,7 @@ async def forgot_password(
     
     email_body = f"""
     <h1>Password Reset Request</h1>
-    <p>You requested a password reset for your SmartSubs account.</p>
+    <p>You requested a password reset for your BingeSensei account.</p>
     <p>Click the link below to reset your password:</p>
     <a href="{reset_link}">Reset Password</a>
     <p>This link expires in 1 hour.</p>
@@ -52,7 +52,7 @@ async def forgot_password(
     """
     
     await email_client.send_email(
-        subject="Reset Your Password - SmartSubs",
+        subject="Reset Your Password - BingeSensei",
         recipients=[user.email],
         body=email_body
     )

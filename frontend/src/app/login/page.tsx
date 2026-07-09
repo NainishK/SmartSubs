@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Loader2 } from 'lucide-react';
 import styles from './login.module.css';
 
@@ -65,7 +66,16 @@ export default function LoginPage() {
         <div className={styles.container}>
             <div className={styles.glassCard}>
                 <div className={styles.brandHeader}>
-                    <span className={styles.logoIcon}>💎</span>
+                    <div className={styles.logoImageContainer}>
+                        <Image
+                            src="/logo-icon-final-v3.png"
+                            alt="BingeSensei Logo Icon"
+                            width={56}
+                            height={56}
+                            style={{ objectFit: 'contain' }}
+                            priority
+                        />
+                    </div>
                     <h1 className={styles.title}>Welcome Back</h1>
                     <p className={styles.subtitle}>Manage your subscriptions smartly</p>
                 </div>

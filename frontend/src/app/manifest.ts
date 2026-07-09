@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
     return {
-        name: 'SmartSubs',
-        short_name: 'SmartSubs',
+        name: 'BingeSensei',
+        short_name: 'BingeSensei',
         description: 'Track, Manage, and Discover content across all your services.',
         start_url: '/dashboard',
         display: 'standalone',

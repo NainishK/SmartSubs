@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import {
     LayoutDashboard,
@@ -11,9 +12,10 @@ import {
     ChevronLeft,
     ChevronRight
 } from 'lucide-react';
-import styles from './Sidebar.module.css';
 import { ThemeToggle } from './ThemeToggle';
+import { useTheme } from '@/context/ThemeContext';
 import ConfirmationModal from './ConfirmationModal';
+import styles from './Sidebar.module.css';
 
 interface SidebarProps {
     isCollapsed: boolean;
@@ -26,6 +28,28 @@ export default function Sidebar({ isCollapsed, toggle, className = '', countryCo
     const pathname = usePathname();
     const router = useRouter();
     const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+    
+    const { theme } = useTheme();
+    const [activeTheme, setActiveTheme] = useState<'light' | 'dark'>('dark');
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (theme === 'system') {
+            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+            const handleChange = (e: MediaQueryListEvent) => {
+                setActiveTheme(e.matches ? 'dark' : 'light');
+            };
+            setActiveTheme(mediaQuery.matches ? 'dark' : 'light');
+            mediaQuery.addEventListener('change', handleChange);
+            return () => mediaQuery.removeEventListener('change', handleChange);
+        } else {
+            setActiveTheme(theme as 'light' | 'dark');
+        }
+    }, [theme]);
 
     const getFlag = (code: string) => {
         const flags: Record<string, string> = {
@@ -72,11 +96,27 @@ export default function Sidebar({ isCollapsed, toggle, className = '', countryCo
 
             <aside className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''} ${className}`}>
                 <div className={styles.header}>
-                    {!isCollapsed && (
-                        <Link href="/dashboard" className={styles.logo}>
-                            SmartSubs
-                        </Link>
-                    )}
+                    <Link href="/dashboard" className={styles.logoContainer}>
+                        {isCollapsed ? (
+                            <Image
+                                src="/logo-icon-final-v3.png"
+                                alt="BingeSensei Icon"
+                                width={42}
+                                height={42}
+                                className={styles.logoIcon}
+                                style={{ objectFit: 'contain' }}
+                            />
+                        ) : (
+                            <Image
+                                src={(!mounted || activeTheme === 'dark') ? '/logo-dark-theme-final-v3.png' : '/logo-light-theme-final-v3.png'}
+                                alt="BingeSensei Logo"
+                                width={134}
+                                height={36}
+                                className={styles.logoFull}
+                                style={{ objectFit: 'contain' }}
+                            />
+                        )}
+                    </Link>
                     <button onClick={toggle} className={styles.toggleBtn} title={isCollapsed ? "Expand" : "Collapse"}>
                         {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
                     </button>

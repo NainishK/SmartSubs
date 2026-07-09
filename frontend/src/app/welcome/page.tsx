@@ -50,7 +50,7 @@ export default function WelcomePage() {
                 <div>
                     <h1 className={styles.title}>Welcome! 🎉</h1>
                     <p className={styles.subtitle}>
-                        Thanks for joining SmartSubs. <br />
+                        Thanks for joining BingeSensei. <br />
                         Please confirm your region to get personalized pricing.
                     </p>
                 </div>

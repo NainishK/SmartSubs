@@ -108,7 +108,7 @@ export default function ReportIssueModal({ visible, onClose }: ReportIssueModalP
 
                 <div className={styles.header}>
                     <h2 className={styles.title}>Report an Issue</h2>
-                    <p className={styles.subtitle}>Help us improve SmartSubs</p>
+                    <p className={styles.subtitle}>Help us improve BingeSensei</p>
                 </div>
 
                 {/* Category Selector */}

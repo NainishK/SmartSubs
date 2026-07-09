@@ -18,19 +18,22 @@ PROVIDER_COSTS = {
     "Paramount Plus": 5.99
 }
 
-def get_cached_data(db: Session, user_id: int, category: str):
-    """Retrieve valid cached data if it exists and is fresh (< 24 hours)."""
+def get_cached_data(db: Session, user_id: int, category: str, ttl_hours: int = 24):
+    """Retrieve valid cached data if it exists and is fresh (< ttl_hours old)."""
     cache_entry = db.query(models.RecommendationCache).filter(
         models.RecommendationCache.user_id == user_id,
         models.RecommendationCache.category == category
     ).first()
-    
-    if cache_entry:
-        if cache_entry.updated_at:
-             try:
-                 return json.loads(cache_entry.data)
-             except:
-                 return None
+
+    if cache_entry and cache_entry.updated_at:
+        age = datetime.utcnow() - cache_entry.updated_at
+        if age < timedelta(hours=ttl_hours):
+            try:
+                return json.loads(cache_entry.data)
+            except:
+                return None
+        else:
+            print(f"[CACHE] Stale cache for user {user_id} category '{category}' (age: {age}). Will recalculate.")
     return None
 
 def set_cached_data(db: Session, user_id: int, category: str, data: list):
@@ -404,103 +407,103 @@ def calculate_dashboard_recommendations(db: Session, user_id: int, country: str)
         f.write(f"Provider String: {provider_string}\n")
 
     try:
-        # Fetch Movies (Global if provider_string is None)
-        data_movies = tmdb_client.discover_media(
-            "movie",
-            sort_by="popularity.desc",
-            min_vote_count=500,
-            with_watch_providers=provider_string,
-            watch_region=country
-        )
-        movies = data_movies.get("results", [])[:20]
-        
-        # Fetch TV
-        data_tv = tmdb_client.discover_media(
-            "tv",
-            sort_by="popularity.desc",
-            min_vote_count=500,
-            with_watch_providers=provider_string,
-            watch_region=country
-        )
-        shows = data_tv.get("results", [])[:20]
-        
-        with open("debug_recs.log", "a") as f:
-            f.write(f"Fetched Movies: {len(movies)}, TV: {len(shows)}\n")
+        # Layer 1: This week's actual trending content (TMDB /trending/week)
+        data_movies = tmdb_client.get_trending("movie", "week")
+        data_tv = tmdb_client.get_trending("tv", "week")
+        trending_movies = [{**x, "media_type": "movie"} for x in data_movies.get("results", [])[:20]]
+        trending_tv    = [{**x, "media_type": "tv"}    for x in data_tv.get("results",    [])[:20]]
 
-        
+        # Interleave movies and TV for variety
         combined_candidates = []
-        for i in range(max(len(movies), len(shows))):
-            if i < len(movies): combined_candidates.append({**movies[i], "media_type": "movie"})
-            if i < len(shows): combined_candidates.append({**shows[i], "media_type": "tv"})
-        
-        count = 0 
+        for i in range(max(len(trending_movies), len(trending_tv))):
+            if i < len(trending_movies): combined_candidates.append(trending_movies[i])
+            if i < len(trending_tv):    combined_candidates.append(trending_tv[i])
+
+        with open("debug_recs.log", "a") as f:
+            f.write(f"Trending week candidates: {len(combined_candidates)}\n")
+
+        def _match_and_append(candidates, seen_titles, count):
+            """Try to match each candidate against user subscriptions and append if matched."""
+            for item in candidates:
+                if count >= 15: break
+                tmdb_id = item.get("id")
+                title = item.get("title") or item.get("name")
+                if tmdb_id in exclude_ids: continue
+                if title in seen_titles: continue
+
+                providers = tmdb_client.get_watch_providers(item.get("media_type"), tmdb_id, region=country)
+                matched_sub = None
+
+                shuffled_subs = list(subscriptions)
+                import random
+                random.shuffle(shuffled_subs)
+
+                if "flatrate" in providers:
+                    flatrate_ids = [str(p["provider_id"]) for p in providers["flatrate"]]
+                    for sub in shuffled_subs:
+                        s_name = sub.service_name.lower().replace(" ", "")
+                        matched_ids_list = []
+                        for k, v in PROVIDER_IDS_MAP.items():
+                            if k.replace(" ", "") in s_name:
+                                matched_ids_list = v.split("|")
+                                break
+                        if any(pid in flatrate_ids for pid in matched_ids_list):
+                            matched_sub = sub.service_name
+                            break
+
+                if not matched_sub and not provider_string:
+                    matched_sub = "Available Globally"
+                    if "flatrate" in providers and len(providers["flatrate"]) > 0:
+                        matched_sub = f"Available on {providers['flatrate'][0]['provider_name']}"
+
+                if matched_sub:
+                    is_global = not provider_string and ("Available Globally" in matched_sub or "Available on" in matched_sub)
+                    recommendations.append({
+                        "type": "global_trending" if is_global else "trending",
+                        "service_name": matched_sub,
+                        "logo_url": get_service_logo(matched_sub.replace("Available on ", "") if "Available on " in matched_sub else matched_sub, country),
+                        "items": [title],
+                        "reason": "Trending This Week" if not is_global else "Trending Worldwide",
+                        "cost": 0, "savings": 0,
+                        "score": 95 + (item.get("popularity", 0) / 100),
+                        "tmdb_id": tmdb_id,
+                        "media_type": item.get("media_type"),
+                        "poster_path": item.get("poster_path"),
+                        "vote_average": item.get("vote_average"),
+                        "overview": item.get("overview"),
+                        "original_language": item.get("original_language"),
+                        "genre_ids": item.get("genre_ids", [])
+                    })
+                    seen_titles.add(title)
+                    count += 1
+            return count
+
+        count = 0
         seen_trending_titles = set()
-        
-        print(f"[DEBUG] Processing {len(combined_candidates)} candidates for Trending ({country}). ProviderStr: {provider_string}")
+        print(f"[TRENDING] Pass 1: matching from /trending/week pool ({len(combined_candidates)} candidates)")
+        count = _match_and_append(combined_candidates, seen_trending_titles, count)
+        print(f"[TRENDING] Pass 1 result: {count} items matched from trending/week")
 
-        for item in combined_candidates:
-            if count >= 15: break
-            tmdb_id = item.get("id")
-            title = item.get("title") or item.get("name")
-            if tmdb_id in exclude_ids: continue
-            if title in seen_trending_titles: continue
-
-            providers = tmdb_client.get_watch_providers(item.get("media_type"), tmdb_id, region=country)
-            # print(f"[DEBUG] Checking {title} ({tmdb_id}): Providers: {list(providers.keys()) if providers else 'None'}") 
-
-            matched_sub = None
-            
-            shuffled_subs = list(subscriptions)
-            import random
-            random.shuffle(shuffled_subs)
-            
-            if "flatrate" in providers:
-                flatrate_ids = [str(p["provider_id"]) for p in providers["flatrate"]]
-                # print(f"[DEBUG]   Flatrate IDs: {flatrate_ids}")
-                
-                for sub in shuffled_subs:
-                    s_name = sub.service_name.lower().replace(" ", "")
-                    # Simplified matching for speed logic ...
-                    matched_ids_list = []
-                    for k, v in PROVIDER_IDS_MAP.items():
-                         if k.replace(" ", "") in s_name:
-                             matched_ids_list = v.split("|")
-                             break
-                    
-                    if any(pid in flatrate_ids for pid in matched_ids_list):
-                        matched_sub = sub.service_name
-                        # print(f"[DEBUG]   Matched Sub: {matched_sub}")
-                        break
-            
-            if not matched_sub and not provider_string:
-                matched_sub = "Available Globally"
-                if "flatrate" in providers and len(providers["flatrate"]) > 0:
-                     matched_sub = f"Available on {providers['flatrate'][0]['provider_name']}"
-            
-            if matched_sub:
-                is_global = not provider_string and ("Available Globally" in matched_sub or "Available on" in matched_sub)
-                
-                recommendations.append({
-                    "type": "global_trending" if is_global else "trending",
-                    "service_name": matched_sub,
-                    "logo_url": get_service_logo(matched_sub.replace("Available on ", "") if "Available on " in matched_sub else matched_sub, country),
-                    "items": [title],
-                    "reason": "Top Trending" if not is_global else "Trending Worldwide",
-                    "cost": 0, "savings": 0,
-                    "score": 95 + (item.get("popularity", 0) / 100),
-                    "tmdb_id": tmdb_id,
-                    "media_type": item.get("media_type"),
-                    "poster_path": item.get("poster_path"),
-                    "vote_average": item.get("vote_average"),
-                    "overview": item.get("overview"),
-                    "original_language": item.get("original_language"),
-                    "genre_ids": item.get("genre_ids", [])
-                })
-                seen_trending_titles.add(title)
-                count += 1
-            else:
-                 # print(f"[DEBUG]   No match for {title}")
-                 pass
+        # Layer 2: Fallback — if trending/week didn't yield enough for the user's region,
+        # supplement with provider-filtered discover (popular content on their services)
+        if count < 8 and provider_string:
+            print(f"[TRENDING] Pass 2: only {count} from trending/week — supplementing with provider-filtered discover")
+            fallback_movies = tmdb_client.discover_media(
+                "movie", sort_by="popularity.desc", min_vote_count=300,
+                with_watch_providers=provider_string, watch_region=country
+            )
+            fallback_tv = tmdb_client.discover_media(
+                "tv", sort_by="popularity.desc", min_vote_count=300,
+                with_watch_providers=provider_string, watch_region=country
+            )
+            fb_movies = [{**x, "media_type": "movie"} for x in fallback_movies.get("results", [])[:15]]
+            fb_tv     = [{**x, "media_type": "tv"}    for x in fallback_tv.get("results",    [])[:15]]
+            fallback_combined = []
+            for i in range(max(len(fb_movies), len(fb_tv))):
+                if i < len(fb_movies): fallback_combined.append(fb_movies[i])
+                if i < len(fb_tv):    fallback_combined.append(fb_tv[i])
+            count = _match_and_append(fallback_combined, seen_trending_titles, count)
+            print(f"[TRENDING] Pass 2 result: {count} total items after fallback")
 
     except Exception as e:
         print(f"Error fetching trending: {e}")

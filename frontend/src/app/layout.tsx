@@ -13,10 +13,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SmartSubs | Master Your Digital Life",
+  title: "BingeSensei - Track, Manage, & Discover",
   description: "Track, Manage, and Discover content across all your services.",
   appleWebApp: {
-    title: "SmartSubs",
+    title: "BingeSensei",
     statusBarStyle: "black-translucent",
     capable: true,
   }
@@ -39,7 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
-        <ThemeProvider defaultTheme="system" storageKey="smartsubs-theme">
+        <ThemeProvider defaultTheme="system" storageKey="bingesensei-theme">
           {children}
         </ThemeProvider>
       </body>

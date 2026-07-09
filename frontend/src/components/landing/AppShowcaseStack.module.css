@@ -84,7 +84,7 @@
     box-shadow:
         0 0 0 1px rgba(0, 0, 0, 0.4),
         0 20px 50px rgba(0, 0, 0, 0.6);
-    background: #0f172a;
+    background: #0F1117;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 

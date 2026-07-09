@@ -156,12 +156,14 @@ class AIRecommendation(BaseModel):
     vote_average: Optional[float] = None
     overview: Optional[str] = None
     logo_url: Optional[str] = None
+    providers: Optional[List[str]] = None  # TMDB regional provider names
 
 class AIStrategyItem(BaseModel):
     action: str # "Cancel", "Add", "Keep"
     service: str
     reason: str
     savings: Optional[float] = None
+    billing_cycle: Optional[str] = "monthly"
 
 class AIGapItem(BaseModel):
     title: str
@@ -172,6 +174,7 @@ class AIGapItem(BaseModel):
     poster_path: Optional[str] = None
     vote_average: Optional[float] = None
     overview: Optional[str] = None
+    providers: Optional[List[str]] = None  # TMDB regional provider names
 
 class AIUnifiedResponse(BaseModel):
     picks: List[AIRecommendation]

@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, Laptop } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import React, { useEffect, useState } from "react";
 
@@ -26,28 +26,52 @@ export function ThemeToggle({ isCollapsed = false, className = '' }: ThemeToggle
         );
     }
 
+    // Cycle theme: light -> dark -> system -> light
+    const getNextThemeInfo = () => {
+        if (theme === "light") {
+            return {
+                next: "dark" as const,
+                label: "Dark Mode",
+                icon: <Moon className="h-5 w-5 text-indigo-400" />,
+                title: "Switch to Dark Mode"
+            };
+        } else if (theme === "dark") {
+            return {
+                next: "system" as const,
+                label: "System Theme",
+                icon: <Laptop className="h-5 w-5 text-emerald-400" />,
+                title: "Switch to System Theme"
+            };
+        } else {
+            return {
+                next: "light" as const,
+                label: "Light Mode",
+                icon: <Sun className="h-5 w-5 text-amber-500" />,
+                title: "Switch to Light Mode"
+            };
+        }
+    };
+
+    const { next, label, icon, title } = getNextThemeInfo();
+
     return (
         <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            onClick={() => setTheme(next)}
             className={`
                 flex items-center w-full text-left transition-colors duration-200
                 ${isCollapsed ? 'justify-center p-2' : ''}
                 ${className}
             `}
             aria-label="Toggle theme"
-            title={isCollapsed ? (theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode") : ""}
+            title={isCollapsed ? title : ""}
         >
             <span className="flex items-center justify-center min-w-[24px]">
-                {theme === "dark" ? (
-                    <Sun className="h-5 w-5 text-amber-500" />
-                ) : (
-                    <Moon className="h-5 w-5" />
-                )}
+                {icon}
             </span>
 
             {!isCollapsed && (
                 <span className="font-medium text-[0.95rem]">
-                    {theme === "dark" ? "Light Mode" : "Dark Mode"}
+                    {label}
                 </span>
             )}
         </button>

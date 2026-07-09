@@ -67,6 +67,7 @@ export interface AIRecommendation {
     vote_average?: number;
     overview?: string;
     logo_url?: string;
+    providers?: string[];  // TMDB regional provider names (lowercase)
 }
 
 export interface UserPreferences {
@@ -85,6 +86,7 @@ export interface AIStrategyItem {
     service: string;
     reason: string;
     savings?: number;
+    billing_cycle?: string;
 }
 
 export interface AIGapItem {
@@ -96,6 +98,7 @@ export interface AIGapItem {
     poster_path?: string;
     overview?: string;
     vote_average?: number;
+    providers?: string[];  // TMDB regional provider names (lowercase)
 }
 
 export interface AIUnifiedResponse {

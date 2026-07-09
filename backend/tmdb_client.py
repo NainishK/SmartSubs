@@ -123,7 +123,20 @@ def get_details(media_type: str, tmdb_id: int):
         print(f"Error fetching details: {e}")
     return {}
 
-def discover_media(media_type: str, with_genres: str = None, sort_by: str = "popularity.desc", min_vote_count: int = 100, min_vote_average: float = 0, with_watch_providers: str = None, watch_region: str = "US"):
+def get_trending(media_type: str, time_window: str = "week"):
+    """Fetch genuinely trending content from TMDB /trending endpoint."""
+    url = f"{TMDB_BASE_URL}/trending/{media_type}/{time_window}"
+    params = {"api_key": settings.TMDB_API_KEY, "language": "en-US"}
+    headers = {"User-Agent": "SubscriptionManager/1.0", "Accept": "application/json"}
+    try:
+        response = session.get(url, params=params, headers=headers, timeout=10, verify=False)
+        if response.status_code == 200:
+            return response.json()
+    except Exception as e:
+        print(f"Error fetching trending: {e}")
+    return {"results": []}
+
+def discover_media(media_type: str, with_genres: str = None, sort_by: str = "popularity.desc", min_vote_count: int = 100, min_vote_average: float = 0, with_watch_providers: str = None, watch_region: str = "US", with_original_language: str = None, extra_params: dict = None):
     """Discover media with advanced filters."""
     url = f"{TMDB_BASE_URL}/discover/{media_type}"
     params = {
@@ -137,9 +150,13 @@ def discover_media(media_type: str, with_genres: str = None, sort_by: str = "pop
     }
     if with_genres:
         params["with_genres"] = with_genres
+    if with_original_language:
+        params["with_original_language"] = with_original_language
     if with_watch_providers:
         params["with_watch_providers"] = with_watch_providers
         params["watch_region"] = watch_region
+    if extra_params:
+        params.update(extra_params)
         
     headers = {
         "User-Agent": "SubscriptionManager/1.0",

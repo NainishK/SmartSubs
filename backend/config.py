@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     # Email Settings
     MAIL_USERNAME: str = ""
     MAIL_PASSWORD: str = ""
-    MAIL_FROM: str = "noreply@smartsubs.app"
+    MAIL_FROM: str = "noreply@bingesensei.app"
     MAIL_PORT: int = 587
     MAIL_SERVER: str = "smtp.gmail.com"
     MAIL_STARTTLS: bool = True

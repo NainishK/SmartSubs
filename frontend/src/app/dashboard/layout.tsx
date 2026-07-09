@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import Sidebar from '@/components/Sidebar';
 import styles from './layout.module.css';
 import { RecommendationsProvider } from '@/context/RecommendationsContext';
 import { Menu } from 'lucide-react';
 import ScrollToTop from '@/components/ScrollToTop';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function DashboardLayout({
     children,
@@ -15,6 +17,23 @@ export default function DashboardLayout({
 }) {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [country, setCountry] = useState<string | null>(null);
+
+    const { theme } = useTheme();
+    const [activeTheme, setActiveTheme] = useState<'light' | 'dark'>('dark');
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (theme === 'system') {
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            setActiveTheme(isDark ? 'dark' : 'light');
+        } else {
+            setActiveTheme(theme as 'light' | 'dark');
+        }
+    }, [theme]);
 
     useEffect(() => {
         const fetchCountry = async () => {
@@ -62,8 +81,15 @@ export default function DashboardLayout({
                     >
                         <Menu size={24} />
                     </button>
-                    <Link href="/dashboard" className={styles.mobileLogo}>
-                        SmartSubs
+                    <Link href="/dashboard" className={styles.mobileLogoContainer}>
+                        <Image
+                            src={(!mounted || activeTheme === 'dark') ? '/logo-dark-theme-final-v3.png' : '/logo-light-theme-final-v3.png'}
+                            alt="BingeSensei Logo"
+                            width={104}
+                            height={28}
+                            style={{ objectFit: 'contain' }}
+                            priority
+                        />
                     </Link>
                 </div>
 

@@ -8,17 +8,44 @@ import logging
 # Configure logging
 logger = logging.getLogger(__name__)
 
+def _is_provider_match(user_subs, provider_names):
+    # Normalize common service names
+    def normalize(name):
+        name = name.lower()
+        replacements = {
+            "amazon prime video": "prime video",
+            "prime video amazon channel": "prime video",
+            "disney+ hotstar": "hotstar",
+            "disney plus hotstar": "hotstar",
+            "jio cinema": "jiocinema",
+            "hbo max": "max",
+            "apple tv plus": "apple tv",
+            "apple tv+": "apple tv"
+        }
+        for k, v in replacements.items():
+            name = name.replace(k, v)
+        return name.replace(" ", "").replace("+", "").replace("-", "")
+
+    normalized_subs = {normalize(s) for s in user_subs}
+    for p in provider_names:
+        norm_p = normalize(p)
+        if any(norm_p in s or s in norm_p for s in normalized_subs):
+            return True
+    return False
+
 # Direct REST implementation to bypass SDK versioning issues and support fallback
 def _call_gemini_rest(prompt: str, model_name: str = "gemini-1.5-flash"):
     if not settings.GEMINI_API_KEY:
         return None
         
-    # Fallback Chain: Use validated models from user's environment (2.0/2.5)
+    # Fallback Chain: Use validated models from user's environment
     candidates = [
-        "gemini-2.5-flash",       # Primary: Matches User's Quota (5/20 used)
-        "gemini-2.0-flash",       # Secondary
-        "gemini-2.0-flash-lite",  # Tertiary
-        "gemini-flash-latest",    # Backup
+        "gemini-3.1-flash-lite",  # Primary: Extremely fast 3.1 lite model, robust quota
+        "gemini-2.5-flash-lite",  # Secondary: Stable 2.5 lite model, robust quota
+        "gemini-2.5-flash",       # Tertiary: Standard flash model
+        "gemini-3.5-flash",       # Backup: Ultra-fast 3.5 flash
+        "gemini-2.0-flash",       # Fallback
+        "gemini-2.0-flash-lite",  # Fallback
         "gemini-pro-latest"       # Last Resort
     ]
     
@@ -41,8 +68,8 @@ def _call_gemini_rest(prompt: str, model_name: str = "gemini-1.5-flash"):
         
         try:
             logger.info(f"Attempting AI Generation with model: {model}...")
-            # Add Timeout to prevent infinite hangs (Increased to 60s for 2.x models)
-            response = requests.post(url, headers=headers, json=data, timeout=60)
+            # Set timeout to 45s to allow sufficient time for large JSON payload generation
+            response = requests.post(url, headers=headers, json=data, timeout=45)
             
             if response.status_code == 200:
                 logger.info(f"Success with model: {model}")
@@ -58,7 +85,7 @@ def _call_gemini_rest(prompt: str, model_name: str = "gemini-1.5-flash"):
                 last_error = f"Error {response.status_code}: {response.text}"
                 
         except requests.exceptions.Timeout:
-            logger.warning(f"Timeout (60s) on {model}. Trying next...")
+            logger.warning(f"Timeout (45s) on {model}. Trying next...")
             last_error = f"Timeout on {model}"
             
         except Exception as e:
@@ -87,11 +114,31 @@ def generate_unified_insights(user_history: list, user_ratings: list, active_sub
     # Context
     history_text = "\n".join([f"- {h['title']} ({h['status']})" for h in user_history[-20:]])
     ratings_text = "\n".join([f"- {r['title']}: {r['rating']}/10" for r in user_ratings])
-    # Parse active_subs (Handle both string list and rich object list)
+    # Parse active_subs (Handle both string list and rich object list) - deduplicate by name
+    seen_sub_names = set()
+    deduped_subs = []
     if active_subs and isinstance(active_subs[0], dict):
-        subs_text = ", ".join([f"{s['name']} ({s.get('cost')} {s.get('currency')}/{s.get('billing')})" for s in active_subs])
+        for s in active_subs:
+            if s['name'] not in seen_sub_names:
+                seen_sub_names.add(s['name'])
+                deduped_subs.append(s)
+        subs_text = ", ".join([f"{s['name']}" for s in deduped_subs])
     else:
-        subs_text = ", ".join(active_subs)
+        for s in active_subs:
+            if s not in seen_sub_names:
+                seen_sub_names.add(s)
+                deduped_subs.append(s)
+        subs_text = ", ".join(deduped_subs)
+    
+    # Build a list of well-known streaming services the user does NOT have
+    all_known_services = [
+        "Apple TV+", "HBO Max", "Max", "Paramount+", "Peacock", "Hulu", "Disney+",
+        "Mubi", "Shudder", "AMC+", "BritBox", "Starz", "Showtime", "ESPN+",
+        "Lionsgate Play", "SonyLiv", "AltBalaji", "Eros Now"
+    ]
+    not_on_subs = [svc for svc in all_known_services if svc.lower().replace(" ", "").replace("+", "") not in {n.lower().replace(" ", "").replace("+", "") for n in seen_sub_names}]
+    not_subscribed_text = ", ".join(not_on_subs) if not_on_subs else "other streaming services"
+    
     pref_text = json.dumps(preferences, indent=2)
     dropped_text = "\n".join([f"- {d['title']}" for d in dropped_history])
     deal_breakers_text = ", ".join(deal_breakers)
@@ -118,9 +165,9 @@ def generate_unified_insights(user_history: list, user_ratings: list, active_sub
     - Repetitive/Ignored Content (Avoid these, user has skipped them multiple times): {ignored_text}
     
     Task: Provide a 3-part comprehensive report in STRICT JSON format:
-    1. "picks": 20 Hidden Gems/Matches. Priority to active subs. (We will filter best 6).
+    1. "picks": 35 Hidden Gems/Matches. Priority to active subs. Diverse mix of genres. (We will filter best 6).
     2. "strategy": 1-3 Financial Actions (Cancel/Add). ALL monetary values must be in {currency}.
-    3. "gaps": 8 specific titles they are missing out on. (We will filter best 4).
+    3. "gaps": 25 specific titles they are MISSING OUT on. These MUST be from services the user does NOT subscribe to: {not_subscribed_text}. Do NOT suggest anything from: {subs_text}. The goal is to show compelling content that could justify subscribing to a new service. Diverse mix of genres. (We will filter best 3).
     
     IMPORTANT RULES:
     1. Use CANONICAL TITLES only (e.g. "Severance", NOT "Severance Season 2").
@@ -185,68 +232,80 @@ def generate_unified_insights(user_history: list, user_ratings: list, active_sub
 
     # Enrich Picks and Filter Bad Ones
     if "picks" in data:
-        # First, enrich all picks
-        enriched_recs = []
-        for rec in data["picks"]:
-            _enrich_item(rec)
-            enriched_recs.append(rec)
+        # Pass country temporarily so the map executor can pick it up
+        for p in data["picks"]:
+            p["_country"] = country
 
-        # Validated Enrichment: Only keep items that successfully found a match and poster
-        # AND are not already in the user's watchlist (Hard Filter)
-        validated_recs = []
-        seen_ids = set() # To prevent duplicates within the picks list itself
-        
-        for r in enriched_recs:
+        # Enrich all picks in parallel to avoid sequential network delays
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
+            list(executor.map(_enrich_item, data["picks"]))
+
+        valid_picks = []
+        seen_ids = set()
+
+        for r in data["picks"]:
             # Check 1: Must have ID and Poster
             if not r.get("tmdb_id") or not r.get("poster_path"):
-                 continue
-                 
-            # Check 2: Must NOT be in Watchlist (Plan to Watch, Watching, etc.)
-            if r.get("tmdb_id") in watchlist_ids:
-                 logger.info(f"Skipping Duplicate Recommendation: {r.get('title')} (ID: {r.get('tmdb_id')}) because it's in watchlist.")
-                 continue
-            
-            # Check 3: Check for Hard Banned (Ignored) items
-            if str(r.get("tmdb_id")) in ignored_ids:
-                 logger.info(f"Skipping Ignored Item (Hard Filter): {r.get('title')} (ID: {r.get('tmdb_id')}).")
-                 continue
-
-            # Check 4: Must not be a duplicate within the current list of picks
-            if r.get("tmdb_id") in seen_ids:
-                logger.info(f"Skipping Duplicate Recommendation: {r.get('title')} (ID: {r.get('tmdb_id')}) because it's already picked.")
                 continue
 
-            validated_recs.append(r)
+            # Check 2: Must NOT be in Watchlist
+            if r.get("tmdb_id") in watchlist_ids:
+                logger.info(f"Skipping Pick: {r.get('title')} - in watchlist")
+                continue
+
+            # Check 3: Must not be ignored
+            if str(r.get("tmdb_id")) in ignored_ids:
+                logger.info(f"Skipping Pick: {r.get('title')} - ignored")
+                continue
+
+            # Check 4: No duplicate within picks
+            if r.get("tmdb_id") in seen_ids:
+                continue
+
+            valid_picks.append(r)
             seen_ids.add(r.get("tmdb_id"))
-            
-        data["picks"] = validated_recs[:6]
+
+        logger.info(f"Curator Picks: {len(valid_picks)} valid after filtering.")
+        data["picks"] = valid_picks[:6]
             
     # Enrich Gaps and Filter Bad Ones
     if "gaps" in data:
+        # Pass country temporarily so the map executor can pick it up
+        for g in data["gaps"]:
+            g["_country"] = country
+
+        # Enrich all gaps in parallel
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            list(executor.map(_enrich_item, data["gaps"]))
+
         valid_gaps = []
         seen_ids = set()
-        for gap in data["gaps"]:
-            _enrich_item(gap)
-            tmdb_id = gap.get("tmdb_id")
-            if tmdb_id and gap.get("poster_path"):
-                 # Filter Out Watchlist/Ignored items for GAPS too
-                 if tmdb_id in watchlist_ids:
-                     logger.info(f"Skipping Gap Item {gap.get('title')} (ID: {tmdb_id}) - Already in Watchlist")
-                     continue
-                 if str(tmdb_id) in ignored_ids:
-                      logger.info(f"Skipping Gap Item {gap.get('title')} (ID: {tmdb_id}) - Ignored")
-                      continue
 
-                 if tmdb_id not in seen_ids:
-                    valid_gaps.append(gap)
-                    seen_ids.add(tmdb_id)
+        for gap in data["gaps"]:
+            tmdb_id = gap.get("tmdb_id")
+            if not tmdb_id or not gap.get("poster_path"):
+                continue
+            if tmdb_id in watchlist_ids:
+                logger.info(f"Skipping Gap: {gap.get('title')} - in watchlist")
+                continue
+            if str(tmdb_id) in ignored_ids:
+                logger.info(f"Skipping Gap: {gap.get('title')} - ignored")
+                continue
+            if tmdb_id not in seen_ids:
+                valid_gaps.append(gap)
+                seen_ids.add(tmdb_id)
+
+        logger.info(f"Missing Out: {len(valid_gaps)} valid gaps after filtering.")
         data["gaps"] = valid_gaps[:3]
-            
+
     return data
 
 def _enrich_item(item):
     """Helper to add TMDB data to an item dict"""
     try:
+        country = item.pop("_country", "US")
         # Clean title for better matching (remove Season suffix)
         clean_title = re.sub(r':\s*Season\s+\d+|\s+Season\s+\d+', '', item['title'], flags=re.IGNORECASE).strip()
         
@@ -259,12 +318,40 @@ def _enrich_item(item):
              results = tmdb_client.search_multi(simple_title)
 
         if results.get('results'):
-            best = results['results'][0]
+            # Look for an exact match first (case-insensitive)
+            best = None
+            query_lower = clean_title.lower().strip()
+            
+            for candidate in results['results']:
+                cand_title = (candidate.get('title') or candidate.get('name') or '').lower().strip()
+                if cand_title == query_lower:
+                    best = candidate
+                    break
+            
+            # If no exact match, fall back to first result
+            if not best:
+                best = results['results'][0]
+                
             item['tmdb_id'] = best.get('id')
             item['media_type'] = best.get('media_type', 'movie') # Default to movie if unspecified, but API usually sends it
+            
+            # Synchronize title to avoid mismatched headings in UI
+            matched_title = best.get('title') or best.get('name')
+            if matched_title:
+                item['title'] = matched_title
+                
             item['poster_path'] = best.get('poster_path')
             item['vote_average'] = best.get('vote_average')
             item['overview'] = best.get('overview')
+
+            # Fetch watch providers for filtering
+            try:
+                providers_data = tmdb_client.get_watch_providers(item['media_type'], item['tmdb_id'], region=country)
+                flatrate = providers_data.get('flatrate', [])
+                item['providers'] = [p['provider_name'].lower().strip() for p in flatrate]
+            except Exception as e:
+                logger.warning(f"Failed to fetch watch providers for {clean_title}: {e}")
+                item['providers'] = []
 
             # Quality Check: If rating or overview is missing/incomplete, try fetching full details
             if not item['vote_average'] or not item['overview']:

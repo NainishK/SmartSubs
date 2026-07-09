@@ -112,7 +112,7 @@ origins = [
 from starlette.middleware.sessions import SessionMiddleware
 
 from config import settings
-app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY, https_only=False, same_site="lax", session_cookie="smartsubs_session")
+app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY, https_only=False, same_site="lax", session_cookie="bingesensei_session")
 
 app.add_middleware(
     CORSMiddleware,
@@ -129,6 +129,176 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# ─────────────────────────────────────────────
+# PUBLIC ENDPOINTS (no auth required)
+# Used by the landing page for unauthenticated visitors
+# ─────────────────────────────────────────────
+
+import tmdb_client as tmdb_client_module
+
+GENRE_MAP = {
+    "action": "28",
+    "comedy": "35",
+    "drama": "18",
+    "scifi": "878",
+    "thriller": "53",
+    "anime": "16",  # animation genre, filtered by language on frontend
+    "horror": "27",
+}
+
+def _format_providers(providers_raw: dict) -> list:
+    """Extract flatrate (streaming) providers into a clean list."""
+    flatrate = providers_raw.get("flatrate", [])
+    return [
+        {"name": p.get("provider_name"), "logo": p.get("logo_path")}
+        for p in flatrate[:5]
+    ]
+
+@app.get("/public/trending")
+def public_trending(region: str = "US", genre: str = None):
+    """
+    Returns top trending movies and TV shows for the landing page.
+    - "All" tab: uses TMDB /trending/week (genuinely trending this week)
+    - "Anime" tab: uses discover filtered to current season + Japanese language
+    - Other genre tabs: uses discover sorted by popularity
+    No authentication required.
+    """
+    from datetime import datetime
+
+    region = region.upper() if region else "US"
+    genre_lower = genre.lower() if genre else ""
+    genre_id = GENRE_MAP.get(genre_lower) if genre_lower else None
+
+    def _build_item(item, media_type):
+        tmdb_id = item.get("id")
+        providers_raw = tmdb_client_module.get_watch_providers(media_type, tmdb_id, region=region)
+        return {
+            "id": tmdb_id,
+            "media_type": media_type,
+            "title": item.get("title") or item.get("name"),
+            "poster_path": item.get("poster_path"),
+            "backdrop_path": item.get("backdrop_path"),
+            "vote_average": item.get("vote_average"),
+            "overview": item.get("overview"),
+            "genre_ids": item.get("genre_ids", []),
+            "original_language": item.get("original_language"),
+            "release_date": item.get("release_date") or item.get("first_air_date"),
+            "providers": _format_providers(providers_raw),
+        }
+
+    results = []
+
+    if not genre_lower:
+        # "All" tab: genuinely trending this week via TMDB /trending endpoint
+        for media_type in ["movie", "tv"]:
+            data = tmdb_client_module.get_trending(media_type, "week")
+            for item in data.get("results", [])[:8]:
+                results.append(_build_item(item, media_type))
+
+    elif genre_lower == "anime":
+        # Anime: only Japanese animation from the current airing season
+        now = datetime.utcnow()
+        season_starts = [1, 4, 7, 10]
+        season_month = max(m for m in season_starts if m <= now.month)
+        season_start_str = datetime(now.year, season_month, 1).strftime("%Y-%m-%d")
+
+        # Currently airing TV anime this season
+        tv_data = tmdb_client_module.discover_media(
+            "tv",
+            sort_by="popularity.desc",
+            min_vote_count=20,
+            with_genres="16",
+            watch_region=region,
+            with_original_language="ja",
+            extra_params={"first_air_date.gte": season_start_str},
+        )
+        for item in tv_data.get("results", [])[:10]:
+            results.append(_build_item(item, "tv"))
+
+        # Recent anime movies (last 12 months)
+        year_ago = datetime(now.year - 1, now.month, 1).strftime("%Y-%m-%d")
+        movie_data = tmdb_client_module.discover_media(
+            "movie",
+            sort_by="popularity.desc",
+            min_vote_count=20,
+            with_genres="16",
+            watch_region=region,
+            with_original_language="ja",
+            extra_params={"primary_release_date.gte": year_ago},
+        )
+        for item in movie_data.get("results", [])[:6]:
+            results.append(_build_item(item, "movie"))
+
+    else:
+        # Other genre tabs: fetch this week's trending, then filter by genre
+        # This gives genuinely trending results rather than all-time popular
+        for media_type in ["movie", "tv"]:
+            trending_data = tmdb_client_module.get_trending(media_type, "week")
+            for item in trending_data.get("results", []):
+                if genre_id and genre_id not in [str(g) for g in item.get("genre_ids", [])]:
+                    continue
+                results.append(_build_item(item, media_type))
+                if len(results) >= 16:
+                    break
+
+        # Fallback: if trending yielded too few for this genre, supplement with discover
+        if len(results) < 6:
+            for media_type in ["movie", "tv"]:
+                data = tmdb_client_module.discover_media(
+                    media_type,
+                    sort_by="popularity.desc",
+                    min_vote_count=300,
+                    with_genres=genre_id,
+                    watch_region=region,
+                )
+                for item in data.get("results", [])[:8]:
+                    if not any(r["id"] == item.get("id") for r in results):
+                        results.append(_build_item(item, media_type))
+
+
+    results.sort(key=lambda x: x.get("vote_average") or 0, reverse=True)
+    return results[:16]
+
+
+
+@app.get("/public/search")
+def public_search(q: str, region: str = "US"):
+    """
+    Search for movies and TV shows for the landing page.
+    No authentication required.
+    """
+    if not q or len(q.strip()) < 2:
+        return []
+
+    region = region.upper() if region else "US"
+    raw = tmdb_client_module.search_multi(q)
+    results = []
+
+    # Scan all 20 raw results so that people entries (who have no media_type 'movie'/'tv')
+    # don't push popular shows like Daredevil off the visible list
+    for item in raw.get("results", [])[:20]:
+        media_type = item.get("media_type")
+        if media_type not in ["movie", "tv"]:
+            continue
+        tmdb_id = item.get("id")
+        providers_raw = tmdb_client_module.get_watch_providers(media_type, tmdb_id, region=region)
+        results.append({
+            "id": tmdb_id,
+            "media_type": media_type,
+            "title": item.get("title") or item.get("name"),
+            "poster_path": item.get("poster_path"),
+            "backdrop_path": item.get("backdrop_path"),
+            "vote_average": item.get("vote_average"),
+            "overview": item.get("overview"),
+            "genre_ids": item.get("genre_ids", []),
+            "original_language": item.get("original_language"),
+            "release_date": item.get("release_date") or item.get("first_air_date"),
+            "providers": _format_providers(providers_raw),
+        })
+
+    return results
+
 
 def validate_ai_access(db: Session, user: models.User):
     if not user.ai_allowed:
@@ -740,6 +910,14 @@ def get_unified_insights(
              
              if has_picks or has_strategy:
                  cached['picks'] = valid_picks
+                 
+                 # Enrich Strategy Items in Cache Hit
+                 if "strategy" in cached:
+                     billing_map = {s.service_name.lower().strip(): s.billing_cycle.lower().strip() for s in current_user.subscriptions}
+                     for strat in cached["strategy"]:
+                         service_name = strat.get("service", "").lower().strip()
+                         billing_cycle = billing_map.get(service_name, "monthly")
+                         strat["billing_cycle"] = "yearly" if "year" in billing_cycle or "annual" in billing_cycle else "monthly"
                  return cached
 
     # 1. Check Permissions (Only if we need to generate)
@@ -903,6 +1081,14 @@ def get_unified_insights(
     if not insights:
         # Return empty structure on failure
         return {"picks": [], "strategy": [], "gaps": []}
+
+    # Enrich Strategy Items with their actual billing cycle from user subscriptions
+    if "strategy" in insights:
+        billing_map = {s.service_name.lower().strip(): s.billing_cycle.lower().strip() for s in subs}
+        for strat in insights["strategy"]:
+            service_name = strat.get("service", "").lower().strip()
+            billing_cycle = billing_map.get(service_name, "monthly")
+            strat["billing_cycle"] = "yearly" if "year" in billing_cycle or "annual" in billing_cycle else "monthly"
         
     # Cache
     country = current_user.country or "US"

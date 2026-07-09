@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import api from '@/lib/api';
 import { Loader2 } from 'lucide-react';
 import styles from '../login/login.module.css'; // Reuse login styles
@@ -82,7 +83,16 @@ export default function SignupPage() {
         <div className={styles.container}>
             <div className={styles.glassCard}>
                 <div className={styles.brandHeader}>
-                    <span className={styles.logoIcon}>💎</span>
+                    <div className={styles.logoImageContainer}>
+                        <Image
+                            src="/logo-icon-final-v3.png"
+                            alt="BingeSensei Logo Icon"
+                            width={56}
+                            height={56}
+                            style={{ objectFit: 'contain' }}
+                            priority
+                        />
+                    </div>
                     <h1 className={styles.title}>Join Us</h1>
                     <p className={styles.subtitle}>Start managing your subscriptions</p>
                 </div>

@@ -71,11 +71,12 @@
     margin-bottom: 0.5rem;
 }
 
-.logoIcon {
-    font-size: 3rem;
-    margin-bottom: 0.5rem;
-    display: block;
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+.logoImageContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1rem;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.08));
 }
 
 .title {

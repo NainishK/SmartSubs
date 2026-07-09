@@ -193,6 +193,14 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
     };
 
 
+    // Returns the most relevant provider name from TMDB regional data (same source as "Where to Watch" in card)
+    const getProviderBadge = (providers?: string[]): string | undefined => {
+        if (!providers || providers.length === 0) return undefined;
+        return providers[0]
+            .split(' ')
+            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+    };
 
     const LANG_OPTIONS = ["English", "Spanish", "French", "German", "Japanese", "Korean", "Hindi", "Mandarin", "Italian"];
     const DEVICE_OPTIONS = ["Mobile/Tablet", "Laptop", "TV (1080p)", "4K Home Theater"];
@@ -423,7 +431,7 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                                                                             status: existingItem?.status,
                                                                             user_rating: existingItem?.user_rating || 0
                                                                         }}
-                                                                        showServiceBadge={rec.service}
+                                                                        showServiceBadge={getProviderBadge(rec.providers)}
                                                                         customBadgeColor="#7c3aed"
                                                                         aiReason={rec.reason}
                                                                         existingStatus={existingItem?.status}
@@ -442,14 +450,20 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
 
                                         {activeTab === 'strategy' && (
                                             <>
-                                                {loading && (
+                                                {loading && data && (
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1rem', background: 'rgba(124,58,237,0.12)', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem', color: '#7c3aed', border: '1px solid rgba(124,58,237,0.2)' }}>
+                                                        <RefreshCw size={14} className={styles.spin} />
+                                                        <span>Refreshing...</span>
+                                                    </div>
+                                                )}
+                                                {loading && !data && (
                                                     <div className={styles.loadingWrapper} style={{ minHeight: '300px' }}>
                                                         <RefreshCw className={styles.spin} size={48} color="#7c3aed" />
-                                                        <p>Analyzing financial strategy & finding gaps...</p>
+                                                        <p>Analyzing financial strategy &amp; finding gaps...</p>
                                                     </div>
                                                 )}
                                                 {data && (
-                                                    <>
+                                                    <div style={{ opacity: loading ? 0.5 : 1, transition: 'opacity 0.4s' }}>
                                                         <div className={styles.strategyList}>
                                                             {data.strategy.map((item, idx) => (
                                                                 <div key={idx} className={styles.strategyCard}>
@@ -461,7 +475,7 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                                                                         <p className={styles.strategyReason}>{item.reason}</p>
                                                                         {item.savings && item.action === 'Cancel' && (
                                                                             <span className={styles.savingsTag} style={{ color: '#166534', background: '#dcfce7', borderColor: '#86efac' }}>
-                                                                                Save {currencySymbol}{item.savings}/mo
+                                                                                Save {currencySymbol}{item.savings}{item.billing_cycle === 'yearly' ? '/yr' : '/mo'}
                                                                             </span>
                                                                         )}
                                                                     </div>
@@ -501,7 +515,6 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                                                                                         user_rating: existingItem?.user_rating || 0
                                                                                     }}
                                                                                     aiReason={gap.reason}
-                                                                                    showServiceBadge={gap.service}
                                                                                     customBadgeColor="#f59e0b"
                                                                                     existingStatus={existingItem?.status}
                                                                                     onAddSuccess={onWatchlistUpdate}
@@ -514,7 +527,7 @@ const AIInsightsModal: React.FC<AIInsightsModalProps> = ({ isOpen, onClose, watc
                                                                 </div>
                                                             </div>
                                                         )}
-                                                    </>
+                                                    </div>
                                                 )}
                                             </>
                                         )}
