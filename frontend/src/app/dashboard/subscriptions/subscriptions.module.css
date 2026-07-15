@@ -1174,4 +1174,92 @@ select.input {
 .detailValueDueSoon {
     color: #f59e0b !important;
     font-weight: 700 !important;
-}
+}
+
+/* =========================================
+   FILTER BAR STYLING
+   ========================================= */
+
+.filtersWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-bottom: 2rem;
+    background: rgba(255, 255, 255, 0.015);
+    padding: 1.25rem;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+}
+
+:global([data-theme='dark']) .filtersWrapper {
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.filterRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+@media (max-width: 576px) {
+    .filterRow {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+}
+
+.filterLabel {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    min-width: 80px;
+}
+
+.filtersWrapper .filterContainer {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.activeOverduePill {
+    background: #ef4444 !important;
+    color: white !important;
+    border-color: #ef4444 !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+}
+
+.activeDueSoonPill {
+    background: #f59e0b !important;
+    color: white !important;
+    border-color: #f59e0b !important;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+}
+
+.activeActivePill {
+    background: #10b981 !important;
+    color: white !important;
+    border-color: #10b981 !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+}
+
+.resetFiltersBtn {
+    margin-top: 1.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #0070f3;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.resetFiltersBtn:hover {
+    background: #0061d5;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 112, 243, 0.2);
+}
+

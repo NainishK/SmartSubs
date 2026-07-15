@@ -22,10 +22,11 @@ export default function SubscriptionsPage() {
     const [loading, setLoading] = useState(true);
     const [userCountry, setUserCountry] = useState('US');
 
-    // Mobile View State
+    // Mobile & Desktop Filter State
     const [viewMode, setViewMode] = useState<'list' | 'add'>('list');
     const [isMobile, setIsMobile] = useState(false);
     const [filterCategory, setFilterCategory] = useState<'ALL' | 'OTT' | 'OTHER'>('ALL');
+    const [filterStatus, setFilterStatus] = useState<'ALL' | 'OVERDUE' | 'DUE_SOON' | 'ACTIVE'>('ALL');
 
     // Editing State
     const [isEditing, setIsEditing] = useState(false);
@@ -292,7 +293,27 @@ export default function SubscriptionsPage() {
         }
     };
 
+    const getSubscriptionStatus = (nextBillingDateStr: string) => {
+        const billingDate = new Date(nextBillingDateStr);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
+        const diffTime = billingDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) return 'OVERDUE';
+        if (diffDays <= 7) return 'DUE_SOON';
+        return 'ACTIVE';
+    };
+
+    const filteredSubscriptions = subscriptions.filter(sub => {
+        const matchesCategory = filterCategory === 'ALL' || (sub.category || 'OTT') === filterCategory;
+        const status = getSubscriptionStatus(sub.next_billing_date);
+        const matchesStatus = filterStatus === 'ALL' || status === filterStatus;
+        return matchesCategory && matchesStatus;
+    });
+
+    const hasActiveFilters = filterCategory !== 'ALL' || filterStatus !== 'ALL';
 
     if (loading) return <div className={styles.loading}>Loading your subscriptions...</div>;
 
@@ -333,125 +354,179 @@ export default function SubscriptionsPage() {
                             </div>
                         ) : (
                             <>
-                                {/* Mobile Category Filter */}
-                                {isMobile && (
-                                    <div className={styles.filterContainer}>
+                                {/* Unified Status & Category Filters */}
+                                <div className={styles.filtersWrapper}>
+                                    <div className={styles.filterRow}>
+                                        <span className={styles.filterLabel}>Status:</span>
+                                        <div className={styles.filterContainer}>
+                                            <button
+                                                className={`${styles.filterPill} ${filterStatus === 'ALL' ? styles.activePill : ''}`}
+                                                onClick={() => setFilterStatus('ALL')}
+                                            >
+                                                All
+                                            </button>
+                                            <button
+                                                className={`${styles.filterPill} ${filterStatus === 'OVERDUE' ? styles.activeOverduePill : ''}`}
+                                                onClick={() => setFilterStatus('OVERDUE')}
+                                            >
+                                                Renewal Due
+                                            </button>
+                                            <button
+                                                className={`${styles.filterPill} ${filterStatus === 'DUE_SOON' ? styles.activeDueSoonPill : ''}`}
+                                                onClick={() => setFilterStatus('DUE_SOON')}
+                                            >
+                                                Due Soon
+                                            </button>
+                                            <button
+                                                className={`${styles.filterPill} ${filterStatus === 'ACTIVE' ? styles.activeActivePill : ''}`}
+                                                onClick={() => setFilterStatus('ACTIVE')}
+                                            >
+                                                Active
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className={styles.filterRow}>
+                                        <span className={styles.filterLabel}>Category:</span>
+                                        <div className={styles.filterContainer}>
+                                            <button
+                                                className={`${styles.filterPill} ${filterCategory === 'ALL' ? styles.activePill : ''}`}
+                                                onClick={() => setFilterCategory('ALL')}
+                                            >
+                                                All
+                                            </button>
+                                            <button
+                                                className={`${styles.filterPill} ${filterCategory === 'OTT' ? styles.activePill : ''}`}
+                                                onClick={() => setFilterCategory('OTT')}
+                                            >
+                                                Streaming (OTT)
+                                            </button>
+                                            <button
+                                                className={`${styles.filterPill} ${filterCategory === 'OTHER' ? styles.activePill : ''}`}
+                                                onClick={() => setFilterCategory('OTHER')}
+                                            >
+                                                Others
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {filteredSubscriptions.length === 0 ? (
+                                    <div className={styles.emptyStateContainer}>
+                                        <div className={styles.emptyIcon}>
+                                            <Filter size={48} />
+                                        </div>
+                                        <h2 className={styles.emptyTitle}>No matching subscriptions</h2>
+                                        <p className={styles.emptySubtitle}>
+                                            No subscriptions match your selected status or category filters. Try resetting the filters.
+                                        </p>
                                         <button
-                                            className={`${styles.filterPill} ${filterCategory === 'ALL' ? styles.activePill : ''}`}
-                                            onClick={() => setFilterCategory('ALL')}
+                                            onClick={() => {
+                                                setFilterStatus('ALL');
+                                                setFilterCategory('ALL');
+                                            }}
+                                            className={styles.resetFiltersBtn}
                                         >
-                                            All
-                                        </button>
-                                        <button
-                                            className={`${styles.filterPill} ${filterCategory === 'OTT' ? styles.activePill : ''}`}
-                                            onClick={() => setFilterCategory('OTT')}
-                                        >
-                                            OTT
-                                        </button>
-                                        <button
-                                            className={`${styles.filterPill} ${filterCategory === 'OTHER' ? styles.activePill : ''}`}
-                                            onClick={() => setFilterCategory('OTHER')}
-                                        >
-                                            Others
+                                            Reset Filters
                                         </button>
                                     </div>
-                                )}
+                                ) : (
+                                    <div className={styles.categoriesContainer}>
+                                        {[
+                                            { id: 'OTT', title: 'Streaming (OTT)' },
+                                            { id: 'OTHER', title: 'Other Subscriptions' }
+                                        ]
+                                            .filter(cat => filterCategory === 'ALL' || cat.id === filterCategory)
+                                            .map(cat => {
+                                                const catSubs = filteredSubscriptions.filter(s => (s.category || 'OTT') === cat.id);
+                                                if (catSubs.length === 0) return null;
 
-                                <div className={styles.categoriesContainer}>
-                                    {[
-                                        { id: 'OTT', title: 'Streaming (OTT)' },
-                                        { id: 'OTHER', title: 'Other Subscriptions' }
-                                    ]
-                                        .filter(cat => filterCategory === 'ALL' || cat.id === filterCategory)
-                                        .map(cat => {
-                                            const catSubs = subscriptions.filter(s => (s.category || 'OTT') === cat.id);
-                                            if (catSubs.length === 0) return null;
+                                                return (
+                                                    <section key={cat.id} className={styles.categorySection}>
+                                                        <h2 className={styles.categoryTitle}>{cat.title}</h2>
+                                                        <div className={styles.subGrid}>
+                                                            {catSubs.map((sub) => {
+                                                                const billingDate = new Date(sub.next_billing_date);
+                                                                const today = new Date();
+                                                                today.setHours(0, 0, 0, 0);
 
-                                            return (
-                                                <section key={cat.id} className={styles.categorySection}>
-                                                    <h2 className={styles.categoryTitle}>{cat.title}</h2>
-                                                    <div className={styles.subGrid}>
-                                                        {catSubs.map((sub) => {
-                                                            const billingDate = new Date(sub.next_billing_date);
-                                                            const today = new Date();
-                                                            today.setHours(0, 0, 0, 0);
+                                                                const diffTime = billingDate.getTime() - today.getTime();
+                                                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                                                            const diffTime = billingDate.getTime() - today.getTime();
-                                                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                                let cardClass = styles.subCard;
+                                                                let statusText = 'Active';
+                                                                let statusClass = styles.badgeActive;
+                                                                let dateClass = styles.detailValue;
+                                                                let isOverdue = false;
+                                                                let isDueSoon = false;
 
-                                                            let cardClass = styles.subCard;
-                                                            let statusText = 'Active';
-                                                            let statusClass = styles.badgeActive;
-                                                            let dateClass = styles.detailValue;
-                                                            let isOverdue = false;
-                                                            let isDueSoon = false;
+                                                                if (diffDays < 0) {
+                                                                    cardClass = `${styles.subCard} ${styles.cardOverdue}`;
+                                                                    statusText = 'Renewal Due';
+                                                                    statusClass = styles.badgeOverdue;
+                                                                    dateClass = `${styles.detailValue} ${styles.detailValueOverdue}`;
+                                                                    isOverdue = true;
+                                                                } else if (diffDays <= 7) {
+                                                                    cardClass = `${styles.subCard} ${styles.cardDueSoon}`;
+                                                                    statusText = 'Due Soon';
+                                                                    statusClass = styles.badgeDueSoon;
+                                                                    dateClass = `${styles.detailValue} ${styles.detailValueDueSoon}`;
+                                                                    isDueSoon = true;
+                                                                }
 
-                                                            if (diffDays < 0) {
-                                                                cardClass = `${styles.subCard} ${styles.cardOverdue}`;
-                                                                statusText = 'Renewal Due';
-                                                                statusClass = styles.badgeOverdue;
-                                                                dateClass = `${styles.detailValue} ${styles.detailValueOverdue}`;
-                                                                isOverdue = true;
-                                                            } else if (diffDays <= 7) {
-                                                                cardClass = `${styles.subCard} ${styles.cardDueSoon}`;
-                                                                statusText = 'Due Soon';
-                                                                statusClass = styles.badgeDueSoon;
-                                                                dateClass = `${styles.detailValue} ${styles.detailValueDueSoon}`;
-                                                                isDueSoon = true;
-                                                            }
-
-                                                            return (
-                                                                <div key={sub.id} className={cardClass}>
-                                                                    <div className={styles.subHeader}>
-                                                                        <div className={styles.serviceIdentity}>
-                                                                            <ServiceIcon
-                                                                                name={sub.service_name}
-                                                                                logoUrl={sub.logo_url}
-                                                                                className={styles.serviceLogo}
-                                                                                fallbackClassName={styles.fallbackLogo}
-                                                                            />
-                                                                            <h3 className={styles.serviceName}>{sub.service_name}</h3>
-                                                                        </div>
-                                                                        <span className={statusClass}>{statusText}</span>
-                                                                    </div>
-
-                                                                    <div className={styles.subBody}>
-                                                                        <div className={styles.costSection}>
-                                                                            <p className={styles.costValue}>{formatCurrency(sub.cost, userCountry)}</p>
-                                                                            <span className={styles.billingPeriod}>per {sub.billing_cycle === 'monthly' ? 'month' : 'year'}</span>
+                                                                return (
+                                                                    <div key={sub.id} className={cardClass}>
+                                                                        <div className={styles.subHeader}>
+                                                                            <div className={styles.serviceIdentity}>
+                                                                                <ServiceIcon
+                                                                                    name={sub.service_name}
+                                                                                    logoUrl={sub.logo_url}
+                                                                                    className={styles.serviceLogo}
+                                                                                    fallbackClassName={styles.fallbackLogo}
+                                                                                />
+                                                                                <h3 className={styles.serviceName}>{sub.service_name}</h3>
+                                                                            </div>
+                                                                            <span className={statusClass}>{statusText}</span>
                                                                         </div>
 
-                                                                        <div className={styles.billingDetail}>
-                                                                            <div className={styles.detailItem}>
-                                                                                <span className={styles.detailLabel}>Next Bill</span>
-                                                                                <span className={dateClass}>{new Date(sub.next_billing_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                                                        <div className={styles.subBody}>
+                                                                            <div className={styles.costSection}>
+                                                                                <p className={styles.costValue}>{formatCurrency(sub.cost, userCountry)}</p>
+                                                                                <span className={styles.billingPeriod}>per {sub.billing_cycle === 'monthly' ? 'month' : 'year'}</span>
+                                                                            </div>
+
+                                                                            <div className={styles.billingDetail}>
+                                                                                <div className={styles.detailItem}>
+                                                                                    <span className={styles.detailLabel}>Next Bill</span>
+                                                                                    <span className={dateClass}>{new Date(sub.next_billing_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                                                                </div>
                                                                             </div>
                                                                         </div>
-                                                                    </div>
 
-                                                                    <div className={styles.subFooter}>
-                                                                        {(isOverdue || isDueSoon) && (
-                                                                            <button onClick={() => handleQuickRenew(sub)} className={styles.renewBtn} title="Quickly roll billing date to next cycle">
-                                                                                <RefreshCw size={12} />
-                                                                                Renew
+                                                                        <div className={styles.subFooter}>
+                                                                            {(isOverdue || isDueSoon) && (
+                                                                                <button onClick={() => handleQuickRenew(sub)} className={styles.renewBtn} title="Quickly roll billing date to next cycle">
+                                                                                    <RefreshCw size={12} />
+                                                                                    Renew
+                                                                                </button>
+                                                                            )}
+                                                                            <button onClick={() => handleEditClick(sub)} className={styles.editBtn}>
+                                                                                <Edit2 size={14} />
+                                                                                Edit
                                                                             </button>
-                                                                        )}
-                                                                        <button onClick={() => handleEditClick(sub)} className={styles.editBtn}>
-                                                                            <Edit2 size={14} />
-                                                                            Edit
-                                                                        </button>
-                                                                        <button onClick={() => openDeleteModal(sub)} className={styles.deleteBtn}>
-                                                                            Cancel
-                                                                        </button>
+                                                                            <button onClick={() => openDeleteModal(sub)} className={styles.deleteBtn}>
+                                                                                Cancel
+                                                                            </button>
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </section>
-                                            );
-                                        })}
-                                </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </section>
+                                                );
+                                            })}
+                                    </div>
+                                )}
                             </>
                         )}
                     </div>
