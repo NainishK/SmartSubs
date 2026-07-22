@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     GITHUB_PAT: str = ""
     GITHUB_REPO: str = "NainishK/SmartSubs"
     
+    # Environment & Security
+    ENVIRONMENT: str = "development"
+    ADMIN_USER: str = "admin"
+    ADMIN_PASSWORD: str = "admin123"
+    
     # Security Key for automated tasks/cron jobs
     CRON_SECURITY_KEY: str = "super_secret_cron_key_default"
 

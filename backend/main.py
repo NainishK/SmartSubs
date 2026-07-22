@@ -13,7 +13,15 @@ from logger import logger # [NEW]
 
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+from limiter import limiter
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from config import settings
+import sqlalchemy
+
+app = FastAPI(title="BingeSensei API", version="1.5.0")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Include Routers
 from routers import auth, notifications
@@ -57,8 +65,10 @@ class AdminAuth(AuthenticationBackend):
         username = form.get("username")
         password = form.get("password")
         
-        # TODO: Connect this to a real "is_superuser" field in DB
-        if username == "admin" and password == "admin123":
+        admin_user = getattr(settings, "ADMIN_USER", "admin")
+        admin_pass = getattr(settings, "ADMIN_PASSWORD", "admin123")
+        
+        if username == admin_user and password == admin_pass:
             request.session.update({"token": "admin_token"})
             return True
         return False
@@ -70,7 +80,7 @@ class AdminAuth(AuthenticationBackend):
     async def authenticate(self, request: Request) -> bool:
         return "token" in request.session
 
-authentication_backend = AdminAuth(secret_key="SUPER_SECRET_KEY")
+authentication_backend = AdminAuth(secret_key=settings.SECRET_KEY)
 
 class UserAdmin(ModelView, model=User):
     column_list = [User.id, User.email, User.ai_access_status, User.ai_allowed, User.country, User.is_active, User.ai_quota_policy, User.ai_usage_count]
@@ -82,7 +92,6 @@ class UserAdmin(ModelView, model=User):
 
 class SubscriptionAdmin(ModelView, model=Subscription):
     column_list = [Subscription.service_name, Subscription.cost, Subscription.is_active]
-    # Removed user_id temporarily to rule out FK resolution issues
     icon = "fa-solid fa-credit-card"
 
 class WatchlistAdmin(ModelView, model=WatchlistItem):
@@ -98,22 +107,35 @@ admin.add_view(WatchlistAdmin)
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     error_msg = "".join(traceback.format_exception(None, exc, exc.__traceback__))
-    logger.error(f"Global Exception: {error_msg}") # [MODIFIED]
+    logger.error(f"Global Exception: {error_msg}")
     return JSONResponse(
         status_code=500,
         content={"message": "Internal Server Error", "details": str(exc)},
     )
 
+is_production = getattr(settings, "ENVIRONMENT", "development").lower() == "production"
+
 origins = [
-    "*",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
+if not is_production:
+    origins.append("*")
+
+if hasattr(settings, "FRONTEND_URL") and settings.FRONTEND_URL:
+    clean_frontend_url = settings.FRONTEND_URL.rstrip("/")
+    if clean_frontend_url not in origins:
+        origins.append(clean_frontend_url)
 
 from starlette.middleware.sessions import SessionMiddleware
 
-from config import settings
-app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY, https_only=False, same_site="lax", session_cookie="bingesensei_session")
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SECRET_KEY,
+    https_only=is_production,
+    same_site="lax",
+    session_cookie="bingesensei_session"
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -130,6 +152,22 @@ def get_db():
         yield db
     finally:
         db.close()
+
+@app.get("/health", tags=["System"])
+def health_check(db: Session = Depends(get_db)):
+    try:
+        db.execute(sqlalchemy.text("SELECT 1"))
+        db_status = "healthy"
+    except Exception as e:
+        logger.error(f"Health check DB error: {e}")
+        db_status = "unhealthy"
+        
+    return {
+        "status": "ok" if db_status == "healthy" else "degraded",
+        "database": db_status,
+        "environment": getattr(settings, "ENVIRONMENT", "development"),
+        "timestamp": datetime.utcnow().isoformat()
+    }
 
 # ─────────────────────────────────────────────
 # PUBLIC ENDPOINTS (no auth required)

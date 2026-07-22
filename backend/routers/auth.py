@@ -5,6 +5,7 @@ import models, schemas, crud, security, email_client
 from database import get_db # Assuming get_db is available or I need to import it
 from dependencies import get_db, get_current_user
 from config import settings
+from limiter import limiter
 import logging
 import sys
 
@@ -30,12 +31,14 @@ class ResetPasswordRequest(BaseModel):
     new_password: str
 
 @router.post("/forgot-password")
+@limiter.limit("5/minute")
 async def forgot_password(
-    request: ForgotPasswordRequest, 
+    request: Request,
+    req_body: ForgotPasswordRequest, 
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
-    user = crud.get_user_by_email(db, email=request.email)
+    user = crud.get_user_by_email(db, email=req_body.email)
     if not user:
         # Don't reveal if user exists or not for security, but for now return 200
         return {"message": "If this email is registered, you will receive a password reset link."}
@@ -72,8 +75,13 @@ async def forgot_password(
     return {"message": "If this email is registered, you will receive a password reset link."}
 
 @router.post("/reset-password")
-def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
-    email = security.verify_password_reset_token(request.token)
+@limiter.limit("5/minute")
+def reset_password(
+    request: Request,
+    req_body: ResetPasswordRequest,
+    db: Session = Depends(get_db)
+):
+    email = security.verify_password_reset_token(req_body.token)
     if not email:
         raise HTTPException(status_code=400, detail="Invalid or expired token")
         
@@ -81,7 +89,9 @@ def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db))
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
         
-    crud.update_user_password(db, user_id=user.id, new_password=request.new_password)
+    hashed_password = security.get_password_hash(req_body.new_password)
+    user.hashed_password = hashed_password
+    db.commit()
     
     return {"message": "Password reset successfully"}
 

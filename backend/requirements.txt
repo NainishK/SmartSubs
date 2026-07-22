@@ -29,3 +29,4 @@ resend
 authlib
 httpx
 email-validator
+slowapi

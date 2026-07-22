@@ -672,3 +672,54 @@
 }
 
 /* Remove old Mock Dashboard UI styles (lines 271-393 replaced by this block) */
+
+.footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(16px);
+  padding: 3rem 1.5rem;
+  margin-top: 5rem;
+}
+
+.footerContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.footerBrand {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: white;
+}
+
+.footerBrand span {
+  color: #6366f1;
+}
+
+.footerCopyright {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+
+.footerLinks {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.footerLink {
+  color: #94a3b8;
+  font-size: 0.88rem;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footerLink:hover {
+  color: white;
+}

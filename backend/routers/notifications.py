@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Header, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, Header, BackgroundTasks, Request
 from sqlalchemy.orm import Session
 from datetime import date, timedelta
 import json
@@ -9,6 +9,7 @@ import schemas
 import email_client
 from database import get_db
 from config import settings
+from limiter import limiter
 
 logger = logging.getLogger("notifications_router")
 
@@ -18,7 +19,9 @@ router = APIRouter(
 )
 
 @router.post("/check-renewals")
+@limiter.limit("10/minute")
 async def check_renewals(
+    request: Request,
     background_tasks: BackgroundTasks,
     x_cron_security_key: str = Header(None),
     db: Session = Depends(get_db)

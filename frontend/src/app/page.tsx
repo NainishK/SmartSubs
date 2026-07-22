@@ -273,6 +273,23 @@ export default function Home() {
                     </div>
                 </div>
             </section>
+
+            {/* ── Footer ── */}
+            <footer className={styles.footer}>
+                <div className={styles.footerContainer}>
+                    <div>
+                        <div className={styles.footerBrand}>Binge<span>Sensei</span></div>
+                        <p className={styles.footerCopyright}>
+                            © {new Date().getFullYear()} BingeSensei. All rights reserved.
+                        </p>
+                    </div>
+                    <div className={styles.footerLinks}>
+                        <Link href="/privacy" className={styles.footerLink}>Privacy Policy</Link>
+                        <Link href="/terms" className={styles.footerLink}>Terms of Service</Link>
+                        <Link href="/login" className={styles.footerLink}>Sign In</Link>
+                    </div>
+                </div>
+            </footer>
         </main>
     );
 }
