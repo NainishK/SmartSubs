@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bingesensei.com';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://bingesensei.app';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -108,6 +108,7 @@ const jsonLd = {
 };
 
 import GoogleAnalytics from "@/components/GoogleAnalytics";
+import MicrosoftClarity from "@/components/MicrosoftClarity";
 import CookieBanner from "@/components/CookieBanner";
 
 export default function RootLayout({
@@ -126,6 +127,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
         <ThemeProvider defaultTheme="system" storageKey="bingesensei-theme">
           <GoogleAnalytics />
+          <MicrosoftClarity />
           {children}
           <CookieBanner />
         </ThemeProvider>

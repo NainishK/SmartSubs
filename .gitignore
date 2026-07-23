@@ -9,3 +9,5 @@ build/
 *.log
 *.db
 .feedback/
+docs/DOCKER_GUIDE.md
+docs/DEPLOYMENT_CHECKLIST.md
